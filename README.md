@@ -1,5 +1,7 @@
 # Flowdesk — Task del team
 
+> Deploy automatico da GitHub attivo.
+
 Web app per gestire le task giornaliere, settimanali e mensili del team, con login tramite email aziendale e una vista d'insieme di tutto ciò che è completato o ancora da fare.
 
 ## Stack tecnico
