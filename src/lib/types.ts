@@ -1,4 +1,4 @@
-import type { Period, Status } from "@/generated/prisma/enums";
+import type { Period, Priority, Status } from "@/generated/prisma/enums";
 
 export type TeamMember = {
   id: string;
@@ -13,6 +13,7 @@ export type TaskWithRelations = {
   description: string | null;
   period: Period;
   status: Status;
+  priority: Priority;
   dueDate: Date | null;
   completedAt: Date | null;
   createdAt: Date;

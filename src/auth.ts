@@ -60,7 +60,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const alwaysPublicPaths = new Set(["/", "/verify"]);
 
       if (guestOnlyPaths.has(pathname)) {
-        return isLoggedIn ? Response.redirect(new URL("/dashboard", request.nextUrl)) : true;
+        return isLoggedIn ? Response.redirect(new URL("/home", request.nextUrl)) : true;
       }
       if (alwaysPublicPaths.has(pathname)) {
         return true;

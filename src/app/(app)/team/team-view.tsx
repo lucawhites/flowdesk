@@ -13,8 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn, initials } from "@/lib/utils";
-import { PERIOD_TABS } from "@/lib/task-helpers";
+import { initials } from "@/lib/utils";
+import { PERIOD_TABS, PRIORITY_OPTIONS } from "@/lib/task-helpers";
+import { StatCard } from "@/components/stat-card";
 import type { TaskWithRelations, TeamMember } from "@/lib/types";
 
 type MemberStat = TeamMember & { total: number; done: number; pending: number };
@@ -44,17 +45,19 @@ export function TeamView({
   teamName: string;
 }) {
   const [periodFilter, setPeriodFilter] = useState<string>("ALL");
+  const [priorityFilter, setPriorityFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [memberFilter, setMemberFilter] = useState<string>("ALL");
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
       if (periodFilter !== "ALL" && task.period !== periodFilter) return false;
+      if (priorityFilter !== "ALL" && task.priority !== priorityFilter) return false;
       if (statusFilter !== "ALL" && task.status !== statusFilter) return false;
       if (memberFilter !== "ALL" && task.assignee.id !== memberFilter) return false;
       return true;
     });
-  }, [tasks, periodFilter, statusFilter, memberFilter]);
+  }, [tasks, periodFilter, priorityFilter, statusFilter, memberFilter]);
 
   const completionRate = totals.total > 0 ? Math.round((totals.done / totals.total) * 100) : 0;
 
@@ -142,6 +145,19 @@ export function TeamView({
                 ))}
               </SelectContent>
             </Select>
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Tutte le priorità</SelectItem>
+                {PRIORITY_OPTIONS.map((p) => (
+                  <SelectItem key={p.value} value={p.value}>
+                    {p.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-36">
                 <SelectValue />
@@ -167,38 +183,5 @@ export function TeamView({
         />
       </div>
     </div>
-  );
-}
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  tone = "neutral",
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: number;
-  tone?: "neutral" | "primary" | "success" | "danger";
-}) {
-  const toneClass = {
-    neutral: "bg-surface-muted text-muted-foreground",
-    primary: "bg-primary-soft text-primary",
-    success: "bg-success-soft text-success",
-    danger: "bg-danger-soft text-danger",
-  }[tone];
-
-  return (
-    <Card>
-      <CardContent className="flex items-center gap-3 p-4">
-        <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg", toneClass)}>
-          <Icon className="h-4.5 w-4.5" />
-        </span>
-        <div>
-          <p className="text-lg font-semibold leading-tight text-foreground">{value}</p>
-          <p className="text-xs text-muted-foreground">{label}</p>
-        </div>
-      </CardContent>
-    </Card>
   );
 }

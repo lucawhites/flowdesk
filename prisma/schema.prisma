@@ -26,6 +26,12 @@ enum Status {
   DONE
 }
 
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 model Team {
   id        String   @id @default(cuid())
   name      String
@@ -70,6 +76,7 @@ model Task {
   description String?
   period      Period    @default(DAILY)
   status      Status    @default(TODO)
+  priority    Priority  @default(MEDIUM)
   dueDate     DateTime?
   completedAt DateTime?
   createdAt   DateTime  @default(now())

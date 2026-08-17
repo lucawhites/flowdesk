@@ -35,7 +35,7 @@ export async function login(_prevState: AuthFormState, formData: FormData): Prom
     await signIn("credentials", {
       email: parsed.data.email.toLowerCase(),
       password: parsed.data.password,
-      redirectTo: "/dashboard",
+      redirectTo: "/home",
     });
   } catch (error) {
     if (error instanceof AuthError) {

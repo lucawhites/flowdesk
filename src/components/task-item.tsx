@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn, initials } from "@/lib/utils";
-import { isDueToday, isOverdue } from "@/lib/task-helpers";
+import { isDueToday, isOverdue, PRIORITY_BADGE_VARIANT, PRIORITY_LABELS } from "@/lib/task-helpers";
 import type { TaskWithRelations, TeamMember } from "@/lib/types";
 
 export function TaskItem({
@@ -41,10 +41,17 @@ export function TaskItem({
   const dueToday = isDueToday(task.dueDate);
   const canManage = task.creatorId === currentUserId || currentUserRole === "ADMIN";
 
+  const priorityBorder = {
+    HIGH: "border-l-4 border-l-danger",
+    MEDIUM: "border-l-4 border-l-warning",
+    LOW: "border-l-4 border-l-transparent",
+  }[task.priority];
+
   return (
     <div
       className={cn(
         "group flex items-start gap-3 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-primary/40",
+        priorityBorder,
         done && "opacity-60"
       )}
     >
@@ -67,6 +74,9 @@ export function TaskItem({
         <p className={cn("text-sm font-medium text-foreground", done && "line-through")}>{task.title}</p>
         {task.description && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{task.description}</p>}
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {task.priority !== "LOW" && (
+            <Badge variant={PRIORITY_BADGE_VARIANT[task.priority]}>{PRIORITY_LABELS[task.priority]}</Badge>
+          )}
           {task.dueDate && (
             <Badge variant={overdue ? "danger" : dueToday ? "warning" : "neutral"}>
               {format(new Date(task.dueDate), "d MMM", { locale: it })}
@@ -84,7 +94,7 @@ export function TaskItem({
       </div>
 
       <DropdownMenu>
-        <DropdownMenuTrigger className="rounded-lg p-1.5 text-muted-foreground opacity-0 outline-none transition-opacity hover:bg-surface-muted hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 cursor-pointer">
+        <DropdownMenuTrigger className="rounded-lg p-1.5 text-muted-foreground outline-none transition-colors hover:bg-surface-muted hover:text-foreground active:bg-surface-muted cursor-pointer">
           <MoreHorizontal className="h-4 w-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

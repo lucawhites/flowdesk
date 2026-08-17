@@ -25,6 +25,7 @@ export const LoginSchema = z.object({
 });
 
 export const TaskPeriods = ["DAILY", "WEEKLY", "MONTHLY"] as const;
+export const TaskPriorities = ["LOW", "MEDIUM", "HIGH"] as const;
 
 export const TaskSchema = z.object({
   title: z
@@ -34,6 +35,7 @@ export const TaskSchema = z.object({
     .max(140),
   description: z.string().trim().max(2000).optional().or(z.literal("")),
   period: z.enum(TaskPeriods),
+  priority: z.enum(TaskPriorities),
   dueDate: z.string().optional().or(z.literal("")),
   assigneeId: z.string().min(1, { error: "Seleziona un responsabile." }),
 });

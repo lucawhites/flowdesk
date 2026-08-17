@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { PERIOD_LABELS, PERIOD_TABS } from "@/lib/task-helpers";
+import { PERIOD_LABELS, PERIOD_TABS, PRIORITY_OPTIONS } from "@/lib/task-helpers";
 import type { TaskWithRelations, TeamMember } from "@/lib/types";
 
 function toDateInputValue(date: Date | null) {
@@ -101,6 +101,24 @@ export function TaskDialog({
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="priority">Priorità</Label>
+              <Select name="priority" defaultValue={task?.priority ?? "MEDIUM"}>
+                <SelectTrigger id="priority">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRIORITY_OPTIONS.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="dueDate">Scadenza (opzionale)</Label>
               <Input id="dueDate" name="dueDate" type="date" defaultValue={toDateInputValue(task?.dueDate ?? null)} />

@@ -24,6 +24,7 @@ export async function createTask(_prevState: TaskFormState, formData: FormData):
     title: formData.get("title"),
     description: formData.get("description"),
     period: formData.get("period"),
+    priority: formData.get("priority"),
     dueDate: formData.get("dueDate"),
     assigneeId: formData.get("assigneeId"),
   });
@@ -43,6 +44,7 @@ export async function createTask(_prevState: TaskFormState, formData: FormData):
       title: parsed.data.title,
       description: parsed.data.description || null,
       period: parsed.data.period,
+      priority: parsed.data.priority,
       dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
       assigneeId: parsed.data.assigneeId,
       creatorId: user.id,
@@ -51,6 +53,7 @@ export async function createTask(_prevState: TaskFormState, formData: FormData):
   });
 
   revalidatePath("/dashboard");
+  revalidatePath("/home");
   revalidatePath("/team");
 }
 
@@ -69,6 +72,7 @@ export async function updateTask(taskId: string, _prevState: TaskFormState, form
     title: formData.get("title"),
     description: formData.get("description"),
     period: formData.get("period"),
+    priority: formData.get("priority"),
     dueDate: formData.get("dueDate"),
     assigneeId: formData.get("assigneeId"),
   });
@@ -89,12 +93,14 @@ export async function updateTask(taskId: string, _prevState: TaskFormState, form
       title: parsed.data.title,
       description: parsed.data.description || null,
       period: parsed.data.period,
+      priority: parsed.data.priority,
       dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
       assigneeId: parsed.data.assigneeId,
     },
   });
 
   revalidatePath("/dashboard");
+  revalidatePath("/home");
   revalidatePath("/team");
 }
 
@@ -113,6 +119,7 @@ export async function toggleTaskStatus(taskId: string, done: boolean) {
   });
 
   revalidatePath("/dashboard");
+  revalidatePath("/home");
   revalidatePath("/team");
 }
 
@@ -126,6 +133,7 @@ export async function deleteTask(taskId: string) {
   await prisma.task.delete({ where: { id: taskId } });
 
   revalidatePath("/dashboard");
+  revalidatePath("/home");
   revalidatePath("/team");
 }
 
@@ -149,6 +157,7 @@ export async function duplicateTaskToNextPeriod(taskId: string) {
       title: existing.title,
       description: existing.description,
       period: existing.period,
+      priority: existing.priority,
       dueDate: nextDueDate,
       assigneeId: existing.assigneeId,
       creatorId: user.id,
@@ -157,5 +166,6 @@ export async function duplicateTaskToNextPeriod(taskId: string) {
   });
 
   revalidatePath("/dashboard");
+  revalidatePath("/home");
   revalidatePath("/team");
 }
