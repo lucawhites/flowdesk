@@ -1,26 +1,106 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --background: #f6f7fb;
+  --surface: #ffffff;
+  --surface-muted: #f0f1f7;
+  --foreground: #16171f;
+  --muted-foreground: #6b7085;
+  --border: #e4e5ee;
+  --primary: #5b5bf2;
+  --primary-foreground: #ffffff;
+  --primary-soft: #edecff;
+  --success: #17924f;
+  --success-soft: #e3f7ec;
+  --warning: #b7690a;
+  --warning-soft: #fdf0dd;
+  --danger: #d1373f;
+  --danger-soft: #fbe7e8;
+  --ring: #5b5bf2;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0f1016;
+    --surface: #171822;
+    --surface-muted: #1d1f2b;
+    --foreground: #eef0f9;
+    --muted-foreground: #9497ab;
+    --border: #2a2c3a;
+    --primary: #8385ff;
+    --primary-foreground: #101122;
+    --primary-soft: #262a52;
+    --success: #38c281;
+    --success-soft: #103a29;
+    --warning: #f0a63d;
+    --warning-soft: #402a0b;
+    --danger: #f0666d;
+    --danger-soft: #3f1417;
+    --ring: #8385ff;
   }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  border-color: var(--border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
+
+::selection {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes content-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.dialog-overlay[data-state="open"] {
+  animation: overlay-in 150ms ease-out;
+}
+
+.dialog-content[data-state="open"] {
+  animation: content-in 150ms ease-out;
+}
+

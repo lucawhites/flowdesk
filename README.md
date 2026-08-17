@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Flowdesk — Task del team
 
-## Getting Started
+Web app per gestire le task giornaliere, settimanali e mensili del team, con login tramite email aziendale e una vista d'insieme di tutto ciò che è completato o ancora da fare.
 
-First, run the development server:
+## Stack tecnico
+
+- **Next.js 16** (App Router, React 19)
+- **NextAuth v5** — autenticazione con email + password (bcrypt, sessioni JWT)
+- **Prisma 7** — ORM, con SQLite in sviluppo e Postgres in produzione
+- **Tailwind CSS v4** + componenti Radix UI
+
+## Come funziona il login e i team
+
+Non serve creare account manualmente uno per uno: chi si registra per primo con un'email aziendale (es. `mario@acme.com`) crea automaticamente il workspace del team **Acme** e ne diventa amministratore. Ogni collega che si registra con la stessa parte dopo la @ (`@acme.com`) entra automaticamente nello stesso workspace, come membro.
+
+## Sviluppo locale
+
+Requisiti: Node.js 20+.
 
 ```bash
+npm install
+npx prisma migrate dev
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+L'app sarà disponibile su `http://localhost:3000`. Il database di sviluppo è un file SQLite (`prisma/dev.db`), creato automaticamente al primo `migrate dev` — nessuna installazione esterna necessaria.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Apri `http://localhost:3000/register` e crea il primo account: diventerai automaticamente amministratore del tuo team.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Variabili d'ambiente (`.env`)
 
-## Learn More
+| Variabile | Descrizione |
+|---|---|
+| `DATABASE_URL` | Connessione al database. In locale: `file:./dev.db`. In produzione: connection string Postgres. |
+| `AUTH_SECRET` | Chiave per firmare sessioni/cookie. Generane una nuova per la produzione con `openssl rand -base64 32`. |
 
-To learn more about Next.js, take a look at the following resources:
+## Portare l'app online (Vercel + Postgres)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+L'app è pronta per il deploy, ma richiede due passaggi manuali perché tocchino account esterni (Vercel, provider del database): **vanno fatti da te**, qui sotto trovi la procedura esatta.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 1. Passa da SQLite a Postgres
 
-## Deploy on Vercel
+SQLite va benissimo in locale, ma su Vercel il filesystem non è persistente: in produzione serve un database Postgres vero (es. [Neon](https://neon.tech), che ha un piano gratuito, oppure Vercel Postgres/Supabase).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Crea un database Postgres con il provider che preferisci e copia la sua connection string (`postgres://...`).
+2. In `prisma/schema.prisma`, cambia:
+   ```prisma
+   datasource db {
+     provider = "sqlite"
+   }
+   ```
+   in:
+   ```prisma
+   datasource db {
+     provider = "postgresql"
+   }
+   ```
+3. In `prisma.config.ts`, la riga `datasource.url` legge già `DATABASE_URL` dall'ambiente: non serve modificarla.
+4. Rigenera il client e crea le tabelle sul nuovo database:
+   ```bash
+   DATABASE_URL="postgres://...la-tua-connection-string..." npx prisma migrate deploy
+   npx prisma generate
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`src/lib/prisma.ts` sceglie automaticamente l'adapter giusto (SQLite o Postgres) in base al prefisso di `DATABASE_URL`, quindi non serve toccare altro codice.
+
+### 2. Deploy su Vercel
+
+1. Carica il progetto su GitHub (o GitLab/Bitbucket).
+2. Su [vercel.com](https://vercel.com), importa il repository, impostando come **Root Directory** la cartella `team-tasks-app` (se il repo contiene anche altri progetti).
+3. Aggiungi le variabili d'ambiente del progetto su Vercel:
+   - `DATABASE_URL` → la connection string Postgres del punto precedente
+   - `AUTH_SECRET` → una nuova chiave generata con `openssl rand -base64 32` (non riusare quella di sviluppo)
+4. Avvia il deploy. Al termine, apri l'URL assegnato da Vercel, vai su `/register` e crea il primo account: sarà l'amministratore del team.
+5. Condividi il link con i colleghi: chi si registra con la stessa email aziendale entrerà automaticamente nello stesso team.
+
+### Aggiornamenti futuri dello schema database
+
+Ogni volta che modifichi `prisma/schema.prisma`, genera una nuova migrazione in locale e poi applicala in produzione:
+
+```bash
+npx prisma migrate dev --name descrizione_modifica   # in locale, crea la migrazione
+git push                                              # Vercel farà il deploy
+DATABASE_URL="postgres://..." npx prisma migrate deploy   # applica la migrazione al DB di produzione
+```
+
+## Struttura del progetto
+
+```
+src/
+  app/
+    (auth)/login, (auth)/register   → pagine pubbliche di accesso
+    (app)/dashboard                 → le task del singolo utente (giornaliere/settimanali/mensili)
+    (app)/team                      → panoramica di tutte le task del team
+    (app)/tasks/actions.ts          → server actions per creare/modificare/completare/eliminare task
+  auth.ts                           → configurazione NextAuth (credenziali, sessione, autorizzazione)
+  proxy.ts                          → protezione delle rotte (redirect a /login se non autenticati)
+  lib/prisma.ts                     → client Prisma (SQLite in dev, Postgres in produzione)
+  components/                       → componenti UI riutilizzabili
+prisma/schema.prisma                → modello dati (Team, User, Task)
+```
