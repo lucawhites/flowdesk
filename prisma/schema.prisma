@@ -37,18 +37,31 @@ model Team {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         Role     @default(MEMBER)
-  createdAt    DateTime @default(now())
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(MEMBER)
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
 
   team   Team   @relation(fields: [teamId], references: [id])
   teamId String
 
   tasksCreated  Task[] @relation("TaskCreator")
   tasksAssigned Task[] @relation("TaskAssignee")
+}
+
+// Token monouso per verificare l'indirizzo email in fase di registrazione.
+// Si salva l'hash del token, mai il valore in chiaro (come per le password).
+model VerificationToken {
+  id        String   @id @default(cuid())
+  email     String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
 }
 
 model Task {

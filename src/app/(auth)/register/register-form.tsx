@@ -1,13 +1,24 @@
 "use client";
 
 import { useActionState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, MailCheck } from "lucide-react";
 import { register } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 
 export function RegisterForm() {
   const [state, formAction, pending] = useActionState(register, undefined);
+
+  if (state?.info) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-4 text-center">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-success-soft text-success">
+          <MailCheck className="h-6 w-6" />
+        </span>
+        <p className="text-sm text-foreground">{state.info}</p>
+      </div>
+    );
+  }
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

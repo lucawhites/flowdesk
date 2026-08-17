@@ -1,8 +1,12 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { LoginSchema } from "@/lib/validation";
+
+export class EmailNotVerifiedSignin extends CredentialsSignin {
+  code = "email_not_verified";
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
@@ -29,6 +33,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const passwordMatches = await bcrypt.compare(parsed.data.password, user.passwordHash);
         if (!passwordMatches) return null;
 
+        if (!user.emailVerified) {
+          throw new EmailNotVerifiedSignin();
+        }
+
         return {
           id: user.id,
           name: user.name,
@@ -44,13 +52,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user;
       const { pathname } = request.nextUrl;
-      const publicPaths = new Set(["/", "/login", "/register"]);
-      const isPublicPath = publicPaths.has(pathname);
+      // Pagine riservate a chi non ha ancora effettuato l'accesso: un utente già
+      // loggato viene rimandato alla dashboard invece di vederle.
+      const guestOnlyPaths = new Set(["/login", "/register"]);
+      // Pagine sempre raggiungibili, indipendentemente dallo stato di login
+      // (es. un link di verifica email cliccato mentre si è già connessi).
+      const alwaysPublicPaths = new Set(["/", "/verify"]);
 
-      if (isPublicPath) {
-        if (isLoggedIn && pathname !== "/") {
-          return Response.redirect(new URL("/dashboard", request.nextUrl));
-        }
+      if (guestOnlyPaths.has(pathname)) {
+        return isLoggedIn ? Response.redirect(new URL("/dashboard", request.nextUrl)) : true;
+      }
+      if (alwaysPublicPaths.has(pathname)) {
         return true;
       }
 

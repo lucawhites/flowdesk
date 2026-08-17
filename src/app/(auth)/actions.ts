@@ -5,11 +5,21 @@ import bcrypt from "bcryptjs";
 import { signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { LoginSchema, RegisterSchema } from "@/lib/validation";
+import { createVerificationToken, getAppUrl } from "@/lib/tokens";
+import { sendVerificationEmail } from "@/lib/email";
 
 export type AuthFormState = {
   errors?: Record<string, string[]>;
   message?: string;
+  info?: string;
+  code?: string;
 } | undefined;
+
+async function dispatchVerificationEmail(email: string) {
+  const rawToken = await createVerificationToken(email);
+  const verifyUrl = `${getAppUrl()}/verify?token=${rawToken}`;
+  await sendVerificationEmail(email, verifyUrl);
+}
 
 export async function login(_prevState: AuthFormState, formData: FormData): Promise<AuthFormState> {
   const parsed = LoginSchema.safeParse({
@@ -29,6 +39,13 @@ export async function login(_prevState: AuthFormState, formData: FormData): Prom
     });
   } catch (error) {
     if (error instanceof AuthError) {
+      const code = (error as AuthError & { code?: string }).code;
+      if (code === "email_not_verified") {
+        return {
+          code: "email_not_verified",
+          message: "Devi prima confermare la tua email prima di accedere. Controlla la posta (anche lo spam).",
+        };
+      }
       if (error.type === "CredentialsSignin") {
         return { message: "Email o password non corrette." };
       }
@@ -76,15 +93,37 @@ export async function register(_prevState: AuthFormState, formData: FormData): P
   });
 
   try {
-    await signIn("credentials", {
-      email,
-      password: parsed.data.password,
-      redirectTo: "/dashboard",
-    });
-  } catch (error) {
-    if (error instanceof AuthError) {
-      return { message: "Account creato, ma l'accesso automatico non è riuscito. Prova ad accedere manualmente." };
-    }
-    throw error;
+    await dispatchVerificationEmail(email);
+  } catch {
+    return {
+      message:
+        "Account creato, ma l'invio dell'email di verifica non è riuscito. Riprova più tardi o contatta l'amministratore del team.",
+    };
   }
+
+  return {
+    info: `Ti abbiamo inviato un'email a ${email}: clicca sul link per confermare l'indirizzo e attivare l'account.`,
+  };
+}
+
+export async function resendVerificationEmail(_prevState: AuthFormState, formData: FormData): Promise<AuthFormState> {
+  const email = String(formData.get("email") || "")
+    .trim()
+    .toLowerCase();
+
+  if (!email) {
+    return { message: "Inserisci la tua email nel campo qui sopra, poi riprova." };
+  }
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  // Risposta identica sia che l'utente esista o meno, per non rivelare quali email sono registrate.
+  if (user && !user.emailVerified) {
+    try {
+      await dispatchVerificationEmail(email);
+    } catch {
+      return { message: "Invio non riuscito. Riprova più tardi." };
+    }
+  }
+
+  return { info: "Se l'indirizzo corrisponde a un account in attesa di conferma, ti abbiamo inviato un nuovo link." };
 }
