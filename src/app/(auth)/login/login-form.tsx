@@ -45,6 +45,9 @@ export function LoginForm() {
       {resendState?.info && (
         <p className="rounded-lg bg-success-soft px-3 py-2 text-sm text-success">{resendState.info}</p>
       )}
+      {resendState?.message && (
+        <p className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">{resendState.message}</p>
+      )}
       <Button type="submit" disabled={pending} className="mt-2 w-full">
         {pending && <Loader2 className="h-4 w-4 animate-spin" />}
         Accedi
