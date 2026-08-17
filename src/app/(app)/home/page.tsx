@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -11,6 +10,7 @@ import { TaskList } from "@/components/task-list";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import { DonutChart, DonutLegend } from "@/components/donut-chart";
 import { initials } from "@/lib/utils";
 
 export default async function HomePage() {
@@ -41,6 +41,11 @@ export default async function HomePage() {
   const teamCompletion = teamTasks.length > 0 ? Math.round((teamDone / teamTasks.length) * 100) : 0;
   const teamOverdue = teamTasks.filter((t) => t.status === "TODO" && isOverdue(t.dueDate, t.status)).length;
 
+  const myDone = myTasks.filter((t) => t.status === "DONE").length;
+  const myCompletion = myTasks.length > 0 ? Math.round((myDone / myTasks.length) * 100) : 0;
+
+  const othersTasks = teamTasks.length - myTasks.length;
+
   const memberStats = members
     .map((member) => {
       const total = teamTasks.filter((t) => t.assigneeId === member.id).length;
@@ -56,22 +61,10 @@ export default async function HomePage() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <Card className="overflow-hidden">
-        <CardContent className="flex flex-col items-start justify-between gap-6 p-6 sm:flex-row sm:items-center">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{today}</p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">Ciao {firstName} 👋</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Ecco il quadro generale di {user.teamName} per oggi.
-            </p>
-          </div>
-          <Image
-            src="/elitter-logo.png"
-            alt={user.teamName}
-            width={200}
-            height={74}
-            className="h-10 w-auto shrink-0 opacity-90 dark:invert"
-            priority
-          />
+        <CardContent className="p-6">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{today}</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">Ciao {firstName} 👋</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Ecco il quadro generale di {user.teamName} per oggi.</p>
         </CardContent>
       </Card>
 
@@ -80,6 +73,77 @@ export default async function HomePage() {
         <StatCard icon={CheckCircle2} label="In scadenza 7gg" value={dueThisWeekCount} tone="warning" />
         <StatCard icon={TriangleAlert} label="Tue in ritardo" value={myOverdueCount} tone="danger" />
         <StatCard icon={Users2} label="Completamento team" value={`${teamCompletion}%`} tone="success" />
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Card>
+          <CardContent className="flex items-center gap-4 p-4">
+            <DonutChart
+              segments={[
+                { label: "Completate", value: myDone, colorVar: "--success" },
+                { label: "Da fare", value: myTasks.length - myDone, colorVar: "--primary" },
+              ]}
+              size={96}
+              strokeWidth={14}
+              centerLabel={`${myCompletion}%`}
+            />
+            <div className="flex-1">
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">Le tue task</p>
+              <DonutLegend
+                segments={[
+                  { label: "Completate", value: myDone, colorVar: "--success" },
+                  { label: "Da fare", value: myTasks.length - myDone, colorVar: "--primary" },
+                ]}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="flex items-center gap-4 p-4">
+            <DonutChart
+              segments={[
+                { label: "Completate", value: teamDone, colorVar: "--success" },
+                { label: "Da fare", value: teamTasks.length - teamDone, colorVar: "--primary" },
+              ]}
+              size={96}
+              strokeWidth={14}
+              centerLabel={`${teamCompletion}%`}
+            />
+            <div className="flex-1">
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">Tutto il team</p>
+              <DonutLegend
+                segments={[
+                  { label: "Completate", value: teamDone, colorVar: "--success" },
+                  { label: "Da fare", value: teamTasks.length - teamDone, colorVar: "--primary" },
+                ]}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="flex items-center gap-4 p-4">
+            <DonutChart
+              segments={[
+                { label: "Tue", value: myTasks.length, colorVar: "--primary" },
+                { label: "Del resto del team", value: othersTasks, colorVar: "--warning" },
+              ]}
+              size={96}
+              strokeWidth={14}
+              centerLabel={`${teamTasks.length > 0 ? Math.round((myTasks.length / teamTasks.length) * 100) : 0}%`}
+            />
+            <div className="flex-1">
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">Tue vs team</p>
+              <DonutLegend
+                segments={[
+                  { label: "Tue", value: myTasks.length, colorVar: "--primary" },
+                  { label: "Resto del team", value: othersTasks, colorVar: "--warning" },
+                ]}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
