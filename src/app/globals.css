@@ -20,6 +20,8 @@
   --danger: #b2473a;
   --danger-soft: #f3dfda;
   --ring: #d97757;
+  /* Barre dei grafici: arancio più scuro, validato per contrasto ≥ 3:1. */
+  --chart-1: #c96442;
 }
 
 /* Tema: lo script in <head> imposta data-theme su <html> (scelta salvata o
@@ -45,6 +47,7 @@
   --danger: #e27d6f;
   --danger-soft: #3d211d;
   --ring: #e0896b;
+  --chart-1: #cf6f4f;
   }
 }
 
@@ -68,6 +71,7 @@
   --danger: #e27d6f;
   --danger-soft: #3d211d;
   --ring: #e0896b;
+  --chart-1: #cf6f4f;
 }
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
@@ -84,6 +88,7 @@
   --color-primary-soft: var(--primary-soft);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-chart-1: var(--chart-1);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);

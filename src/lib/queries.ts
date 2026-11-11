@@ -17,7 +17,8 @@ export async function getTeamMembers(teamId: string): Promise<TeamMember[]> {
 /**
  * Tutto ciò che serve alle viste Daily / Obiettivi / Progetti (e a Home e Team).
  * Le daily caricate sono: quelle dell'ultima settimana in avanti più tutte le
- * non completate più vecchie (che con il carry-over sono ancora "di oggi").
+ * non completate più vecchie (che con il carry-over sono ancora "di oggi")
+ * e quelle completate negli ultimi giorni (servono ai KPI).
  */
 export async function getTeamWork(teamId: string) {
   const today = todayISO();
@@ -39,7 +40,10 @@ export async function getTeamWork(teamId: string) {
       orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }],
     }),
     prisma.daily.findMany({
-      where: { teamId, OR: [{ date: { gte: windowStart } }, { completedAt: null }] },
+      where: {
+        teamId,
+        OR: [{ date: { gte: windowStart } }, { completedAt: null }, { completedAt: { gte: windowStart } }],
+      },
       include: {
         assignee: person,
         objective: { select: { id: true, title: true, project: { select: { name: true } } } },
