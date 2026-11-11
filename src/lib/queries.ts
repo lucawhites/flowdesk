@@ -5,6 +5,56 @@ import { objectiveProgressFrom, projectProgress } from "@/lib/progress";
 import type { DailyItem, ObjectiveItem, ProjectItem, TeamMember } from "@/lib/types";
 
 const person = { select: { id: true, name: true } } as const;
+// Prima le card ordinate a mano, poi le altre nel loro ordine naturale.
+const byPosition = { position: { sort: "asc", nulls: "last" } } as const;
+
+const dailyInclude = {
+  assignee: person,
+  objective: { select: { id: true, title: true, project: { select: { name: true } } } },
+  step: { select: { id: true, title: true } },
+} as const;
+
+type DailyRowData = {
+  id: string;
+  title: string;
+  notes: string | null;
+  position: number | null;
+  date: Date;
+  completedAt: Date | null;
+  creatorId: string;
+  agentRunId: string | null;
+  assignee: { id: string; name: string };
+  objective: { id: string; title: string; project: { name: string } } | null;
+  step: { id: string; title: string } | null;
+};
+
+function toDailyItem(d: DailyRowData): DailyItem {
+  return {
+    id: d.id,
+    title: d.title,
+    notes: d.notes,
+    position: d.position,
+    date: dateColumnToISO(d.date),
+    completedOn: d.completedAt ? romeISO(d.completedAt) : null,
+    assignee: d.assignee,
+    creatorId: d.creatorId,
+    objective: d.objective
+      ? { id: d.objective.id, title: d.objective.title, projectName: d.objective.project.name }
+      : null,
+    step: d.step,
+    byAgent: !!d.agentRunId,
+  };
+}
+
+/** Tutte le daily collegate a un obiettivo (pagina di dettaglio), senza limiti di data. */
+export async function getObjectiveDailies(teamId: string, objectiveId: string): Promise<DailyItem[]> {
+  const rows = await prisma.daily.findMany({
+    where: { teamId, objectiveId },
+    include: dailyInclude,
+    orderBy: [{ date: "asc" }, { createdAt: "asc" }],
+  });
+  return rows.map(toDailyItem);
+}
 
 export async function getTeamMembers(teamId: string): Promise<TeamMember[]> {
   return prisma.user.findMany({
@@ -26,7 +76,7 @@ export async function getTeamWork(teamId: string) {
 
   const [members, projectRows, objectiveRows, dailyRows] = await Promise.all([
     getTeamMembers(teamId),
-    prisma.project.findMany({ where: { teamId }, orderBy: { name: "asc" } }),
+    prisma.project.findMany({ where: { teamId }, orderBy: [byPosition, { name: "asc" }] }),
     prisma.objective.findMany({
       where: { teamId },
       include: {
@@ -38,18 +88,14 @@ export async function getTeamWork(teamId: string) {
           orderBy: { date: "asc" },
         },
       },
-      orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }],
+      orderBy: [byPosition, { dueDate: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }],
     }),
     prisma.daily.findMany({
       where: {
         teamId,
         OR: [{ date: { gte: windowStart } }, { completedAt: null }, { completedAt: { gte: windowStart } }],
       },
-      include: {
-        assignee: person,
-        objective: { select: { id: true, title: true, project: { select: { name: true } } } },
-        step: { select: { id: true, title: true } },
-      },
+      include: dailyInclude,
       orderBy: [{ date: "asc" }, { createdAt: "asc" }],
     }),
   ]);
@@ -101,19 +147,7 @@ export async function getTeamWork(teamId: string) {
     };
   });
 
-  const dailies: DailyItem[] = dailyRows.map((d) => ({
-    id: d.id,
-    title: d.title,
-    date: dateColumnToISO(d.date),
-    completedOn: d.completedAt ? romeISO(d.completedAt) : null,
-    assignee: d.assignee,
-    creatorId: d.creatorId,
-    objective: d.objective
-      ? { id: d.objective.id, title: d.objective.title, projectName: d.objective.project.name }
-      : null,
-    step: d.step,
-    byAgent: !!d.agentRunId,
-  }));
+  const dailies: DailyItem[] = dailyRows.map(toDailyItem);
 
   return { today, members, projects, objectives, dailies };
 }

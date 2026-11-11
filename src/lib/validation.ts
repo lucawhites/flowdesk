@@ -45,4 +45,5 @@ export const DailySchema = z.object({
   assigneeId: z.string().min(1, { error: "Seleziona un responsabile." }),
   // "NONE" = daily libera, senza obiettivo (Radix Select non accetta valori vuoti).
   objectiveId: z.string().min(1),
+  notes: z.string().trim().max(2000, { error: "Massimo 2000 caratteri." }).optional().or(z.literal("")),
 });

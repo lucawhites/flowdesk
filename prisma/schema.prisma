@@ -69,6 +69,8 @@ model Project {
   id          String   @id @default(cuid())
   name        String
   description String?
+  // Ordine scelto a mano trascinando le card; null = in coda, nell'ordine naturale.
+  position    Int?
   createdAt   DateTime @default(now())
 
   team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
@@ -86,6 +88,8 @@ model Objective {
   id          String    @id @default(cuid())
   title       String
   description String?
+  // Ordine scelto a mano trascinando le card; null = in coda, nell'ordine naturale.
+  position    Int?
   dueDate     DateTime? @db.Date
   createdAt   DateTime  @default(now())
 
@@ -163,6 +167,9 @@ model AgentRun {
 model Daily {
   id          String    @id @default(cuid())
   title       String
+  notes       String?
+  // Ordine scelto a mano trascinando le card; null = in coda, nell'ordine naturale.
+  position    Int?
   date        DateTime  @db.Date
   completedAt DateTime?
   createdAt   DateTime  @default(now())

@@ -120,6 +120,7 @@ export async function saveDaily(dailyId: string | null, _prev: FormState, formDa
     date: field(formData, "date"),
     assigneeId: field(formData, "assigneeId"),
     objectiveId: field(formData, "objectiveId") ?? "NONE",
+    notes: field(formData, "notes"),
   });
   if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
 
@@ -138,6 +139,7 @@ export async function saveDaily(dailyId: string | null, _prev: FormState, formDa
     date: isoToDateColumn(parsed.data.date),
     assigneeId: parsed.data.assigneeId,
     objectiveId,
+    notes: parsed.data.notes || null,
   };
 
   if (dailyId) {
@@ -169,6 +171,25 @@ export async function deleteDaily(dailyId: string) {
   const existing = await prisma.daily.findFirst({ where: { id: dailyId, teamId: user.teamId } });
   if (!existing || !canManage(user, existing)) return;
   await prisma.daily.delete({ where: { id: dailyId } });
+  refresh();
+}
+
+// ─── Ordine delle card ───────────────────────────────────────────────────────
+
+/**
+ * Salva l'ordine scelto trascinando le card: gli id arrivano nell'ordine nuovo.
+ * L'ordine è unico per tutto il team; i progetti li riordina solo l'amministratore.
+ */
+export async function reorderItems(kind: "daily" | "objective" | "project", ids: string[]) {
+  const user = await requireSessionUser();
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > 300) return;
+  if (!ids.every((id) => typeof id === "string" && id.length > 0 && id.length < 64)) return;
+  if (kind === "project" && user.role !== "ADMIN") return;
+
+  const at = (id: string, i: number) => ({ where: { id, teamId: user.teamId }, data: { position: i + 1 } });
+  if (kind === "daily") await prisma.$transaction(ids.map((id, i) => prisma.daily.updateMany(at(id, i))));
+  else if (kind === "objective") await prisma.$transaction(ids.map((id, i) => prisma.objective.updateMany(at(id, i))));
+  else await prisma.$transaction(ids.map((id, i) => prisma.project.updateMany(at(id, i))));
   refresh();
 }
 

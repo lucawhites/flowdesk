@@ -16,6 +16,9 @@ export type Person = { id: string; name: string };
 export type DailyItem = {
   id: string;
   title: string;
+  notes: string | null;
+  /** Ordine scelto a mano; null = in coda. */
+  position: number | null;
   date: string;
   /** Giorno di completamento (fuso italiano), null se ancora da fare. */
   completedOn: string | null;

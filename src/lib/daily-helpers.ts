@@ -25,6 +25,10 @@ export function sortDailies(dailies: DailyItem[]) {
     const aDone = a.completedOn !== null;
     const bDone = b.completedOn !== null;
     if (aDone !== bDone) return aDone ? 1 : -1;
+    // Ordine scelto a mano: chi non ne ha uno va in coda.
+    const aPos = a.position ?? Number.MAX_SAFE_INTEGER;
+    const bPos = b.position ?? Number.MAX_SAFE_INTEGER;
+    if (aPos !== bPos) return aPos - bPos;
     if (a.date !== b.date) return a.date < b.date ? -1 : 1;
     return a.title.localeCompare(b.title, "it");
   });

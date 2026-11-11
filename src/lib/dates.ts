@@ -53,3 +53,23 @@ export function relativeDayLabel(iso: string, today: string) {
   if (iso === addDaysISO(today, -1)) return "Ieri";
   return formatISO(iso, "EEEE d MMMM");
 }
+
+/** Etichetta di sezione: "Domani · giovedì 12 novembre" oppure solo il giorno. */
+export function dayHeading(iso: string, today: string) {
+  const full = formatISO(iso, "EEEE d MMMM");
+  if (iso === today) return `Oggi · ${full}`;
+  if (iso === addDaysISO(today, 1)) return `Domani · ${full}`;
+  return full.charAt(0).toUpperCase() + full.slice(1);
+}
+
+/** I prossimi giorni lavorativi (lun-ven) dopo quello indicato. */
+export function nextWorkingDays(from: string, count: number) {
+  const days: string[] = [];
+  let day = from;
+  while (days.length < count) {
+    day = addDaysISO(day, 1);
+    const weekday = isoToDateColumn(day).getUTCDay();
+    if (weekday !== 0 && weekday !== 6) days.push(day);
+  }
+  return days;
+}

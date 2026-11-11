@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { saveDaily } from "@/app/(app)/work-actions";
 import { FieldError, FormDialog } from "@/components/form-dialog";
 import { MemberSelect } from "@/components/member-select";
-import { Input, Label } from "@/components/ui/input";
+import { Input, Label, Textarea } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { DailyItem, ObjectiveOption, TeamMember } from "@/lib/types";
 
@@ -16,6 +16,7 @@ export function DailyDialog({
   daily,
   defaultObjectiveId,
   defaultAssigneeId,
+  defaultDate,
   trigger,
 }: {
   members: TeamMember[];
@@ -25,6 +26,7 @@ export function DailyDialog({
   daily?: DailyItem;
   defaultObjectiveId?: string;
   defaultAssigneeId?: string;
+  defaultDate?: string;
   trigger: ReactNode;
 }) {
   const isEdit = !!daily;
@@ -49,7 +51,7 @@ export function DailyDialog({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="daily-date">Giorno</Label>
-              <Input id="daily-date" name="date" type="date" defaultValue={daily?.date ?? today} required />
+              <Input id="daily-date" name="date" type="date" defaultValue={daily?.date ?? defaultDate ?? today} required />
               <FieldError messages={state?.errors?.date} />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -80,6 +82,18 @@ export function DailyDialog({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="daily-notes">Note (opzionale)</Label>
+            <Textarea
+              id="daily-notes"
+              name="notes"
+              placeholder="Dettagli utili: contatti, misure, cosa serve…"
+              defaultValue={daily?.notes ?? ""}
+              maxLength={2000}
+            />
+            <FieldError messages={state?.errors?.notes} />
           </div>
         </>
       )}

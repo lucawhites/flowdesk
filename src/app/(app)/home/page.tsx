@@ -24,9 +24,10 @@ export default async function HomePage() {
 
   const openObjectives = objectives.filter((o) => !o.reached);
   const myObjectives = openObjectives.filter((o) => o.assignee.id === user.id);
-  const myLate =
-    myObjectives.filter((o) => isObjectiveLate(o, today)).length +
-    myToday.filter((d) => d.date < today && d.completedOn === null).length;
+  const myLateObjectives = myObjectives.filter((o) => isObjectiveLate(o, today)).length;
+  const myLate = myLateObjectives + myToday.filter((d) => d.date < today && d.completedOn === null).length;
+  // Se in ritardo ci sono solo daily riportate, si va alle daily.
+  const lateHref = myLateObjectives > 0 ? "/obiettivi?vista=mie&filtro=ritardo" : "/daily";
 
   const objectiveOptions = openObjectives.map((o) => ({ id: o.id, title: o.title, projectName: o.project.name }));
   const firstName = (user.name ?? "").split(" ")[0];
@@ -49,18 +50,22 @@ export default async function HomePage() {
       </Card>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard icon={CalendarCheck2} label="Daily da fare oggi" value={myPendingToday} tone="primary" />
-        <StatCard icon={CheckCircle2} label="Completate oggi" value={myDoneToday} tone="success" />
-        <StatCard icon={Target} label="Tuoi obiettivi aperti" value={myObjectives.length} tone="warning" />
-        <StatCard icon={TriangleAlert} label="Tuoi in ritardo" value={myLate} tone="danger" />
+        <StatCard icon={CalendarCheck2} label="Daily da fare oggi" value={myPendingToday} tone="primary" href="/daily" />
+        <StatCard icon={CheckCircle2} label="Completate oggi" value={myDoneToday} tone="success" href="/daily" />
+        <StatCard icon={Target} label="Tuoi obiettivi aperti" value={myObjectives.length} tone="warning" href="/obiettivi?vista=mie" />
+        <StatCard icon={TriangleAlert} label="Tuoi in ritardo" value={myLate} tone="danger" href={lateHref} />
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {[
-          { title: "Le tue daily di oggi", done: myDoneToday, total: myToday.length },
-          { title: "Daily del team oggi", done: teamDoneToday, total: teamToday.length },
+          { title: "Le tue daily di oggi", done: myDoneToday, total: myToday.length, href: "/daily" },
+          { title: "Daily del team oggi", done: teamDoneToday, total: teamToday.length, href: "/daily?vista=team" },
         ].map((c) => (
-          <Card key={c.title}>
+          <Link
+            key={c.title}
+            href={c.href}
+            className="rounded-2xl border border-border bg-surface shadow-sm outline-none transition-colors hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <CardContent className="flex items-center gap-4 p-4">
               <DonutChart
                 segments={[
@@ -81,7 +86,7 @@ export default async function HomePage() {
                 />
               </div>
             </CardContent>
-          </Card>
+          </Link>
         ))}
       </div>
 
@@ -127,9 +132,13 @@ export default async function HomePage() {
                 openObjectives.slice(0, 6).map((o) => {
                   const late = isObjectiveLate(o, today);
                   return (
-                    <div key={o.id}>
+                    <Link
+                      key={o.id}
+                      href={`/obiettivi/${o.id}`}
+                      className="group block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
                       <div className="flex items-center justify-between gap-2">
-                        <p className="truncate text-xs font-medium text-foreground">{o.title}</p>
+                        <p className="truncate text-xs font-medium text-foreground group-hover:underline">{o.title}</p>
                         <p className={cn("text-xs", late ? "text-danger" : "text-muted-foreground")}>{o.progress}%</p>
                       </div>
                       <p className="truncate text-[11px] text-muted-foreground">
@@ -137,7 +146,7 @@ export default async function HomePage() {
                         {o.dueDate && ` · entro il ${formatISO(o.dueDate)}`}
                       </p>
                       <Progress value={o.progress} className="mt-1 h-1.5" indicatorClassName={cn(late && "bg-danger")} />
-                    </div>
+                    </Link>
                   );
                 })
               )}

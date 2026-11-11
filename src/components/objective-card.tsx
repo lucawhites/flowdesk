@@ -1,6 +1,8 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, type ReactNode } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CalendarDays, Check, ChevronDown, Crosshair, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteObjective, setFocus } from "@/app/(app)/work-actions";
@@ -13,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
+import { cardClick } from "@/lib/card-click";
 import { formatISO } from "@/lib/dates";
 import { isObjectiveLate } from "@/lib/daily-helpers";
 import { cn, initials } from "@/lib/utils";
@@ -26,6 +29,8 @@ export function ObjectiveCard({
   currentUserId,
   currentUserRole,
   today,
+  variant = "card",
+  dragHandle,
 }: {
   objective: ObjectiveItem;
   members: TeamMember[];
@@ -34,7 +39,13 @@ export function ObjectiveCard({
   currentUserId: string;
   currentUserRole: Role;
   today: string;
+  /** "detail" = dentro la pagina dell'obiettivo: tutto aperto, niente clic sulla card. */
+  variant?: "card" | "detail";
+  dragHandle?: ReactNode;
 }) {
+  const router = useRouter();
+  const isDetail = variant === "detail";
+  const href = `/obiettivi/${objective.id}`;
   const [, startTransition] = useTransition();
   const late = isObjectiveLate(objective, today);
   const complete = objective.reached;
@@ -42,12 +53,27 @@ export function ObjectiveCard({
     currentUserRole === "ADMIN" || objective.creatorId === currentUserId || objective.assignee.id === currentUserId;
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
+    <div
+      onClick={isDetail ? undefined : cardClick(() => router.push(href))}
+      className={cn(
+        "flex h-full flex-col gap-3 rounded-xl border border-border bg-surface p-4",
+        !isDetail && "cursor-pointer transition-colors hover:border-primary/40"
+      )}
+    >
       <div className="flex items-start gap-3">
+        {dragHandle}
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-foreground">{objective.title}</p>
+          {isDetail ? (
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">{objective.title}</h1>
+          ) : (
+            <Link href={href} className="text-sm font-semibold text-foreground outline-none hover:underline focus-visible:underline">
+              {objective.title}
+            </Link>
+          )}
           {objective.description && (
-            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{objective.description}</p>
+            <p className={cn("mt-0.5 text-muted-foreground", isDetail ? "whitespace-pre-wrap text-sm" : "line-clamp-2 text-xs")}>
+              {objective.description}
+            </p>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-muted px-2 py-0.5 text-xs text-muted-foreground">
@@ -108,6 +134,7 @@ export function ObjectiveCard({
                 startTransition(async () => {
                   await deleteObjective(objective.id);
                   toast.success("Obiettivo eliminato");
+                  if (isDetail) router.push("/obiettivi");
                 });
               }}
             >
@@ -144,7 +171,7 @@ export function ObjectiveCard({
       )}
 
       {objective.steps.length > 0 && (
-        <details className="group" open={objective.inFocus}>
+        <details className="group" open={objective.inFocus || isDetail}>
           <summary className="flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
             <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
             Passi
@@ -156,7 +183,7 @@ export function ObjectiveCard({
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        {objective.dailies.length > 0 ? (
+        {objective.dailies.length > 0 && !isDetail ? (
           <details className="group min-w-0 flex-1">
             <summary className="flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
               <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />

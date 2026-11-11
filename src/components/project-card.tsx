@@ -1,6 +1,8 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, type ReactNode } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteProject } from "@/app/(app)/work-actions";
@@ -10,6 +12,7 @@ import { ProjectDialog } from "@/components/project-dialog";
 import { Button } from "@/components/ui/button";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
+import { cardClick } from "@/lib/card-click";
 import { isObjectiveLate } from "@/lib/daily-helpers";
 import { cn } from "@/lib/utils";
 import type { ProjectItem, Role, TeamMember } from "@/lib/types";
@@ -21,7 +24,7 @@ export function ProjectCard({
   currentUserId,
   currentUserRole,
   today,
-  onShowObjectives,
+  dragHandle,
 }: {
   project: ProjectItem;
   projects: { id: string; name: string }[];
@@ -29,16 +32,24 @@ export function ProjectCard({
   currentUserId: string;
   currentUserRole: Role;
   today: string;
-  onShowObjectives: () => void;
+  dragHandle?: ReactNode;
 }) {
+  const router = useRouter();
+  const href = `/progetti/${project.id}`;
   const [, startTransition] = useTransition();
   const lateCount = project.objectives.filter((o) => isObjectiveLate(o, today)).length;
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5">
+    <div
+      onClick={cardClick(() => router.push(href))}
+      className="flex h-full cursor-pointer flex-col gap-4 rounded-xl border border-border bg-surface p-5 transition-colors hover:border-primary/40"
+    >
       <div className="flex items-start gap-3">
+        {dragHandle}
         <div className="min-w-0 flex-1">
-          <p className="text-base font-semibold text-foreground">{project.name}</p>
+          <Link href={href} className="text-base font-semibold text-foreground outline-none hover:underline focus-visible:underline">
+            {project.name}
+          </Link>
           {project.description && <p className="mt-0.5 text-xs text-muted-foreground">{project.description}</p>}
         </div>
         {currentUserRole === "ADMIN" && (
@@ -91,7 +102,9 @@ export function ProjectCard({
         <ul className="flex flex-col gap-2.5">
           {project.objectives.map((o) => (
             <li key={o.id} className="flex items-center gap-3">
-              <span className="min-w-0 flex-1 truncate text-xs text-foreground">{o.title}</span>
+              <Link href={`/obiettivi/${o.id}`} className="min-w-0 flex-1 truncate text-xs text-foreground hover:underline">
+                {o.title}
+              </Link>
               <Progress
                 value={o.progress}
                 className="h-1.5 w-20 shrink-0"
@@ -116,7 +129,7 @@ export function ProjectCard({
           }
         />
         {project.objectives.length > 0 && (
-          <Button size="sm" variant="ghost" onClick={onShowObjectives}>
+          <Button size="sm" variant="ghost" onClick={() => router.push(href)}>
             Vedi obiettivi
           </Button>
         )}
