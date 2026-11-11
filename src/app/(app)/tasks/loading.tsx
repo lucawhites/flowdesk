@@ -1,5 +1,5 @@
 import { PageSkeleton } from "@/components/page-skeleton";
 
-export default function DashboardLoading() {
+export default function TasksLoading() {
   return <PageSkeleton rows={3} />;
 }

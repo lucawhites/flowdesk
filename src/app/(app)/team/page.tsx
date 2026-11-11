@@ -1,52 +1,45 @@
-import { prisma } from "@/lib/prisma";
 import { requireSessionUser } from "@/lib/dal";
-import { sortTasks } from "@/lib/task-helpers";
+import { getTeamWork } from "@/lib/queries";
+import { startOfWeekISO } from "@/lib/dates";
+import { dailiesForToday, isObjectiveLate } from "@/lib/daily-helpers";
 import { TeamView } from "./team-view";
 
+// Versione essenziale: la pagina KPI completa è la tappa 2 dell'evoluzione.
 export default async function TeamPage() {
   const user = await requireSessionUser();
+  const { today, members, projects, objectives, dailies } = await getTeamWork(user.teamId);
+  const weekStart = startOfWeekISO(today);
 
-  const [tasks, members] = await Promise.all([
-    prisma.task.findMany({
-      where: { teamId: user.teamId },
-      include: { assignee: { select: { id: true, name: true } } },
-    }),
-    prisma.user.findMany({
-      where: { teamId: user.teamId },
-      select: { id: true, name: true, email: true, role: true },
-      orderBy: { name: "asc" },
-    }),
-  ]);
+  const todayDailies = dailiesForToday(dailies, today);
+  const doneThisWeek = dailies.filter((d) => d.completedOn !== null && d.completedOn >= weekStart);
 
-  const sortedTasks = sortTasks(tasks);
-
-  const memberStats = members.map((member) => {
-    const memberTasks = tasks.filter((t) => t.assigneeId === member.id);
-    const done = memberTasks.filter((t) => t.status === "DONE").length;
+  const memberStats = members.map((m) => {
+    const mineToday = todayDailies.filter((d) => d.assignee.id === m.id);
     return {
-      ...member,
-      total: memberTasks.length,
-      done,
-      pending: memberTasks.length - done,
+      ...m,
+      todayTotal: mineToday.length,
+      todayDone: mineToday.filter((d) => d.completedOn !== null).length,
+      weekDone: doneThisWeek.filter((d) => d.assignee.id === m.id).length,
+      openObjectives: objectives.filter((o) => o.assignee.id === m.id && o.progress < 100).length,
     };
   });
 
   const totals = {
-    total: tasks.length,
-    done: tasks.filter((t) => t.status === "DONE").length,
-    pending: tasks.filter((t) => t.status === "TODO").length,
-    overdue: tasks.filter((t) => t.status === "TODO" && t.dueDate && new Date(t.dueDate) < new Date(new Date().toDateString())).length,
+    doneToday: todayDailies.filter((d) => d.completedOn !== null).length,
+    todayTotal: todayDailies.length,
+    doneThisWeek: doneThisWeek.length,
+    late:
+      objectives.filter((o) => isObjectiveLate(o, today)).length +
+      todayDailies.filter((d) => d.date < today && d.completedOn === null).length,
   };
 
   return (
     <TeamView
-      tasks={sortedTasks}
-      members={members}
-      memberStats={memberStats}
-      totals={totals}
-      currentUserId={user.id}
-      currentUserRole={user.role}
       teamName={user.teamName}
+      currentUserId={user.id}
+      totals={totals}
+      memberStats={memberStats}
+      projects={projects.map((p) => ({ id: p.id, name: p.name, progress: p.progress, objectives: p.objectives.length }))}
     />
   );
 }
