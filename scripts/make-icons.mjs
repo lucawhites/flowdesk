@@ -2,12 +2,16 @@
 // Uso: node scripts/make-icons.mjs
 import sharp from "sharp";
 
+// Disegno ingrandito del 25%: riempie la zona sicura delle icone "maskable"
+// (cerchio centrale dell'80%) senza uscirne.
 const art = `
+  <g transform="translate(50 50) scale(1.25) translate(-50 -50)">
   <circle cx="50" cy="50" r="26" fill="none" stroke="#33322d" stroke-width="9"/>
   <circle cx="50" cy="50" r="26" fill="none" stroke="#d97757" stroke-width="9"
     stroke-linecap="round" stroke-dasharray="114 164" transform="rotate(-90 50 50)"/>
   <path d="M40 51l7 7 13-15" fill="none" stroke="#f4f2eb" stroke-width="6"
-    stroke-linecap="round" stroke-linejoin="round"/>`;
+    stroke-linecap="round" stroke-linejoin="round"/>
+  </g>`;
 
 // rx 22 = angoli arrotondati; rx 0 = a tutto campo (iPhone e icone "maskable"
 // ritagliano da soli la forma).
