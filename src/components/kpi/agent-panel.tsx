@@ -2,6 +2,7 @@ import { Sparkles, TriangleAlert } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { prisma } from "@/lib/prisma";
+import { AgentInstructions } from "@/components/kpi/agent-instructions";
 import { dateColumnToISO, formatISO, isoToDateColumn, todayISO } from "@/lib/dates";
 
 type Stalled = { objectiveId: string; title: string; reason: string; suggestion: string };
@@ -15,9 +16,10 @@ const STATUS = {
 } as const;
 
 /** Sezione "Agente pianificatore" della pagina KPI: ultima revisione, esecuzioni e costo del mese. */
-export async function AgentPanel({ teamId }: { teamId: string }) {
+export async function AgentPanel({ teamId, isAdmin }: { teamId: string; isAdmin: boolean }) {
   const monthStart = isoToDateColumn(todayISO().slice(0, 8) + "01");
-  const [runs, review, month, members] = await Promise.all([
+  const [team, runs, review, month, members] = await Promise.all([
+    prisma.team.findUnique({ where: { id: teamId }, select: { agentInstructions: true } }),
     prisma.agentRun.findMany({ where: { teamId }, orderBy: { startedAt: "desc" }, take: 6 }),
     prisma.agentRun.findFirst({ where: { teamId, kind: "review", status: "ok" }, orderBy: { startedAt: "desc" } }),
     prisma.agentRun.aggregate({ where: { teamId, day: { gte: monthStart } }, _sum: { costUsd: true } }),
@@ -81,6 +83,10 @@ export async function AgentPanel({ teamId }: { teamId: string }) {
                 })}
               </ul>
             )}
+          </div>
+
+          <div className="border-t border-border pt-3">
+            <AgentInstructions initial={team?.agentInstructions ?? ""} canEdit={isAdmin} />
           </div>
 
           <div className="border-t border-border pt-3 text-xs text-muted-foreground">

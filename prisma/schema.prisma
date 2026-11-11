@@ -20,6 +20,8 @@ model Team {
   name      String
   domain    String   @unique
   createdAt DateTime @default(now())
+  /// Istruzioni libere scritte dall'amministratore, lette dall'agente a ogni esecuzione.
+  agentInstructions String?
 
   members    User[]
   projects   Project[]

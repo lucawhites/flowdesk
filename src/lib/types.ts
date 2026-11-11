@@ -76,3 +76,6 @@ export type FormState =
       ok?: boolean;
     }
   | undefined;
+
+/** Lunghezza massima delle istruzioni libere per l'agente pianificatore. */
+export const AGENT_INSTRUCTIONS_MAX = 2000;

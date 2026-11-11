@@ -9,6 +9,17 @@ const ELITTER =
   "Elitter è un piccolo brand italiano di pelletteria esotica di lusso (coccodrillo, alligatore), capi e accessori fatti a mano in Italia, " +
   "con vendita diretta, bespoke, collaborazioni e social. Il team è di tre persone. Scrivi sempre in italiano.";
 
+/** Aggiunge alle regole fisse le istruzioni scritte dall'amministratore nella pagina KPI. */
+function withInstructions(system: string, instructions: string | null) {
+  if (!instructions) return system;
+  return `${system}
+
+Istruzioni dell'amministratore del team (seguile: hanno la precedenza sulle preferenze qui sopra, ma non cambiano il formato della risposta, gli id da usare né il numero massimo di daily per persona):
+"""
+${instructions}
+"""`;
+}
+
 // ─── Pianificazione giornaliera ──────────────────────────────────────────────
 
 const PlanSchema = z.object({
@@ -55,7 +66,7 @@ export async function runPlan(teamId: string, today: string, opts: { dryRun?: bo
   };
 
   try {
-    const { data, usage, model } = await askClaude(PLAN_SYSTEM, input, PlanSchema);
+    const { data, usage, model } = await askClaude(withInstructions(PLAN_SYSTEM, ctx.instructions), input, PlanSchema);
 
     // Controlli in codice: id validi, passo dell'obiettivo giusto, tetto per persona.
     const slots = new Map(ctx.people.map((p) => [p.id, p.freeSlots]));
@@ -120,7 +131,7 @@ export async function runReview(teamId: string, today: string, opts: { dryRun?: 
 
   try {
     const input = { oggi: today, obiettiviInFocus: ctx.focus };
-    const { data, usage, model } = await askClaude(REVIEW_SYSTEM, input, ReviewSchema);
+    const { data, usage, model } = await askClaude(withInstructions(REVIEW_SYSTEM, ctx.instructions), input, ReviewSchema);
 
     const open = new Set(ctx.focus.flatMap((o) => o.steps.filter((s) => !s.done).map((s) => s.id)));
     const toComplete = data.stepsCompleted.filter((s) => open.has(s.stepId));

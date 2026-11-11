@@ -10,7 +10,7 @@ export default async function TeamPage() {
   return (
     <>
       <TeamView kpis={kpis} teamName={user.teamName} currentUserId={user.id} />
-      <AgentPanel teamId={user.teamId} />
+      <AgentPanel teamId={user.teamId} isAdmin={user.role === "ADMIN"} />
     </>
   );
 }

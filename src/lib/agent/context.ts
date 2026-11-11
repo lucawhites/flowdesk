@@ -9,7 +9,8 @@ export const MAX_DAILIES_PER_PERSON = 4;
 export async function loadAgentContext(teamId: string, today: string) {
   const since = isoToDateColumn(addDaysISO(today, -21));
 
-  const [members, objectives, openDailies] = await Promise.all([
+  const [team, members, objectives, openDailies] = await Promise.all([
+    prisma.team.findUnique({ where: { id: teamId }, select: { agentInstructions: true } }),
     prisma.user.findMany({
       where: { teamId },
       select: { id: true, name: true, areas: true, role: true },
@@ -84,7 +85,7 @@ export async function loadAgentContext(teamId: string, today: string) {
   });
 
   const admin = members.find((m) => m.role === "ADMIN") ?? members[0];
-  return { people, focus, adminId: admin.id };
+  return { people, focus, adminId: admin.id, instructions: team?.agentInstructions?.trim() || null };
 }
 
 export type AgentContext = Awaited<ReturnType<typeof loadAgentContext>>;

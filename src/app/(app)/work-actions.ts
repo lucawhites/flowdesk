@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSessionUser } from "@/lib/dal";
 import { isoToDateColumn } from "@/lib/dates";
 import { DailySchema, ObjectiveSchema, ProjectSchema } from "@/lib/validation";
-import type { FormState } from "@/lib/types";
+import { AGENT_INSTRUCTIONS_MAX, type FormState } from "@/lib/types";
 
 type SessionUser = Awaited<ReturnType<typeof requireSessionUser>>;
 
@@ -215,4 +215,18 @@ export async function setFocus(objectiveId: string, inFocus: boolean) {
   if (user.role !== "ADMIN") return;
   await prisma.objective.updateMany({ where: { id: objectiveId, teamId: user.teamId }, data: { inFocus } });
   refresh();
+}
+
+/** Salva le istruzioni libere per l'agente pianificatore (solo amministratore). */
+export async function saveAgentInstructions(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await requireSessionUser();
+  if (user.role !== "ADMIN") return { message: "Solo l'amministratore può istruire l'agente." };
+
+  const text = (field(formData, "instructions") ?? "").trim();
+  if (text.length > AGENT_INSTRUCTIONS_MAX) {
+    return { message: `Massimo ${AGENT_INSTRUCTIONS_MAX} caratteri (ora ${text.length}).` };
+  }
+  await prisma.team.update({ where: { id: user.teamId }, data: { agentInstructions: text || null } });
+  refresh();
+  return { ok: true };
 }
