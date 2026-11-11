@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { CalendarCheck2, FolderKanban, Plus, Target } from "lucide-react";
 import { DailyDialog } from "@/components/daily-dialog";
-import { DailyRow, EmptyState } from "@/components/daily-item";
+import { DailyRow } from "@/components/daily-item";
+import { EmptyState } from "@/components/empty-state";
 import { ObjectiveCard } from "@/components/objective-card";
 import { ObjectiveDialog } from "@/components/objective-dialog";
 import { ProjectCard } from "@/components/project-card";
