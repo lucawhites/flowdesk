@@ -32,7 +32,7 @@ export function computeKpis({
     return { day, done: dailies.filter((d) => d.completedOn === day).length };
   });
 
-  const openObjectives = objectives.filter((o) => o.progress < 100 || o.dailyTotal === 0);
+  const openObjectives = objectives.filter((o) => !o.reached);
   const reachedObjectives = objectives.length - openObjectives.length;
 
   const lateObjectives = objectives
@@ -65,7 +65,7 @@ export function computeKpis({
     name: p.name,
     progress: p.progress,
     objectives: p.objectives.length,
-    reached: p.objectives.filter((o) => o.dailyTotal > 0 && o.progress === 100).length,
+    reached: p.objectives.filter((o) => o.reached).length,
     late: p.objectives.filter((o) => isObjectiveLate(o, today)).length,
   }));
 

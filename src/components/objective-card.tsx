@@ -1,9 +1,10 @@
 "use client";
 
 import { useTransition } from "react";
-import { CalendarDays, Check, ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Crosshair, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { deleteObjective } from "@/app/(app)/work-actions";
+import { deleteObjective, setFocus } from "@/app/(app)/work-actions";
+import { MetricBox, StepList } from "@/components/objective-extras";
 import { DailyDialog } from "@/components/daily-dialog";
 import { ItemMenu } from "@/components/item-menu";
 import { ObjectiveDialog } from "@/components/objective-dialog";
@@ -36,7 +37,7 @@ export function ObjectiveCard({
 }) {
   const [, startTransition] = useTransition();
   const late = isObjectiveLate(objective, today);
-  const complete = objective.dailyTotal > 0 && objective.progress === 100;
+  const complete = objective.reached;
   const canManage =
     currentUserRole === "ADMIN" || objective.creatorId === currentUserId || objective.assignee.id === currentUserId;
 
@@ -62,6 +63,11 @@ export function ObjectiveCard({
                 {formatISO(objective.dueDate)}
               </Badge>
             )}
+            {objective.inFocus && (
+              <Badge variant="primary">
+                <Crosshair className="h-3 w-3" /> Focus del mese
+              </Badge>
+            )}
             {complete && (
               <Badge variant="success">
                 <Check className="h-3 w-3" /> Raggiunto
@@ -83,6 +89,18 @@ export function ObjectiveCard({
                 </DropdownMenuItem>
               }
             />
+            {currentUserRole === "ADMIN" && (
+              <DropdownMenuItem
+                onSelect={() =>
+                  startTransition(async () => {
+                    await setFocus(objective.id, !objective.inFocus);
+                    toast.success(objective.inFocus ? "Tolto dal focus del mese" : "Aggiunto al focus del mese");
+                  })
+                }
+              >
+                <Crosshair className="h-4 w-4" /> {objective.inFocus ? "Togli dal focus" : "Metti nel focus del mese"}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
               className="text-danger data-[highlighted]:bg-danger-soft"
               onSelect={() => {
@@ -102,9 +120,11 @@ export function ObjectiveCard({
       <div>
         <div className="mb-1.5 flex items-center justify-between text-xs">
           <span className="text-muted-foreground">
-            {objective.dailyTotal === 0
-              ? "Nessuna daily collegata"
-              : `${objective.dailyDone} di ${objective.dailyTotal} daily completate`}
+            {objective.stepTotal > 0
+              ? `${objective.stepDone} di ${objective.stepTotal} passi completati`
+              : objective.dailyTotal === 0
+                ? "Nessun passo né daily collegata"
+                : `${objective.dailyDone} di ${objective.dailyTotal} daily completate`}
           </span>
           <span className="font-semibold text-foreground">{objective.progress}%</span>
         </div>
@@ -113,6 +133,27 @@ export function ObjectiveCard({
           indicatorClassName={cn(complete && "bg-success", late && "bg-danger")}
         />
       </div>
+
+      {objective.metric && (
+        <MetricBox
+          objectiveId={objective.id}
+          metric={objective.metric}
+          canEdit={canManage}
+          isAdmin={currentUserRole === "ADMIN"}
+        />
+      )}
+
+      {objective.steps.length > 0 && (
+        <details className="group" open={objective.inFocus}>
+          <summary className="flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
+            <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+            Passi
+          </summary>
+          <div className="mt-2">
+            <StepList steps={objective.steps} />
+          </div>
+        </details>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         {objective.dailies.length > 0 ? (

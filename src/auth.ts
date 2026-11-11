@@ -28,7 +28,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { email },
           include: { team: true },
         });
-        if (!user) return null;
+        if (!user || !user.passwordHash) return null; // passwordHash vuota = invitato, non ancora registrato
 
         const passwordMatches = await bcrypt.compare(parsed.data.password, user.passwordHash);
         if (!passwordMatches) return null;

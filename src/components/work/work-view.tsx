@@ -56,7 +56,7 @@ export function TasksView({
   const objectiveOptions: ObjectiveOption[] = useMemo(
     () =>
       objectives
-        .filter((o) => o.progress < 100 || o.dailyTotal === 0)
+        .filter((o) => !o.reached)
         .map((o) => ({ id: o.id, title: o.title, projectName: o.project.name })),
     [objectives]
   );

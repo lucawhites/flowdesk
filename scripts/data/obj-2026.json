@@ -1,0 +1,776 @@
+{
+ "source": "Projects Map.xlsx · OBJ 2026",
+ "projects": [
+  "Sales",
+  "Management",
+  "Marketing",
+  "Social media",
+  "Produzione",
+  "Collab",
+  "CRM"
+ ],
+ "objectives": [
+  {
+   "area": "Sales",
+   "title": "APRIRE ALMENO 2 NUOVI CANALI DI VENDITA DIRETTA / GEOLOCALIZZATI",
+   "owner": "alessandro",
+   "phaseProgress": 0.33,
+   "steps": [
+    "decidere due aree geografiche in linea con prodotto e target di riferimeno",
+    "ricercare aperture di mercato nelle 2 aree, quali buyers, retail, ecommerce, gruppi acquisto, etc.",
+    "contattare più di 10 prospect ad area",
+    "attivare collab con almeno 1 partner ad area",
+    "svolgere almeno 2 trattative ad area",
+    "vendere almeno un prodotto ad area"
+   ],
+   "stepsDone": 2,
+   "stepsProposed": false,
+   "metric": {
+    "label": "aree geografiche con almeno una vendita",
+    "unit": "aree",
+    "target": 2,
+    "current": 0
+   },
+   "inFocus": true
+  },
+  {
+   "area": "Sales",
+   "title": "VENDERE ALMENO 200 BRACCIALI (O ALTRO ENTRY LEVEL =)",
+   "owner": "alessandro",
+   "phaseProgress": 0.33,
+   "steps": [
+    "selezionare 1 o + prodotti E.L. da promuovere",
+    "sviluppare strategia promozionale",
+    "sviluppare strategia per canali di vendita",
+    "promozione e tecniche di vendita",
+    "vendita di almeno 200 items",
+    "follow up post vendita"
+   ],
+   "stepsDone": 2,
+   "stepsProposed": false,
+   "metric": {
+    "label": "pezzi entry level venduti",
+    "unit": "pezzi",
+    "target": 200,
+    "current": 0
+   },
+   "inFocus": true
+  },
+  {
+   "area": "Sales",
+   "title": "AVVIARE RAPPORTI CON ALMENO 3 NUOVE \"ALINA\"",
+   "owner": "alessandro",
+   "phaseProgress": 0.17,
+   "steps": [
+    "sviluppo di una strategia su come trovare nuovi buyers, indipendentemente dalla area geografica",
+    "contatto di 20+ buyers",
+    "sviluppo di materiale di supporto per buyers coerente con i loro feedback",
+    "seguire almeno 3 trattaive con clienti di buyers",
+    "vendita di almeno 1 prodotto",
+    "follow up and repeat"
+   ],
+   "stepsDone": 1,
+   "stepsProposed": false,
+   "metric": {
+    "label": "nuovi buyer attivi (\"Alina\")",
+    "unit": "buyer",
+    "target": 3,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Sales",
+   "title": "ORGANIZZARE ALMENO UN TRUNK SHOW",
+   "owner": "alessandro",
+   "phaseProgress": 0.0,
+   "steps": [
+    "ricerca e decisione di un luogo",
+    "struttura ed pianificazione dell'evento in tutti i dettagli",
+    "contatto partners ed organizzazione evento, fissando data e dettagli",
+    "promozione, crm, lista invitati, promo fisica e digitale",
+    "evento con finalità ordini",
+    "follow up promozionale e di ordini"
+   ],
+   "stepsDone": 0,
+   "stepsProposed": false,
+   "metric": {
+    "label": "trunk show organizzati",
+    "unit": "eventi",
+    "target": 1,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Sales",
+   "title": "PROVARE A PROPORCI UN ECOMMERCE DI LUSSO",
+   "owner": "alessandro",
+   "phaseProgress": 0.17,
+   "steps": [
+    "ricerca piattaforme in linea col nostro prodotto",
+    "contattare almeno 5 piattaforme selezionate",
+    "attivare almeno una partnership con particolare attenzione ai vincoli contrattuali",
+    "gestire e promuover partnership sulla piattaforma",
+    "vendita di almeno 1 prodotto",
+    "follow up and repeat"
+   ],
+   "stepsDone": 1,
+   "stepsProposed": false,
+   "metric": {
+    "label": "piattaforme e-commerce di lusso attive",
+    "unit": "piattaforme",
+    "target": 1,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Management",
+   "title": "ORGANIZZAZIONE DEL FLUSSO DI LAVORO QUOTIDIANO, UTILIZZARE PJCT MAP PER MESI/ANNO E TIMELINE, RISPETTARE RUOLI E IMPARARE AD AGGIORNARSI",
+   "owner": "luca",
+   "phaseProgress": 0.17,
+   "steps": [
+    "strategia ed organizzazione",
+    "rispetto dei ruoli con focus responsabilità",
+    "utilizzo project map per goals mensili ed annuali",
+    "utilizzo della timeline per flusso progettuale aggiornato",
+    "riunione quotidiana alle 10 con poche eccezioni",
+    "utilizzo di email interne per aggiornarsi su cose importanti"
+   ],
+   "stepsDone": 1,
+   "stepsProposed": false,
+   "metric": {
+    "label": "daily completate nel mese",
+    "unit": "%",
+    "target": 80,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Management",
+   "title": "MIGLIORARE LA DIVISIONE DEI RUOLI E RISPETTARE LE RESPONSABILITA' OPERATIVE",
+   "owner": "luca",
+   "phaseProgress": 0.5,
+   "steps": [
+    "scrittura testuale ed accettazione ruoli",
+    "impegno personale nel rispettare ruolo, mansioni, responsabilità",
+    "cross check l'uno all'altro"
+   ],
+   "stepsDone": 1,
+   "stepsProposed": false,
+   "metric": {
+    "label": "persone con ruolo scritto e accettato",
+    "unit": "persone",
+    "target": 3,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Management",
+   "title": "RENDERE PIU' ECONOMICA LA GESTIONE MENSILE",
+   "owner": "luca",
+   "phaseProgress": 0.67,
+   "steps": [
+    "individuazione e scrittura nero su bianco di sprechi",
+    "condivisione spese per cross check",
+    "limitazione sprechi"
+   ],
+   "stepsDone": 2,
+   "stepsProposed": false,
+   "metric": {
+    "label": "riduzione dei costi mensili",
+    "unit": "%",
+    "target": 10,
+    "current": 0
+   },
+   "inFocus": true
+  },
+  {
+   "area": "Management",
+   "title": "ALMENO 1 CORSO A MEMBRO STAFF",
+   "owner": "luca",
+   "phaseProgress": 0.0,
+   "steps": [
+    "selezione corso 1x staff",
+    "iscrizione e inizio corso",
+    "finalizzazione",
+    "condivisione know-how con gruppo"
+   ],
+   "stepsDone": 0,
+   "stepsProposed": false,
+   "metric": {
+    "label": "membri dello staff con un corso completato",
+    "unit": "persone",
+    "target": 3,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Management",
+   "title": "PERFEZIONARE IL PROCESSO DI RICEZIONE ORDINI E INVIO ORDINI A FASONISTI  E FORNITORI",
+   "owner": "luca",
+   "phaseProgress": 1.0,
+   "steps": [
+    "creazione di una scheda ordine in ricezione",
+    "obbligo utilizzo email per invio schede ordine a fasonisti",
+    "organizzazione ordinata degli ordini e le loro timeline e deadline"
+   ],
+   "stepsDone": 3,
+   "stepsProposed": false,
+   "metric": {
+    "label": "ordini inviati con scheda via email",
+    "unit": "%",
+    "target": 100,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Marketing",
+   "title": "1 ARTICOLO SU DI NOI IN UNA RIVISTA DI SETTORE",
+   "owner": "francesca",
+   "phaseProgress": 0.0,
+   "steps": [
+    "ricerca e selezione delle riviste fisiche o digitali che ci interessano",
+    "preparazione press kit con focus sugli argomenti che ci interessano e storia da raccontare",
+    "contatto delle riviste",
+    "finalizzazione collab",
+    "utilizzo del materiale per follow up promozionale"
+   ],
+   "stepsDone": 0,
+   "stepsProposed": false,
+   "metric": {
+    "label": "articoli pubblicati su riviste di settore",
+    "unit": "articoli",
+    "target": 1,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Marketing",
+   "title": "SVILUPPARE UN ECOMMERCE ONLY ON ORDER + ENTRY LEVEL IN STOCK",
+   "owner": "francesca",
+   "phaseProgress": 1.0,
+   "steps": [
+    "back end, struttura, sviluppo",
+    "sviluppo UI/UX",
+    "messa online",
+    "promozione",
+    "effettuare almeno 1 vendita online"
+   ],
+   "stepsDone": 5,
+   "stepsProposed": false,
+   "metric": {
+    "label": "vendite online",
+    "unit": "vendite",
+    "target": 1,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Marketing",
+   "title": "INIZIARE UNA RELAZIONE CON UN NUOVO VIP",
+   "owner": "francesca",
+   "phaseProgress": 0.0,
+   "steps": [
+    "identificare almeno 5 personalità (coerenti con area geografica, target, valori)",
+    "contatto dei selezionati",
+    "sviluppo e gestione partneship",
+    "finalizzazione collab",
+    "follow up promozionale"
+   ],
+   "stepsDone": 0,
+   "stepsProposed": false,
+   "metric": {
+    "label": "VIP con relazione avviata",
+    "unit": "VIP",
+    "target": 1,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Marketing",
+   "title": "REALIZZARE ELITTER EXPERIENCE",
+   "owner": "francesca",
+   "phaseProgress": 0.67,
+   "steps": [
+    "strategia sullo stato attuale",
+    "finalizzazione sviluppo",
+    "prototipo",
+    "produzione",
+    "utilizzo con follow up per modifiche future"
+   ],
+   "stepsDone": 3,
+   "stepsProposed": false,
+   "metric": {
+    "label": "Elitter Experience realizzate",
+    "unit": "experience",
+    "target": 1,
+    "current": 0
+   },
+   "inFocus": true
+  },
+  {
+   "area": "Marketing",
+   "title": "CREARE UNA SERIE DI VIDEO 1x PRODOTTO PER SPIEGAZIONE/PITCH",
+   "owner": "francesca",
+   "phaseProgress": 1.0,
+   "steps": [
+    "ricerca di professionisti o materiale per sviluppo interno, in budget ma massima qualità possibile",
+    "scrittura piano regia",
+    "realizzazione, editing",
+    "pubblicazione",
+    "follow up promozionale"
+   ],
+   "stepsDone": 5,
+   "stepsProposed": false,
+   "metric": {
+    "label": "prodotti con video pitch",
+    "unit": "prodotti",
+    "target": 10,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Social media",
+   "title": "MIGLIORARE IL MODO IN CUI CREAIAMO CONTENUTO PERCHE' SIA PIU' AFFINE ALL'ALGORITMO",
+   "owner": "francesca",
+   "phaseProgress": 0.5,
+   "steps": [
+    "studiare tutorials su come migliorare il contenuto per essere affine all'algoritmo",
+    "fare tentativi esecutivi",
+    "correggere errori e vedere quali funzionano di più",
+    "follow up"
+   ],
+   "stepsDone": 2,
+   "stepsProposed": false,
+   "metric": {
+    "label": "visualizzazioni medie per reel",
+    "unit": "views",
+    "target": 5000,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Social media",
+   "title": "ALE: ESSERE PIU' ATTIVO SUI SOCIAL DI PRE AGGREGAZIONE",
+   "owner": "alessandro",
+   "phaseProgress": 0.0,
+   "steps": [
+    "reddit",
+    "x",
+    "discord"
+   ],
+   "stepsDone": 0,
+   "stepsProposed": false,
+   "metric": {
+    "label": "piattaforme di pre-aggregazione attive",
+    "unit": "piattaforme",
+    "target": 3,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Social media",
+   "title": "SET-UP DI FACEBOOK E TIK TOK",
+   "owner": "francesca",
+   "phaseProgress": 0.5,
+   "steps": [
+    "set up coerente",
+    "utilizzo iniziale piattaforma",
+    "follow up"
+   ],
+   "stepsDone": 1,
+   "stepsProposed": false,
+   "metric": {
+    "label": "nuove piattaforme social attive",
+    "unit": "piattaforme",
+    "target": 2,
+    "current": 0
+   },
+   "inFocus": true
+  },
+  {
+   "area": "Social media",
+   "title": "AUMENTARE ENGAGEMENT SU INSTAGRAM IN MANIERA ORGANICA, CON ALMENO 5K FOLLOWERS",
+   "owner": "francesca",
+   "phaseProgress": 0.5,
+   "steps": [
+    "studio di strategie organiche",
+    "sviluppo e attuazione strategia",
+    "raggiungimento 5k followers",
+    "follow up repeat"
+   ],
+   "stepsDone": 2,
+   "stepsProposed": false,
+   "metric": {
+    "label": "follower Instagram",
+    "unit": "follower",
+    "target": 5000,
+    "current": 0
+   },
+   "inFocus": true
+  },
+  {
+   "area": "Social media",
+   "title": "ROUTINE QUOTIDIANA DI CONTATTO, ENGAGEMENT, RESEARCH",
+   "owner": "francesca",
+   "phaseProgress": 0.33,
+   "steps": [
+    "organizzare una routine",
+    "attuare routine",
+    "follow up"
+   ],
+   "stepsDone": 1,
+   "stepsProposed": false,
+   "metric": {
+    "label": "giorni di routine svolti nel mese",
+    "unit": "giorni",
+    "target": 20,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Produzione",
+   "title": "INSERIRE UNA COLLEZIONE DI ENTRY LEVEL + GIACCA E.L.",
+   "owner": "luca",
+   "phaseProgress": 0.33,
+   "steps": [
+    "sviluppo e scelta di una collezione EL di accessori",
+    "sviluppo e scelta di una giacca EL",
+    "produzione prototipi",
+    "creazione linea promo per tutti gli items",
+    "messa in commercio intera linea",
+    "vendita e follow up"
+   ],
+   "stepsDone": 2,
+   "stepsProposed": false,
+   "metric": {
+    "label": "articoli della linea entry level in vendita",
+    "unit": "articoli",
+    "target": 4,
+    "current": 0
+   },
+   "inFocus": true
+  },
+  {
+   "area": "Produzione",
+   "title": "AMPLIARE E RISOLVERE FILIERA",
+   "owner": "luca",
+   "phaseProgress": 0.67,
+   "steps": [
+    "risolvere filiera bracciali e altri accessori EL",
+    "alt beta moda",
+    "alt moreno",
+    "eventuali altri fasonisti necessari",
+    "test produttivo"
+   ],
+   "stepsDone": 3,
+   "stepsProposed": false,
+   "metric": {
+    "label": "fasonisti alternativi testati",
+    "unit": "fasonisti",
+    "target": 3,
+    "current": 0
+   },
+   "inFocus": true
+  },
+  {
+   "area": "Produzione",
+   "title": "SVILUPPARE UNA GIACCA ICONICA",
+   "owner": "luca",
+   "phaseProgress": 0.0,
+   "steps": [
+    "progettare una giacca iconica che rappresenti Elitter per il 2026",
+    "avviare filiera per prototipo",
+    "produrre prototipo",
+    "creare materiale promo prototipo (video, foto, schede prodotto, storia, etc)",
+    "avviare campagna promo",
+    "vendita e follow up"
+   ],
+   "stepsDone": 0,
+   "stepsProposed": false,
+   "metric": {
+    "label": "prototipi di giacca iconica",
+    "unit": "prototipi",
+    "target": 1,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Produzione",
+   "title": "TROVARE UN DETTAGLIO DISTINTIVO DA APPLICARE AD OGNI PRODOTTO ELITTER",
+   "owner": "luca",
+   "phaseProgress": 0.0,
+   "steps": [
+    "ricerca e progettazione",
+    "richiesta preventivi e sviluppo",
+    "produrre prototipo",
+    "follow up"
+   ],
+   "stepsDone": 0,
+   "stepsProposed": false,
+   "metric": {
+    "label": "dettaglio distintivo prototipato",
+    "unit": "prototipi",
+    "target": 1,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Produzione",
+   "title": "INIZIARE A STRUTTURARE LO SVILUPPO DEL PRODOTTO IN MODO PROFESSIONALE",
+   "owner": "luca",
+   "phaseProgress": 0.5,
+   "steps": [
+    "scrivere le linee guida su come sviluppare i prodotti (valori, priorità, dettagli, etc)",
+    "creare tutta la documentazione necessaria (schede sviluppo, schede materiali, etc)",
+    "delineare timeline, deadline e tempistiche generali",
+    "creare la prima collezione",
+    "follow up repeat"
+   ],
+   "stepsDone": 2,
+   "stepsProposed": false,
+   "metric": {
+    "label": "documenti di sviluppo prodotto completati",
+    "unit": "documenti",
+    "target": 3,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Collab",
+   "title": "TROVARE UNA O PIU' COLLAB CON UN AMBASSADOR CON GRANDE PUBBLICO",
+   "owner": "francesca",
+   "phaseProgress": 0.0,
+   "steps": [
+    "selezione di target affini",
+    "ricerca",
+    "contatto di molteplici target",
+    "finalizzazione collab",
+    "follow up promozionale"
+   ],
+   "stepsDone": 0,
+   "stepsProposed": false,
+   "metric": {
+    "label": "collab con ambassador attive",
+    "unit": "collab",
+    "target": 1,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Collab",
+   "title": "CERCARE DI REPLICARE UN PROGETTO COME QUELLO DI VILLA D'ESTE (WHITE LABEL)",
+   "owner": "alessandro",
+   "phaseProgress": 0.33,
+   "steps": [
+    "delineare target affini",
+    "ricerca",
+    "contatto di molteplici target",
+    "finalizzazione collab",
+    "follow up repeat"
+   ],
+   "stepsDone": 1,
+   "stepsProposed": false,
+   "metric": {
+    "label": "progetti white label firmati",
+    "unit": "progetti",
+    "target": 1,
+    "current": 0
+   },
+   "inFocus": true
+  },
+  {
+   "area": "Collab",
+   "title": "AVVIARE RELAZIONI CON CONGIERGE, CATERING, GUEST HOUSE DI ALTO LUSSO (KIT DI BENVENUTO)",
+   "owner": "francesca",
+   "phaseProgress": 0.0,
+   "steps": [
+    "delineare target affini",
+    "ricerca",
+    "contatto di molteplici target",
+    "finalizzazione collab",
+    "follow up repeat"
+   ],
+   "stepsDone": 0,
+   "stepsProposed": false,
+   "metric": {
+    "label": "partner hospitality di lusso attivi",
+    "unit": "partner",
+    "target": 3,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Collab",
+   "title": "POSIZIONARE IL PRODOTTO IN ALMENO UN ALTRO SPAZIO RETAIL COME TRAFFIC",
+   "owner": "alessandro",
+   "phaseProgress": 0.0,
+   "steps": [
+    "decidere luogo e tipologia di retail al quale vogliamo proporci",
+    "ricerca dei profili selezionati",
+    "contatto e proposta partnership con materiale adeguato (catalogo etc)",
+    "finalizzazione collab",
+    "supporto e vendita",
+    "follow up"
+   ],
+   "stepsDone": 0,
+   "stepsProposed": false,
+   "metric": {
+    "label": "spazi retail attivi oltre Traffic",
+    "unit": "spazi",
+    "target": 1,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "Collab",
+   "title": "SVILUPPARE UN METODO DI RICERCA E SVILUPPO PARTNERSHIP CON BUYERS",
+   "owner": "alessandro",
+   "phaseProgress": 0.0,
+   "steps": [
+    "definire il profilo del buyer ideale e i criteri di scelta",
+    "elencare le fonti di ricerca (fiere, showroom, LinkedIn, agenti)",
+    "preparare il kit di presentazione per buyer",
+    "contattare 20 buyer con il metodo",
+    "misurare le risposte e correggere il metodo",
+    "finalizzare almeno 5 collab"
+   ],
+   "stepsDone": 0,
+   "stepsProposed": true,
+   "metric": {
+    "label": "collab con buyer finalizzate",
+    "unit": "collab",
+    "target": 5,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "CRM",
+   "title": "NEWSLETTER MENSILE",
+   "owner": "luca",
+   "phaseProgress": 0.0,
+   "steps": [
+    "scegliere la piattaforma e importare i contatti",
+    "definire format e calendario della newsletter",
+    "scrivere e inviare la prima newsletter",
+    "analizzare aperture e clic",
+    "inviare la newsletter ogni mese"
+   ],
+   "stepsDone": 0,
+   "stepsProposed": true,
+   "metric": {
+    "label": "newsletter mensili inviate (nov-dic)",
+    "unit": "newsletter",
+    "target": 2,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "CRM",
+   "title": "RICORDARSI I COMPLEANNI",
+   "owner": "luca",
+   "phaseProgress": 0.0,
+   "steps": [
+    "raccogliere le date di nascita dei clienti nel CRM",
+    "impostare un promemoria mensile dei compleanni",
+    "preparare il messaggio o l'omaggio di auguri",
+    "inviare gli auguri ogni mese"
+   ],
+   "stepsDone": 0,
+   "stepsProposed": true,
+   "metric": {
+    "label": "clienti con compleanno registrato nel CRM",
+    "unit": "clienti",
+    "target": 50,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "CRM",
+   "title": "FINALIZZARE UN INCONTRO CON FRANZ KRALER, WAKAKA, SCEICCO E AMICO DI NASSIB",
+   "owner": "alessandro",
+   "phaseProgress": 0.0,
+   "steps": [
+    "raccogliere contatti e referenti dei quattro",
+    "preparare presentazione e kit Elitter",
+    "contattarli e proporre una data",
+    "svolgere gli incontri",
+    "follow up"
+   ],
+   "stepsDone": 0,
+   "stepsProposed": true,
+   "metric": {
+    "label": "incontri fatti (Kraler, Wakaka, Sceicco, amico di Nassib)",
+    "unit": "incontri",
+    "target": 4,
+    "current": 0
+   },
+   "inFocus": false
+  },
+  {
+   "area": "CRM",
+   "title": "COMPLETARE E POPOLARE IL FILE CRM",
+   "owner": "luca",
+   "phaseProgress": 0.33,
+   "steps": [
+    "definire i campi del file CRM",
+    "importare i contatti esistenti (clienti, buyer, partner)",
+    "completare i dati mancanti",
+    "aggiornarlo dopo ogni contatto"
+   ],
+   "stepsDone": 1,
+   "stepsProposed": true,
+   "metric": {
+    "label": "contatti completi nel file CRM",
+    "unit": "contatti",
+    "target": 200,
+    "current": 0
+   },
+   "inFocus": true
+  },
+  {
+   "area": "CRM",
+   "title": "PER OGNI PRODOTTO: CREARE SCHEDA TECNICA, STORY TELLING, PITCH SALE, PARTNERS BRIEF",
+   "owner": "alessandro",
+   "phaseProgress": 0.5,
+   "steps": [
+    "elencare i prodotti e creare il modello del kit",
+    "scrivere le schede tecniche",
+    "scrivere lo storytelling",
+    "scrivere il pitch di vendita",
+    "scrivere il partners brief"
+   ],
+   "stepsDone": 2,
+   "stepsProposed": true,
+   "metric": {
+    "label": "prodotti con kit completo (scheda, storia, pitch, brief)",
+    "unit": "prodotti",
+    "target": 10,
+    "current": 0
+   },
+   "inFocus": false
+  }
+ ]
+}

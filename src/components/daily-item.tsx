@@ -1,7 +1,7 @@
 "use client";
 
 import { useOptimistic, useTransition } from "react";
-import { Pencil, Target, Trash2, Undo2 } from "lucide-react";
+import { Pencil, Sparkles, Target, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteDaily, toggleDaily } from "@/app/(app)/work-actions";
 import { DailyDialog } from "@/components/daily-dialog";
@@ -69,6 +69,12 @@ export function DailyRow({
               <span className="truncate">
                 {daily.objective.projectName} · {daily.objective.title}
               </span>
+            </Badge>
+          )}
+          {daily.step && <Badge className="max-w-full"><span className="truncate">Passo: {daily.step.title}</span></Badge>}
+          {daily.byAgent && (
+            <Badge title="Creata dall'agente pianificatore">
+              <Sparkles className="h-3 w-3" /> Agente
             </Badge>
           )}
           {carried && !done && (

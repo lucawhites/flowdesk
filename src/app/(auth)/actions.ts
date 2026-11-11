@@ -72,11 +72,19 @@ export async function register(_prevState: AuthFormState, formData: FormData): P
   const domain = email.split("@")[1];
 
   const existingUser = await prisma.user.findUnique({ where: { email } });
+  const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+
+  if (existingUser && !existingUser.emailVerified) {
+    // Account non ancora confermato (es. invitato dall'amministratore): con la
+    // registrazione si sceglie la password e si conferma l'email; nome, team e
+    // aree restano quelli esistenti. Finché l'email non è confermata non si entra,
+    // quindi riscrivere la password non dà accesso a nessuno.
+    await prisma.user.update({ where: { id: existingUser.id }, data: { passwordHash } });
+    return sendVerificationAndReply(email);
+  }
   if (existingUser) {
     return { errors: { email: ["Esiste già un account con questa email."] } };
   }
-
-  const passwordHash = await bcrypt.hash(parsed.data.password, 10);
 
   const team = await prisma.team.findUnique({ where: { domain } });
 
@@ -92,6 +100,10 @@ export async function register(_prevState: AuthFormState, formData: FormData): P
     },
   });
 
+  return sendVerificationAndReply(email);
+}
+
+async function sendVerificationAndReply(email: string): Promise<AuthFormState> {
   try {
     await dispatchVerificationEmail(email);
   } catch {

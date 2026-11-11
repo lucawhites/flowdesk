@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { addDaysISO, dateColumnToISO, isoToDateColumn, romeISO, todayISO } from "@/lib/dates";
-import { objectiveProgress, projectProgress } from "@/lib/progress";
+import { objectiveProgressFrom, projectProgress } from "@/lib/progress";
 import type { DailyItem, ObjectiveItem, ProjectItem, TeamMember } from "@/lib/types";
 
 const person = { select: { id: true, name: true } } as const;
@@ -9,7 +9,7 @@ const person = { select: { id: true, name: true } } as const;
 export async function getTeamMembers(teamId: string): Promise<TeamMember[]> {
   return prisma.user.findMany({
     where: { teamId },
-    select: { id: true, name: true, email: true, role: true },
+    select: { id: true, name: true, email: true, role: true, areas: true },
     orderBy: { name: "asc" },
   });
 }
@@ -32,6 +32,7 @@ export async function getTeamWork(teamId: string) {
       include: {
         assignee: person,
         project: { select: { id: true, name: true } },
+        steps: { select: { id: true, position: true, title: true, completedAt: true }, orderBy: { position: "asc" } },
         dailies: {
           select: { id: true, title: true, date: true, completedAt: true, assignee: { select: { name: true } } },
           orderBy: { date: "asc" },
@@ -47,6 +48,7 @@ export async function getTeamWork(teamId: string) {
       include: {
         assignee: person,
         objective: { select: { id: true, title: true, project: { select: { name: true } } } },
+        step: { select: { id: true, title: true } },
       },
       orderBy: [{ date: "asc" }, { createdAt: "asc" }],
     }),
@@ -54,6 +56,11 @@ export async function getTeamWork(teamId: string) {
 
   const objectives: ObjectiveItem[] = objectiveRows.map((o) => {
     const dailyDone = o.dailies.filter((d) => d.completedAt).length;
+    const stepDone = o.steps.filter((s) => s.completedAt).length;
+    const { progress, reached } = objectiveProgressFrom(
+      { done: stepDone, total: o.steps.length },
+      { done: dailyDone, total: o.dailies.length },
+    );
     return {
       id: o.id,
       title: o.title,
@@ -64,7 +71,15 @@ export async function getTeamWork(teamId: string) {
       project: o.project,
       dailyTotal: o.dailies.length,
       dailyDone,
-      progress: objectiveProgress(dailyDone, o.dailies.length),
+      stepTotal: o.steps.length,
+      stepDone,
+      progress,
+      reached,
+      inFocus: o.inFocus,
+      metric: o.metricLabel
+        ? { label: o.metricLabel, unit: o.metricUnit, target: o.metricTarget, current: o.metricCurrent, approved: o.metricApproved }
+        : null,
+      steps: o.steps.map((s) => ({ id: s.id, position: s.position, title: s.title, done: !!s.completedAt })),
       dailies: o.dailies.map((d) => ({
         id: d.id,
         title: d.title,
@@ -96,6 +111,8 @@ export async function getTeamWork(teamId: string) {
     objective: d.objective
       ? { id: d.objective.id, title: d.objective.title, projectName: d.objective.project.name }
       : null,
+    step: d.step,
+    byAgent: !!d.agentRunId,
   }));
 
   return { today, members, projects, objectives, dailies };

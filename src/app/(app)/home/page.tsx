@@ -22,7 +22,7 @@ export default async function HomePage() {
   const myPendingToday = myToday.length - myDoneToday;
   const teamDoneToday = teamToday.filter((d) => d.completedOn !== null).length;
 
-  const openObjectives = objectives.filter((o) => o.progress < 100 || o.dailyTotal === 0);
+  const openObjectives = objectives.filter((o) => !o.reached);
   const myObjectives = openObjectives.filter((o) => o.assignee.id === user.id);
   const myLate =
     myObjectives.filter((o) => isObjectiveLate(o, today)).length +

@@ -144,7 +144,9 @@ export async function saveDaily(dailyId: string | null, _prev: FormState, formDa
     const existing = await prisma.daily.findFirst({ where: { id: dailyId, teamId: user.teamId } });
     if (!existing) return { message: "Daily non trovata." };
     if (!canManage(user, existing)) return { message: "Non hai i permessi per modificare questa daily." };
-    await prisma.daily.update({ where: { id: dailyId }, data });
+    // Se cambia obiettivo, il passo collegato non vale più.
+    const stepReset = existing.objectiveId !== objectiveId ? { stepId: null } : {};
+    await prisma.daily.update({ where: { id: dailyId }, data: { ...data, ...stepReset } });
   } else {
     await prisma.daily.create({ data: { ...data, teamId: user.teamId, creatorId: user.id } });
   }
@@ -167,5 +169,50 @@ export async function deleteDaily(dailyId: string) {
   const existing = await prisma.daily.findFirst({ where: { id: dailyId, teamId: user.teamId } });
   if (!existing || !canManage(user, existing)) return;
   await prisma.daily.delete({ where: { id: dailyId } });
+  refresh();
+}
+
+// ─── Passi, metrica e focus degli obiettivi ──────────────────────────────────
+
+async function manageableObjective(user: SessionUser, objectiveId: string) {
+  const objective = await prisma.objective.findFirst({ where: { id: objectiveId, teamId: user.teamId } });
+  return objective && canManage(user, objective) ? objective : null;
+}
+
+/** Segna un passo come fatto / da fare (chiunque nel team, come le daily). */
+export async function toggleStep(stepId: string, done: boolean) {
+  const user = await requireSessionUser();
+  await prisma.objectiveStep.updateMany({
+    where: { id: stepId, objective: { teamId: user.teamId } },
+    data: { completedAt: done ? new Date() : null },
+  });
+  refresh();
+}
+
+/** Aggiorna il valore attuale (e il target) della metrica di risultato. */
+export async function updateMetric(objectiveId: string, current: number | null, target: number | null) {
+  const user = await requireSessionUser();
+  if (!(await manageableObjective(user, objectiveId))) return;
+  const valid = (n: number | null) => (n === null || Number.isFinite(n) ? n : null);
+  await prisma.objective.update({
+    where: { id: objectiveId },
+    data: { metricCurrent: valid(current), metricTarget: valid(target) },
+  });
+  refresh();
+}
+
+/** L'amministratore approva la metrica proposta dall'agente. */
+export async function approveMetric(objectiveId: string) {
+  const user = await requireSessionUser();
+  if (user.role !== "ADMIN") return;
+  await prisma.objective.updateMany({ where: { id: objectiveId, teamId: user.teamId }, data: { metricApproved: true } });
+  refresh();
+}
+
+/** Mette o toglie un obiettivo dal focus del mese seguito dall'agente (solo amministratore). */
+export async function setFocus(objectiveId: string, inFocus: boolean) {
+  const user = await requireSessionUser();
+  if (user.role !== "ADMIN") return;
+  await prisma.objective.updateMany({ where: { id: objectiveId, teamId: user.teamId }, data: { inFocus } });
   refresh();
 }
