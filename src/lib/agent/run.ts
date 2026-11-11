@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { isoToDateColumn } from "@/lib/dates";
 import { askClaude, AGENT_MODEL } from "@/lib/agent/claude";
-import { loadAgentContext } from "@/lib/agent/context";
+import { isProduction, loadAgentContext } from "@/lib/agent/context";
 
 const ELITTER =
   "Elitter è un piccolo brand italiano di pelletteria esotica di lusso (coccodrillo, alligatore), capi e accessori fatti a mano in Italia, " +
@@ -41,7 +41,7 @@ Sei l'agente pianificatore di Flowdesk. Ogni mattina feriale crei le "daily" del
 Ricevi in JSON: la data, le persone (aree di competenza, arretrati ancora aperti, posti liberi oggi) e gli obiettivi in focus (area, responsabile, metrica, passi in ordine con quello corrente, daily recenti).
 
 Regole:
-- Per ogni persona crea al massimo "freeSlots" daily; se ha 0 posti liberi non crearne. Punta a riempire i posti liberi, ma solo con attività utili.
+- Per ogni persona crea al massimo "freeSlots" daily; se ha 0 posti liberi non crearne. Di queste, quelle su obiettivi con area diversa da "Produzione" non possono superare "freeSlotsOutsideProduction": i posti in più sono riservati alla Produzione. Punta a riempire i posti liberi, ma solo con attività utili.
 - Ogni daily è collegata a un obiettivo in focus e al suo passo corrente (currentStepId). Puoi usare il passo successivo solo se il corrente è già ben coperto da daily aperte.
 - Assegna le daily a chi ha competenza nell'area dell'obiettivo; preferisci il responsabile dell'obiettivo. "Commerciale" vale come supporto all'area Sales. Non dare a una persona daily di aree che non sono sue.
 - Una daily si fa in mezza giornata al massimo: verbo all'infinito all'inizio, concreta e verificabile (es. "Scrivere a 5 boutique di Dubai con il catalogo bracciali"), massimo 110 caratteri, niente frasi vaghe come "lavorare su" o "approfondire".
@@ -55,7 +55,7 @@ export async function runPlan(teamId: string, today: string, opts: { dryRun?: bo
   const totalSlots = ctx.people.reduce((n, p) => n + p.freeSlots, 0);
   if (ctx.focus.length === 0 || totalSlots === 0) {
     return logRun(teamId, today, "plan", "skipped", {
-      summary: ctx.focus.length === 0 ? "Nessun obiettivo nel focus del mese." : "Nessun posto libero: tutti hanno già 4 daily aperte.",
+      summary: ctx.focus.length === 0 ? "Nessun obiettivo nel focus del mese." : "Nessun posto libero: tutti hanno già il massimo di daily aperte.",
     });
   }
 
@@ -68,13 +68,20 @@ export async function runPlan(teamId: string, today: string, opts: { dryRun?: bo
   try {
     const { data, usage, model } = await askClaude(withInstructions(PLAN_SYSTEM, ctx.instructions), input, PlanSchema);
 
-    // Controlli in codice: id validi, passo dell'obiettivo giusto, tetto per persona.
+    // Controlli in codice: id validi, passo dell'obiettivo giusto, tetto per persona
+    // (posti extra solo per obiettivi di Produzione).
     const slots = new Map(ctx.people.map((p) => [p.id, p.freeSlots]));
+    const otherSlots = new Map(ctx.people.map((p) => [p.id, p.freeSlotsOutsideProduction]));
     const steps = new Map(ctx.focus.flatMap((o) => o.steps.map((s) => [s.id, o.id] as const)));
+    const areaOf = new Map(ctx.focus.map((o) => [o.id, o.area]));
     const accepted = data.dailies.filter((d) => {
       const left = slots.get(d.assigneeId) ?? 0;
       if (left <= 0 || steps.get(d.stepId) !== d.objectiveId || !d.title.trim()) return false;
+      const production = isProduction(areaOf.get(d.objectiveId));
+      const otherLeft = otherSlots.get(d.assigneeId) ?? 0;
+      if (!production && otherLeft <= 0) return false;
       slots.set(d.assigneeId, left - 1);
+      if (!production) otherSlots.set(d.assigneeId, otherLeft - 1);
       return true;
     });
 
