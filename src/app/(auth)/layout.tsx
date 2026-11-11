@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { AppLogo } from "@/components/app-logo";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -14,9 +14,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       />
       <div className="w-full max-w-md">
         <div className="mb-8 flex items-center justify-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <CheckCircle2 className="h-5 w-5" />
-          </span>
+          <AppLogo className="h-9 w-9" />
           <span className="text-lg font-semibold tracking-tight">Flowdesk</span>
         </div>
         {children}

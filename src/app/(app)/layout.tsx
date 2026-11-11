@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
+import { AppLogo } from "@/components/app-logo";
 import { auth } from "@/auth";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { MobileNav } from "@/components/mobile-nav";
@@ -18,9 +18,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen w-full bg-background">
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-surface p-5 md:flex">
         <Link href="/home" className="mb-8 flex items-center gap-2 px-1">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <CheckCircle2 className="h-4.5 w-4.5" />
-          </span>
+          <AppLogo className="h-8 w-8" />
           <span className="text-base font-semibold tracking-tight text-foreground">Flowdesk</span>
         </Link>
         <SidebarNav />
@@ -33,9 +31,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <div className="flex min-h-screen flex-1 flex-col">
         <header className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-border bg-surface/80 px-4 py-3 backdrop-blur md:px-8">
           <Link href="/home" className="flex items-center gap-2 md:hidden">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <CheckCircle2 className="h-4 w-4" />
-            </span>
+            <AppLogo className="h-7 w-7" />
             <span className="text-sm font-semibold">Flowdesk</span>
           </Link>
           <MobileNav />
