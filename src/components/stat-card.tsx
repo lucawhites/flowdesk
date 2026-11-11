@@ -28,7 +28,7 @@ export function StatCard({
         </span>
         <div className="min-w-0">
           <p className="truncate text-lg font-semibold leading-tight text-foreground">{value}</p>
-          <p className="truncate text-xs text-muted-foreground">{label}</p>
+          <p className="text-xs leading-snug text-muted-foreground">{label}</p>
         </div>
       </CardContent>
     </Card>

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -17,6 +17,13 @@ export const metadata: Metadata = {
   description: "Progetti, obiettivi e daily del team Elitter.",
 };
 
+// viewportFit "cover" serve per leggere la safe area (barra home dell'iPhone) nella barra in basso.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
@@ -31,6 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <Toaster
           position="bottom-right"
+          mobileOffset={{ bottom: "calc(4.5rem + env(safe-area-inset-bottom))" }}
           toastOptions={{
             style: {
               background: "var(--surface)",
