@@ -8,7 +8,9 @@ export default defineConfig({
   migrations: {
     path: "prisma/migrations",
   },
+  // Le migrazioni vanno sulla connessione diretta (DIRECT_URL); l'app usa DATABASE_URL,
+  // che su Neon punta all'endpoint "-pooler" (PgBouncer).
   datasource: {
-    url: process.env["DATABASE_URL"],
+    url: process.env["DIRECT_URL"] ?? process.env["DATABASE_URL"],
   },
 });
