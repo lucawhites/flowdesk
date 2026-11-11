@@ -9,6 +9,22 @@ export const MAX_DAILIES_PER_PERSON = 4;
 export const PRODUCTION_AREA = "Produzione";
 export const PRODUCTION_EXTRA_SLOTS = 2;
 
+/** Quante daily (solo create dall'agente) l'agente può rimandare a persona in una mattina. */
+export const MAX_POSTPONED_PER_PERSON = 2;
+/** Fin dove può rimandare, in giorni dal giorno della pianificazione. */
+export const POSTPONE_HORIZON_DAYS = 7;
+
+/** Posti liberi di una persona dati i suoi arretrati (totali e fuori dalla Produzione). */
+export function slotsFor(hasProductionArea: boolean, backlog: number, backlogOutsideProduction: number) {
+  const extra = hasProductionArea ? PRODUCTION_EXTRA_SLOTS : 0;
+  const freeSlots = Math.max(0, MAX_DAILIES_PER_PERSON + extra - backlog);
+  // Posti totali; quelli fuori dalla Produzione restano al massimo MAX_DAILIES_PER_PERSON.
+  return {
+    freeSlots,
+    freeSlotsOutsideProduction: Math.min(freeSlots, Math.max(0, MAX_DAILIES_PER_PERSON - backlogOutsideProduction)),
+  };
+}
+
 export const isProduction = (projectName: string | null | undefined) =>
   projectName?.trim().toLowerCase() === PRODUCTION_AREA.toLowerCase();
 
@@ -41,23 +57,31 @@ export async function loadAgentContext(teamId: string, today: string) {
     prisma.daily.findMany({
       where: { teamId, completedAt: null, date: { lte: isoToDateColumn(today) } },
       include: { objective: { select: { title: true, project: { select: { name: true } } } } },
-      orderBy: { date: "asc" },
+      // Stesso ordine in cui il team le vede: prima quelle ordinate a mano.
+      orderBy: [{ position: { sort: "asc", nulls: "last" } }, { date: "asc" }, { createdAt: "asc" }],
     }),
   ]);
 
   const people = members.map((m) => {
     const backlog = openDailies.filter((d) => d.assigneeId === m.id);
-    const extra = m.areas.some(isProduction) ? PRODUCTION_EXTRA_SLOTS : 0;
+    const hasProductionArea = m.areas.some(isProduction);
     const otherBacklog = backlog.filter((d) => !isProduction(d.objective?.project.name)).length;
-    const freeSlots = Math.max(0, MAX_DAILIES_PER_PERSON + extra - backlog.length);
     return {
       id: m.id,
       name: m.name,
       areas: m.areas,
-      backlog: backlog.map((d) => ({ title: d.title, objective: d.objective?.title ?? null, plannedFor: dateColumnToISO(d.date) })),
-      // Posti totali; quelli fuori dalla Produzione restano al massimo MAX_DAILIES_PER_PERSON.
-      freeSlots,
-      freeSlotsOutsideProduction: Math.min(freeSlots, Math.max(0, MAX_DAILIES_PER_PERSON - otherBacklog)),
+      // Daily ancora aperte, nell'ordine attuale (la prima è quella in cima alla lista).
+      backlog: backlog.map((d) => ({
+        id: d.id,
+        title: d.title,
+        objective: d.objective?.title ?? null,
+        area: d.objective?.project.name ?? null,
+        plannedFor: dateColumnToISO(d.date),
+        // Solo le daily create dall'agente si possono rimandare.
+        byAgent: !!d.agentRunId,
+      })),
+      hasProductionArea,
+      ...slotsFor(hasProductionArea, backlog.length, otherBacklog),
     };
   });
 
@@ -74,6 +98,7 @@ export async function loadAgentContext(teamId: string, today: string) {
       area: o.project.name,
       owner: o.assignee.name,
       ownerId: o.assignee.id,
+      dueDate: o.dueDate ? dateColumnToISO(o.dueDate) : null,
       metric: o.metricLabel
         ? { label: o.metricLabel, current: o.metricCurrent, target: o.metricTarget, unit: o.metricUnit }
         : null,

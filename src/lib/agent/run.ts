@@ -1,9 +1,15 @@
 import "server-only";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { isoToDateColumn } from "@/lib/dates";
+import { addDaysISO, isoToDateColumn } from "@/lib/dates";
 import { askClaude, AGENT_MODEL } from "@/lib/agent/claude";
-import { isProduction, loadAgentContext } from "@/lib/agent/context";
+import {
+  MAX_POSTPONED_PER_PERSON,
+  POSTPONE_HORIZON_DAYS,
+  isProduction,
+  loadAgentContext,
+  slotsFor,
+} from "@/lib/agent/context";
 
 const ELITTER =
   "Elitter è un piccolo brand italiano di pelletteria esotica di lusso (coccodrillo, alligatore), capi e accessori fatti a mano in Italia, " +
@@ -25,86 +31,173 @@ ${instructions}
 const PlanSchema = z.object({
   dailies: z.array(
     z.object({
+      // Sigla della nuova daily ("n1", "n2", …) per citarla in "order".
+      key: z.string(),
       assigneeId: z.string(),
       objectiveId: z.string(),
       stepId: z.string(),
       title: z.string(),
     }),
   ),
+  // Daily già esistenti da spostare a un altro giorno.
+  postpone: z.array(z.object({ dailyId: z.string(), toDate: z.string(), reason: z.string() })),
+  // Ordine di priorità delle daily di oggi, per persona: id esistenti e sigle delle nuove.
+  order: z.array(z.object({ assigneeId: z.string(), items: z.array(z.string()) })),
   note: z.string(),
 });
 
 const PLAN_SYSTEM = `${ELITTER}
 
-Sei l'agente pianificatore di Flowdesk. Ogni mattina feriale crei le "daily" del giorno: micro-attività concrete che, sommate, completano i passi degli obiettivi del focus del mese.
+Sei l'agente pianificatore di Flowdesk. Ogni mattina feriale crei le "daily" del giorno: micro-attività concrete che, sommate, completano i passi degli obiettivi del focus del mese. Poi riorganizzi la giornata di ogni persona: metti le daily in ordine di priorità e, se serve, rimandi le meno urgenti.
 
-Ricevi in JSON: la data, le persone (aree di competenza, arretrati ancora aperti, posti liberi oggi) e gli obiettivi in focus (area, responsabile, metrica, passi in ordine con quello corrente, daily recenti).
+Ricevi in JSON: la data, le persone (aree di competenza, arretrati ancora aperti nell'ordine attuale, posti liberi oggi) e gli obiettivi in focus (area, responsabile, scadenza "dueDate", metrica, passi in ordine con quello corrente, daily recenti).
 
-Regole:
-- Per ogni persona crea al massimo "freeSlots" daily; se ha 0 posti liberi non crearne. Di queste, quelle su obiettivi con area diversa da "Produzione" non possono superare "freeSlotsOutsideProduction": i posti in più sono riservati alla Produzione. Punta a riempire i posti liberi, ma solo con attività utili.
+Regole per le nuove daily:
+- Dai a ogni nuova daily una "key" diversa: "n1", "n2", …
+- Per ogni persona crea al massimo "freeSlots" daily (più una per ogni sua daily che rimandi, vedi sotto); se non ha posti liberi non crearne. Di queste, quelle su obiettivi con area diversa da "Produzione" non possono superare "freeSlotsOutsideProduction": i posti in più sono riservati alla Produzione. Punta a riempire i posti liberi, ma solo con attività utili.
 - Ogni daily è collegata a un obiettivo in focus e al suo passo corrente (currentStepId). Puoi usare il passo successivo solo se il corrente è già ben coperto da daily aperte.
 - Assegna le daily a chi ha competenza nell'area dell'obiettivo; preferisci il responsabile dell'obiettivo. "Commerciale" vale come supporto all'area Sales. Non dare a una persona daily di aree che non sono sue.
 - Una daily si fa in mezza giornata al massimo: verbo all'infinito all'inizio, concreta e verificabile (es. "Scrivere a 5 boutique di Dubai con il catalogo bracciali"), massimo 110 caratteri, niente frasi vaghe come "lavorare su" o "approfondire".
 - Non ripetere attività già presenti tra gli arretrati o tra le daily recenti non completate; costruisci sul lavoro già fatto (daily completate) per fare il passo successivo logico.
 - Distribuisci le daily tra più obiettivi della stessa persona nel corso della settimana, non tutte sullo stesso.
 - Usa solo gli id ricevuti, copiati esattamente.
-- In "note" scrivi una riga sul criterio usato oggi.`;
+
+Regole per riorganizzare (campi "order" e "postpone"):
+- "order": per ogni persona che oggi ha almeno due daily aperte, elenca TUTTE le sue daily di oggi dalla più urgente alla meno urgente, usando l'id degli arretrati e la key delle nuove. Criteri, in ordine: scadenze vicine o già superate (dueDate dell'obiettivo, date citate nei titoli o nelle istruzioni dell'amministratore), poi ciò che sblocca il lavoro di altri, poi il resto. Se l'ordine attuale va già bene, ripetilo uguale.
+- "postpone": puoi spostare a un giorno lavorativo successivo (entro ${POSTPONE_HORIZON_DAYS} giorni, formato YYYY-MM-DD) solo arretrati con "byAgent": true, al massimo ${MAX_POSTPONED_PER_PERSON} per persona, e solo per fare posto a qualcosa di chiaramente più urgente o perché oggi quell'attività non si può fare. Ogni daily rimandata libera un posto per quella persona. In "reason" spiega il motivo in una frase.
+- Le daily create a mano dal team ("byAgent": false) non si rimandano mai. Nessuna daily si cancella o si riscrive. Nel dubbio non rimandare: lascia "postpone" vuoto.
+- In "note" scrivi una riga sul criterio usato oggi, citando eventuali daily rimandate.`;
 
 export async function runPlan(teamId: string, today: string, opts: { dryRun?: boolean } = {}) {
   const ctx = await loadAgentContext(teamId, today);
+  const openCount = ctx.people.reduce((n, p) => n + p.backlog.length, 0);
   const totalSlots = ctx.people.reduce((n, p) => n + p.freeSlots, 0);
-  if (ctx.focus.length === 0 || totalSlots === 0) {
+  // Anche senza posti liberi c'è lavoro da fare: riordinare o rimandare le daily aperte.
+  if (ctx.focus.length === 0 || (totalSlots === 0 && openCount === 0)) {
     return logRun(teamId, today, "plan", "skipped", {
-      summary: ctx.focus.length === 0 ? "Nessun obiettivo nel focus del mese." : "Nessun posto libero: tutti hanno già il massimo di daily aperte.",
+      summary: ctx.focus.length === 0 ? "Nessun obiettivo nel focus del mese." : "Niente da pianificare.",
     });
   }
 
   const input = {
     oggi: today,
-    persone: ctx.people,
+    persone: ctx.people.map((p) => ({
+      id: p.id,
+      name: p.name,
+      areas: p.areas,
+      backlog: p.backlog,
+      freeSlots: p.freeSlots,
+      freeSlotsOutsideProduction: p.freeSlotsOutsideProduction,
+    })),
     obiettiviInFocus: ctx.focus.filter((o) => o.currentStepId),
   };
 
   try {
     const { data, usage, model } = await askClaude(withInstructions(PLAN_SYSTEM, ctx.instructions), input, PlanSchema);
 
-    // Controlli in codice: id validi, passo dell'obiettivo giusto, tetto per persona
-    // (posti extra solo per obiettivi di Produzione).
-    const slots = new Map(ctx.people.map((p) => [p.id, p.freeSlots]));
-    const otherSlots = new Map(ctx.people.map((p) => [p.id, p.freeSlotsOutsideProduction]));
+    // ── Controlli in codice: l'agente propone, qui si decide cosa è ammesso. ──
+
+    // 1. Rimandi: solo daily create dall'agente, verso un giorno lavorativo vicino, poche per persona.
+    const backlog = new Map(ctx.people.flatMap((p) => p.backlog.map((d) => [d.id, { ...d, assigneeId: p.id }] as const)));
+    const lastDay = addDaysISO(today, POSTPONE_HORIZON_DAYS);
+    const postponedBy = new Map<string, number>();
+    const postponed = data.postpone.filter((m, i, all) => {
+      const daily = backlog.get(m.dailyId);
+      if (!daily || !daily.byAgent || all.findIndex((x) => x.dailyId === m.dailyId) !== i) return false;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(m.toDate) || m.toDate <= today || m.toDate > lastDay) return false;
+      const weekday = isoToDateColumn(m.toDate).getUTCDay();
+      if (Number.isNaN(weekday) || weekday === 0 || weekday === 6) return false;
+      const count = postponedBy.get(daily.assigneeId) ?? 0;
+      if (count >= MAX_POSTPONED_PER_PERSON) return false;
+      postponedBy.set(daily.assigneeId, count + 1);
+      return true;
+    });
+    const postponedIds = new Set(postponed.map((m) => m.dailyId));
+
+    // 2. Nuove daily: id validi, passo dell'obiettivo giusto, tetto per persona ricalcolato
+    //    dopo i rimandi (posti extra solo per obiettivi di Produzione).
+    const remaining = new Map(
+      ctx.people.map((p) => {
+        const kept = p.backlog.filter((d) => !postponedIds.has(d.id));
+        return [p.id, slotsFor(p.hasProductionArea, kept.length, kept.filter((d) => !isProduction(d.area)).length)] as const;
+      }),
+    );
     const steps = new Map(ctx.focus.flatMap((o) => o.steps.map((s) => [s.id, o.id] as const)));
     const areaOf = new Map(ctx.focus.map((o) => [o.id, o.area]));
     const accepted = data.dailies.filter((d) => {
-      const left = slots.get(d.assigneeId) ?? 0;
-      if (left <= 0 || steps.get(d.stepId) !== d.objectiveId || !d.title.trim()) return false;
+      const left = remaining.get(d.assigneeId);
+      if (!left || left.freeSlots <= 0 || steps.get(d.stepId) !== d.objectiveId || !d.title.trim()) return false;
       const production = isProduction(areaOf.get(d.objectiveId));
-      const otherLeft = otherSlots.get(d.assigneeId) ?? 0;
-      if (!production && otherLeft <= 0) return false;
-      slots.set(d.assigneeId, left - 1);
-      if (!production) otherSlots.set(d.assigneeId, otherLeft - 1);
+      if (!production && left.freeSlotsOutsideProduction <= 0) return false;
+      left.freeSlots -= 1;
+      if (!production) left.freeSlotsOutsideProduction -= 1;
       return true;
     });
+
+    // 3. Ordine: per persona, le daily di oggi (arretrati non rimandati + nuove) nell'ordine
+    //    proposto; quelle che l'agente ha dimenticato restano in coda nell'ordine di prima.
+    const newByKey = new Map(accepted.map((d) => [d.key, d]));
+    const positions = new Map<string, number>(); // id di una daily esistente oppure key di una nuova
+    let reordered = 0;
+    for (const person of ctx.people) {
+      const proposal = data.order.find((o) => o.assigneeId === person.id);
+      if (!proposal) continue;
+      const mine = [
+        ...person.backlog.filter((d) => !postponedIds.has(d.id)).map((d) => d.id),
+        ...accepted.filter((d) => d.assigneeId === person.id).map((d) => d.key),
+      ];
+      if (mine.length < 2) continue;
+      const wanted = [...new Set(proposal.items)].filter((item) => mine.includes(item));
+      const final = [...wanted, ...mine.filter((item) => !wanted.includes(item))];
+      final.forEach((item, i) => positions.set(item, i + 1));
+      if (final.some((item, i) => item !== mine[i])) reordered += 1;
+    }
+
+    const parts = [`${accepted.length} daily create`];
+    if (postponed.length > 0) parts.push(`${postponed.length} rimandat${postponed.length === 1 ? "a" : "e"}`);
+    if (reordered > 0) parts.push(`priorità riordinate per ${reordered} ${reordered === 1 ? "persona" : "persone"}`);
 
     const run = await logRun(teamId, today, "plan", opts.dryRun ? "dry" : "ok", {
       model,
       usage,
-      summary: `${accepted.length} daily create${opts.dryRun ? " (prova, non salvate)" : ""}. ${data.note}`,
-      output: { proposed: data.dailies, accepted: accepted.length, dryRun: !!opts.dryRun },
+      summary: `${parts.join(", ")}${opts.dryRun ? " (prova, non salvato)" : ""}. ${data.note}`,
+      output: {
+        proposed: data.dailies,
+        accepted: accepted.length,
+        postponed: postponed.map((m) => ({ ...m, title: backlog.get(m.dailyId)?.title })),
+        order: data.order,
+        dryRun: !!opts.dryRun,
+      },
     });
 
-    if (!opts.dryRun && accepted.length > 0) {
-      await prisma.daily.createMany({
-        data: accepted.map((d) => ({
-          title: d.title.trim().slice(0, 200),
-          date: isoToDateColumn(today),
-          teamId,
-          assigneeId: d.assigneeId,
-          objectiveId: d.objectiveId,
-          stepId: d.stepId,
-          creatorId: ctx.adminId,
-          agentRunId: run.id,
-        })),
-      });
+    if (!opts.dryRun) {
+      await prisma.$transaction([
+        // Una daily rimandata riparte senza ordine manuale nel nuovo giorno.
+        ...postponed.map((m) =>
+          prisma.daily.updateMany({
+            where: { id: m.dailyId, teamId, completedAt: null },
+            data: { date: isoToDateColumn(m.toDate), position: null },
+          }),
+        ),
+        ...[...positions]
+          .filter(([item]) => !newByKey.has(item))
+          .map(([id, position]) => prisma.daily.updateMany({ where: { id, teamId }, data: { position } })),
+        ...accepted.map((d) =>
+          prisma.daily.create({
+            data: {
+              title: d.title.trim().slice(0, 200),
+              date: isoToDateColumn(today),
+              position: positions.get(d.key) ?? null,
+              teamId,
+              assigneeId: d.assigneeId,
+              objectiveId: d.objectiveId,
+              stepId: d.stepId,
+              creatorId: ctx.adminId,
+              agentRunId: run.id,
+            },
+          }),
+        ),
+      ]);
     }
     return run;
   } catch (error) {
