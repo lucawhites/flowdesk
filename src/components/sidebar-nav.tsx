@@ -17,13 +17,13 @@ export function SidebarNav() {
             key={href}
             href={href}
             className={cn(
-              "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-100 active:scale-[0.97]",
+              "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-100 active:scale-[0.97]",
               active
-                ? "bg-primary-soft text-primary"
-                : "text-muted-foreground hover:bg-surface-muted hover:text-foreground active:bg-surface-muted"
+                ? "bg-surface-muted font-semibold text-foreground before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-accent"
+                : "font-medium text-muted-foreground hover:bg-surface-muted hover:text-foreground active:bg-surface-muted"
             )}
           >
-            <Icon className="h-4 w-4" />
+            <Icon className={cn("h-4 w-4", active && "text-accent")} />
             {label}
           </Link>
         );

@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { CalendarDays, Check, ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { deleteObjective } from "@/app/(app)/tasks/actions";
+import { deleteObjective } from "@/app/(app)/work-actions";
 import { DailyDialog } from "@/components/daily-dialog";
 import { ItemMenu } from "@/components/item-menu";
 import { ObjectiveDialog } from "@/components/objective-dialog";

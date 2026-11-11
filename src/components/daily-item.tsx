@@ -3,7 +3,7 @@
 import { useOptimistic, useTransition } from "react";
 import { Pencil, Target, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
-import { deleteDaily, toggleDaily } from "@/app/(app)/tasks/actions";
+import { deleteDaily, toggleDaily } from "@/app/(app)/work-actions";
 import { DailyDialog } from "@/components/daily-dialog";
 import { ItemMenu } from "@/components/item-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";

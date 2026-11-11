@@ -19,7 +19,7 @@ export function MobileNav() {
             aria-label={label}
             className={cn(
               "flex items-center justify-center rounded-lg p-2 transition-all duration-100 active:scale-90",
-              active ? "bg-primary-soft text-primary" : "text-muted-foreground active:bg-surface-muted"
+              active ? "bg-surface-muted text-accent" : "text-muted-foreground active:bg-surface-muted"
             )}
           >
             <Icon className="h-5 w-5" />

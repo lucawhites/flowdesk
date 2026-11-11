@@ -13,7 +13,7 @@ export default function LoginPage() {
         <LoginForm />
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Non hai ancora un account?{" "}
-          <Link href="/register" className="font-medium text-primary hover:underline">
+          <Link href="/register" className="font-medium text-accent hover:underline">
             Registra la tua azienda
           </Link>
         </p>

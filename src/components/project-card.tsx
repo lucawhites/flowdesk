@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { deleteProject } from "@/app/(app)/tasks/actions";
+import { deleteProject } from "@/app/(app)/work-actions";
 import { ItemMenu } from "@/components/item-menu";
 import { ObjectiveDialog } from "@/components/objective-dialog";
 import { ProjectDialog } from "@/components/project-dialog";

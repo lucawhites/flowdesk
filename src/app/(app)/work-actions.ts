@@ -10,9 +10,8 @@ import type { FormState } from "@/lib/types";
 type SessionUser = Awaited<ReturnType<typeof requireSessionUser>>;
 
 function refresh() {
-  revalidatePath("/tasks");
-  revalidatePath("/home");
-  revalidatePath("/team");
+  // Daily, Obiettivi, Progetti, Home e Team leggono tutti gli stessi dati.
+  revalidatePath("/", "layout");
 }
 
 function field(formData: FormData, name: string) {

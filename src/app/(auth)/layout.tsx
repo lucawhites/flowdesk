@@ -9,7 +9,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
           background:
-            "radial-gradient(60% 50% at 15% 10%, var(--primary-soft), transparent), radial-gradient(50% 40% at 85% 90%, var(--primary-soft), transparent)",
+            "radial-gradient(60% 50% at 15% 10%, var(--accent-soft), transparent), radial-gradient(50% 40% at 85% 90%, var(--primary-soft), transparent)",
         }}
       />
       <div className="w-full max-w-md">

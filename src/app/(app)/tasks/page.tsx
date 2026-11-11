@@ -1,20 +1,7 @@
-import { requireSessionUser } from "@/lib/dal";
-import { getTeamWork } from "@/lib/queries";
-import { TasksView, type TasksTab } from "./tasks-view";
+import { redirect } from "next/navigation";
 
-const TABS: TasksTab[] = ["daily", "obiettivi", "progetti"];
-
+// Vecchio indirizzo della scheda Task (con ?vista=...): resta per i link salvati.
 export default async function TasksPage({ searchParams }: { searchParams: Promise<{ vista?: string }> }) {
-  const user = await requireSessionUser();
-  const [{ vista }, work] = await Promise.all([searchParams, getTeamWork(user.teamId)]);
-  const initialTab = TABS.includes(vista as TasksTab) ? (vista as TasksTab) : "daily";
-
-  return (
-    <TasksView
-      {...work}
-      initialTab={initialTab}
-      currentUserId={user.id}
-      currentUserRole={user.role}
-    />
-  );
+  const { vista } = await searchParams;
+  redirect(vista === "obiettivi" || vista === "progetti" ? `/${vista}` : "/daily");
 }

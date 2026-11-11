@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { saveDaily } from "@/app/(app)/tasks/actions";
+import { saveDaily } from "@/app/(app)/work-actions";
 import { FieldError, FormDialog } from "@/components/form-dialog";
 import { MemberSelect } from "@/components/member-select";
 import { Input, Label } from "@/components/ui/input";

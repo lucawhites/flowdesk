@@ -54,7 +54,7 @@ export function SelectItem({ className, children, ...props }: React.ComponentPro
     >
       <span className="absolute left-2.5 flex h-3.5 w-3.5 items-center justify-center">
         <SelectPrimitive.ItemIndicator>
-          <Check className="h-3.5 w-3.5 text-primary" />
+          <Check className="h-3.5 w-3.5 text-accent" />
         </SelectPrimitive.ItemIndicator>
       </span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>

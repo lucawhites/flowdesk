@@ -36,10 +36,10 @@ export default async function HomePage() {
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <Card className="overflow-hidden">
         <CardContent className="p-6">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             {formatISO(today, "EEEE d MMMM yyyy")}
           </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">Ciao {firstName} 👋</h1>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">Ciao {firstName}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {myPendingToday > 0
               ? `Hai ${myPendingToday} daily ancora da completare oggi.`
@@ -65,7 +65,7 @@ export default async function HomePage() {
               <DonutChart
                 segments={[
                   { label: "Completate", value: c.done, colorVar: "--success" },
-                  { label: "Da fare", value: c.total - c.done, colorVar: "--primary" },
+                  { label: "Da fare", value: c.total - c.done, colorVar: "--accent" },
                 ]}
                 size={96}
                 strokeWidth={14}
@@ -76,7 +76,7 @@ export default async function HomePage() {
                 <DonutLegend
                   segments={[
                     { label: "Completate", value: c.done, colorVar: "--success" },
-                    { label: "Da fare", value: c.total - c.done, colorVar: "--primary" },
+                    { label: "Da fare", value: c.total - c.done, colorVar: "--accent" },
                   ]}
                 />
               </div>
@@ -89,12 +89,12 @@ export default async function HomePage() {
         <div className="flex flex-col gap-3 lg:col-span-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-muted-foreground">Le tue daily di oggi</h2>
-            <Link href="/tasks?vista=daily" className="flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+            <Link href="/daily" className="flex items-center gap-1 text-xs font-medium text-accent hover:underline">
               Vedi tutte <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
           {myToday.length === 0 ? (
-            <EmptyState icon={CalendarCheck2} message="Nessuna daily per oggi. ☕️" />
+            <EmptyState icon={CalendarCheck2} message="Nessuna daily per oggi." />
           ) : (
             myToday.map((d) => (
               <DailyRow
@@ -113,7 +113,7 @@ export default async function HomePage() {
         <div className="flex flex-col gap-3 lg:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-muted-foreground">Obiettivi in corso</h2>
-            <Link href="/tasks?vista=obiettivi" className="flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+            <Link href="/obiettivi" className="flex items-center gap-1 text-xs font-medium text-accent hover:underline">
               Tutti <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>

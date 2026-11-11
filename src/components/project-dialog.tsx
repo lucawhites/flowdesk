@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { saveProject } from "@/app/(app)/tasks/actions";
+import { saveProject } from "@/app/(app)/work-actions";
 import { FieldError, FormDialog } from "@/components/form-dialog";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import type { ProjectItem } from "@/lib/types";

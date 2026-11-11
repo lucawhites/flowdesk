@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { MobileNav } from "@/components/mobile-nav";
 import { UserMenu } from "@/components/user-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const session = await auth();
@@ -20,12 +21,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <CheckCircle2 className="h-4.5 w-4.5" />
           </span>
-          <span className="text-base font-semibold tracking-tight">Flowdesk</span>
+          <span className="text-base font-semibold tracking-tight text-foreground">Flowdesk</span>
         </Link>
         <SidebarNav />
-        <div className="mt-auto rounded-xl bg-surface-muted p-3">
-          <p className="text-xs font-medium text-foreground">{session.user.teamName}</p>
-          <p className="text-xs text-muted-foreground">Workspace del team</p>
+        <div className="mt-auto border-t border-border pt-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Workspace</p>
+          <p className="mt-0.5 text-sm font-medium text-foreground">{session.user.teamName}</p>
         </div>
       </aside>
 
@@ -39,6 +40,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           </Link>
           <MobileNav />
           <div className="ml-auto flex items-center gap-3">
+            <ThemeToggle />
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium leading-tight text-foreground">{session.user.name}</p>
               <p className="text-xs leading-tight text-muted-foreground">{session.user.email}</p>

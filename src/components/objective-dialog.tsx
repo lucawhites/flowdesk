@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { saveObjective } from "@/app/(app)/tasks/actions";
+import { saveObjective } from "@/app/(app)/work-actions";
 import { FieldError, FormDialog } from "@/components/form-dialog";
 import { MemberSelect } from "@/components/member-select";
 import { Input, Label, Textarea } from "@/components/ui/input";

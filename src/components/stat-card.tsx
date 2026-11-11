@@ -14,7 +14,7 @@ export function StatCard({
 }) {
   const toneClass = {
     neutral: "bg-surface-muted text-muted-foreground",
-    primary: "bg-primary-soft text-primary",
+    primary: "bg-accent-soft text-accent",
     success: "bg-success-soft text-success",
     danger: "bg-danger-soft text-danger",
     warning: "bg-warning-soft text-warning",
