@@ -151,3 +151,53 @@ export async function getTeamWork(teamId: string) {
 
   return { today, members, projects, objectives, dailies };
 }
+
+export const SEARCH_MIN_LENGTH = 2;
+const SEARCH_LIMIT = 50;
+
+/**
+ * Ricerca libera nel team: progetti (nome, descrizione), obiettivi (titolo,
+ * descrizione, passi) e daily (titolo, note). Senza distinguere maiuscole.
+ */
+export async function searchTeam(teamId: string, query: string) {
+  const q = query.trim();
+  if (q.length < SEARCH_MIN_LENGTH) return { projects: [], objectives: [], dailies: [] };
+  const has = { contains: q, mode: "insensitive" } as const;
+
+  const [projects, objectives, dailies] = await Promise.all([
+    prisma.project.findMany({
+      where: { teamId, OR: [{ name: has }, { description: has }] },
+      select: { id: true, name: true, description: true, _count: { select: { objectives: true } } },
+      orderBy: [byPosition, { name: "asc" }],
+      take: SEARCH_LIMIT,
+    }),
+    prisma.objective.findMany({
+      where: { teamId, OR: [{ title: has }, { description: has }, { steps: { some: { title: has } } }] },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        inFocus: true,
+        dueDate: true,
+        assignee: person,
+        project: { select: { id: true, name: true } },
+        steps: { where: { title: has }, select: { title: true, completedAt: true }, orderBy: { position: "asc" } },
+      },
+      orderBy: [byPosition, { createdAt: "asc" }],
+      take: SEARCH_LIMIT,
+    }),
+    prisma.daily.findMany({
+      where: { teamId, OR: [{ title: has }, { notes: has }] },
+      include: dailyInclude,
+      // Prima le più recenti: chi cerca di solito vuole l'ultima volta che se n'è parlato.
+      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+      take: SEARCH_LIMIT,
+    }),
+  ]);
+
+  return {
+    projects,
+    objectives: objectives.map((o) => ({ ...o, dueDate: o.dueDate ? dateColumnToISO(o.dueDate) : null })),
+    dailies: dailies.map(toDailyItem),
+  };
+}

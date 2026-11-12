@@ -8,6 +8,7 @@ import { MobileNav } from "@/components/mobile-nav";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TextSizeMenu } from "@/components/text-size-menu";
+import { HeaderSearch, HeaderSearchLink } from "@/components/header-search";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const session = await auth();
@@ -38,7 +39,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               <span className="text-sm font-semibold">Flowdesk</span>
             </Link>
           </div>
+          <HeaderSearch />
           <div className="ml-auto flex items-center gap-3">
+            <HeaderSearchLink />
             <TextSizeMenu />
             <ThemeToggle />
             <div className="hidden text-right sm:block">
