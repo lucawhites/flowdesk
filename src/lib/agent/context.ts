@@ -5,9 +5,12 @@ import { addDaysISO, dateColumnToISO, isoToDateColumn, romeISO } from "@/lib/dat
 /** Massimo di daily aperte per persona in un giorno, arretrati inclusi. */
 export const MAX_DAILIES_PER_PERSON = 4;
 
-/** Chi ha questa area ha posti in più, usabili solo per obiettivi di questo progetto. */
-export const PRODUCTION_AREA = "Produzione";
-export const PRODUCTION_EXTRA_SLOTS = 2;
+/**
+ * Aree con posti riservati: chi ha l'area ha questi posti in più, usabili solo per
+ * obiettivi del progetto con lo stesso nome. Le sue daily di quell'area occupano prima
+ * i posti riservati, poi quelli normali.
+ */
+export const RESERVED_SLOTS: Record<string, number> = { Produzione: 2, GFP: 2 };
 
 /** Quante daily (solo create dall'agente) l'agente può rimandare a persona in una mattina. */
 export const MAX_POSTPONED_PER_PERSON = 2;
@@ -17,33 +20,52 @@ export const POSTPONE_HORIZON_DAYS = 7;
 /** Con un'assenza solo di qualche ora (orario indicato) la persona ha al massimo questi posti. */
 export const PARTIAL_ABSENCE_MAX_SLOTS = 2;
 
-/** Posti liberi di una persona dati i suoi arretrati (totali e fuori dalla Produzione). */
-export function slotsFor(hasProductionArea: boolean, backlog: number, backlogOutsideProduction: number) {
-  const extra = hasProductionArea ? PRODUCTION_EXTRA_SLOTS : 0;
-  const freeSlots = Math.max(0, MAX_DAILIES_PER_PERSON + extra - backlog);
-  // Posti totali; quelli fuori dalla Produzione restano al massimo MAX_DAILIES_PER_PERSON.
-  return {
-    freeSlots,
-    freeSlotsOutsideProduction: Math.min(freeSlots, Math.max(0, MAX_DAILIES_PER_PERSON - backlogOutsideProduction)),
-  };
+export type Slots = {
+  /** Posti liberi in tutto. */
+  freeSlots: number;
+  /** Posti liberi usabili per qualsiasi area. */
+  freeSlotsGeneral: number;
+  /** Posti liberi riservati, per area (solo le aree riservate della persona). */
+  reservedSlots: Record<string, number>;
+};
+
+/** Nome canonico dell'area riservata a cui appartiene un progetto, se c'è. */
+export function reservedAreaOf(projectName: string | null | undefined) {
+  const name = projectName?.trim().toLowerCase();
+  return Object.keys(RESERVED_SLOTS).find((a) => a.toLowerCase() === name) ?? null;
+}
+
+/** Posti liberi di una persona date le sue aree e le aree dei suoi arretrati. */
+export function slotsFor(personAreas: string[], backlogAreas: (string | null | undefined)[]): Slots {
+  const mine = new Set(personAreas.map(reservedAreaOf).filter((a): a is string => !!a));
+  const used = new Map<string, number>();
+  let general = 0;
+  for (const project of backlogAreas) {
+    const area = reservedAreaOf(project);
+    if (area && mine.has(area)) used.set(area, (used.get(area) ?? 0) + 1);
+    else general += 1;
+  }
+  const reservedSlots: Record<string, number> = {};
+  for (const area of mine) {
+    const n = used.get(area) ?? 0;
+    reservedSlots[area] = Math.max(0, RESERVED_SLOTS[area] - n);
+    general += Math.max(0, n - RESERVED_SLOTS[area]); // oltre i riservati occupano posti normali
+  }
+  const freeSlotsGeneral = Math.max(0, MAX_DAILIES_PER_PERSON - general);
+  const freeSlots = freeSlotsGeneral + Object.values(reservedSlots).reduce((s, n) => s + n, 0);
+  return { freeSlots, freeSlotsGeneral, reservedSlots };
 }
 
 /** Assente tutto il giorno: nessun posto. Assente qualche ora: posti ridotti. */
-export function limitSlots(
-  slots: { freeSlots: number; freeSlotsOutsideProduction: number },
-  absentToday: boolean,
-  partlyAbsentToday: boolean,
-) {
-  if (absentToday) return { freeSlots: 0, freeSlotsOutsideProduction: 0 };
-  if (!partlyAbsentToday) return slots;
+export function limitSlots(slots: Slots, absentToday: boolean, partlyAbsentToday: boolean): Slots {
+  const cap = absentToday ? 0 : partlyAbsentToday ? PARTIAL_ABSENCE_MAX_SLOTS : Infinity;
+  if (cap === Infinity) return slots;
   return {
-    freeSlots: Math.min(slots.freeSlots, PARTIAL_ABSENCE_MAX_SLOTS),
-    freeSlotsOutsideProduction: Math.min(slots.freeSlotsOutsideProduction, PARTIAL_ABSENCE_MAX_SLOTS),
+    freeSlots: Math.min(slots.freeSlots, cap),
+    freeSlotsGeneral: Math.min(slots.freeSlotsGeneral, cap),
+    reservedSlots: Object.fromEntries(Object.entries(slots.reservedSlots).map(([a, n]) => [a, Math.min(n, cap)])),
   };
 }
-
-export const isProduction = (projectName: string | null | undefined) =>
-  projectName?.trim().toLowerCase() === PRODUCTION_AREA.toLowerCase();
 
 type AbsenceRow = {
   title: string;
@@ -123,8 +145,6 @@ export async function loadAgentContext(teamId: string, today: string) {
 
   const people = members.map((m) => {
     const backlog = openDailies.filter((d) => d.assigneeId === m.id);
-    const hasProductionArea = m.areas.some(isProduction);
-    const otherBacklog = backlog.filter((d) => !isProduction(d.objective?.project.name)).length;
     const { absentDays, partialAbsences } = absencesFor(absenceRows, m.id, today, horizon);
     const absentToday = absentDays.includes(today);
     const partlyAbsentToday = partialAbsences.some((a) => a.date === today);
@@ -142,13 +162,19 @@ export async function loadAgentContext(teamId: string, today: string) {
         // Solo le daily create dall'agente si possono rimandare.
         byAgent: !!d.agentRunId,
       })),
-      hasProductionArea,
       absentToday,
       partlyAbsentToday,
       // Giorni (YYYY-MM-DD) in cui è assente tutto il giorno e assenze di qualche ora, da oggi in avanti.
       absentDays,
       partialAbsences,
-      ...limitSlots(slotsFor(hasProductionArea, backlog.length, otherBacklog), absentToday, partlyAbsentToday),
+      ...limitSlots(
+        slotsFor(
+          m.areas,
+          backlog.map((d) => d.objective?.project.name),
+        ),
+        absentToday,
+        partlyAbsentToday,
+      ),
     };
   });
 

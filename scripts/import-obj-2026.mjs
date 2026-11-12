@@ -9,7 +9,7 @@ const apply = process.argv.includes("--apply");
 const data = JSON.parse(readFileSync(new URL("./data/obj-2026.json", import.meta.url), "utf8"));
 
 const PEOPLE = {
-  luca: { email: "production@elitter.it", areas: ["Produzione", "Social media GFP", "Management", "CRM"] },
+  luca: { email: "production@elitter.it", areas: ["Produzione", "GFP", "Management", "CRM"] },
   francesca: { email: "francesca@elitter.it", name: "Francesca", areas: ["Commerciale", "Social media", "Marketing", "Collab"] },
   alessandro: { email: "alessandro.columbano@elitter.it", name: "Alessandro Columbano", areas: ["Sales", "Commerciale", "Collab", "CRM"] },
 };

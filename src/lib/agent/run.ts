@@ -7,7 +7,7 @@ import { notifyIfObjectiveReached } from "@/lib/notifications";
 import {
   MAX_POSTPONED_PER_PERSON,
   POSTPONE_HORIZON_DAYS,
-  isProduction,
+  reservedAreaOf,
   loadAgentContext,
   slotsFor,
   limitSlots,
@@ -56,7 +56,7 @@ Ricevi in JSON: la data, le persone (aree di competenza, arretrati ancora aperti
 
 Regole per le nuove daily:
 - Dai a ogni nuova daily una "key" diversa: "n1", "n2", …
-- Per ogni persona crea al massimo "freeSlots" daily (più una per ogni sua daily che rimandi, vedi sotto); se non ha posti liberi non crearne. Di queste, quelle su obiettivi con area diversa da "Produzione" non possono superare "freeSlotsOutsideProduction": i posti in più sono riservati alla Produzione. Punta a riempire i posti liberi, ma solo con attività utili.
+- Per ogni persona crea al massimo "freeSlots" daily (più una per ogni sua daily che rimandi, vedi sotto); se non ha posti liberi non crearne. I posti sono di due tipi: "freeSlotsGeneral" vale per qualsiasi area, "reservedSlots" (es. {"Produzione": 2, "GFP": 1}) vale solo per obiettivi di quell'area. Le daily di un'area riservata usano prima i suoi posti riservati, poi quelli generali; le altre solo quelli generali. Punta a riempire i posti liberi, ma solo con attività utili.
 - Assenze: chi ha "absentToday": true oggi non c'è e non riceve daily (ha 0 posti). Se è il responsabile di un obiettivo con un passo urgente, assegna la daily a un'altra persona con competenza in quell'area, se c'è. Chi ha "partlyAbsentToday": true è via qualche ora (vedi "partialAbsences"): dagli attività brevi. Tieni conto anche delle assenze dei prossimi giorni ("absentDays"): anticipa ciò che deve fare prima di partire.
 - Ogni daily è collegata a un obiettivo in focus e al suo passo corrente (currentStepId). Puoi usare il passo successivo solo se il corrente è già ben coperto da daily aperte.
 - Assegna le daily a chi ha competenza nell'area dell'obiettivo; preferisci il responsabile dell'obiettivo. "Commerciale" vale come supporto all'area Sales. Non dare a una persona daily di aree che non sono sue.
@@ -93,7 +93,8 @@ export async function runPlan(teamId: string, today: string, opts: { dryRun?: bo
       areas: p.areas,
       backlog: p.backlog,
       freeSlots: p.freeSlots,
-      freeSlotsOutsideProduction: p.freeSlotsOutsideProduction,
+      freeSlotsGeneral: p.freeSlotsGeneral,
+      reservedSlots: p.reservedSlots,
       absentToday: p.absentToday,
       partlyAbsentToday: p.partlyAbsentToday,
       absentDays: p.absentDays,
@@ -127,11 +128,14 @@ export async function runPlan(teamId: string, today: string, opts: { dryRun?: bo
     const postponedIds = new Set(postponed.map((m) => m.dailyId));
 
     // 2. Nuove daily: id validi, passo dell'obiettivo giusto, tetto per persona ricalcolato
-    //    dopo i rimandi (posti extra solo per obiettivi di Produzione).
+    //    dopo i rimandi (posti riservati solo per obiettivi della loro area).
     const remaining = new Map(
       ctx.people.map((p) => {
         const kept = p.backlog.filter((d) => !postponedIds.has(d.id));
-        const slots = slotsFor(p.hasProductionArea, kept.length, kept.filter((d) => !isProduction(d.area)).length);
+        const slots = slotsFor(
+          p.areas,
+          kept.map((d) => d.area),
+        );
         return [p.id, limitSlots(slots, p.absentToday, p.partlyAbsentToday)] as const;
       }),
     );
@@ -140,10 +144,11 @@ export async function runPlan(teamId: string, today: string, opts: { dryRun?: bo
     const accepted = data.dailies.filter((d) => {
       const left = remaining.get(d.assigneeId);
       if (!left || left.freeSlots <= 0 || steps.get(d.stepId) !== d.objectiveId || !d.title.trim()) return false;
-      const production = isProduction(areaOf.get(d.objectiveId));
-      if (!production && left.freeSlotsOutsideProduction <= 0) return false;
+      const area = reservedAreaOf(areaOf.get(d.objectiveId));
+      if (area && (left.reservedSlots[area] ?? 0) > 0) left.reservedSlots[area] -= 1;
+      else if (left.freeSlotsGeneral > 0) left.freeSlotsGeneral -= 1;
+      else return false;
       left.freeSlots -= 1;
-      if (!production) left.freeSlotsOutsideProduction -= 1;
       return true;
     });
 
