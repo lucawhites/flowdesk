@@ -106,6 +106,8 @@ model Objective {
   metricApproved Boolean @default(false)
   // Focus del mese: solo questi obiettivi generano daily dall'agente.
   inFocus        Boolean @default(false)
+  // Quando è partita l'email "Obiettivo raggiunto": si manda una volta sola.
+  reachedNotifiedAt DateTime?
 
   team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId String

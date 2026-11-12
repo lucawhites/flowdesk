@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSessionUser } from "@/lib/dal";
 import { isoToDateColumn } from "@/lib/dates";
+import { notifyIfObjectiveReached, objectiveReached } from "@/lib/notifications";
 import { DailySchema, ObjectiveSchema, ProjectSchema } from "@/lib/validation";
 import { AGENT_INSTRUCTIONS_MAX, HOME_TILE_IDS, type FormState } from "@/lib/types";
 
@@ -159,11 +161,23 @@ export async function saveDaily(dailyId: string | null, _prev: FormState, formDa
 
 export async function toggleDaily(dailyId: string, done: boolean) {
   const user = await requireSessionUser();
-  await prisma.daily.updateMany({
-    where: { id: dailyId, teamId: user.teamId },
-    data: { completedAt: done ? new Date() : null },
-  });
+  const daily = await prisma.daily.findFirst({ where: { id: dailyId, teamId: user.teamId }, select: { objectiveId: true } });
+  if (!daily) return;
+  const wasReached = done && daily.objectiveId ? await objectiveReached(daily.objectiveId) : true;
+  await prisma.daily.update({ where: { id: dailyId }, data: { completedAt: done ? new Date() : null } });
+  if (!wasReached) watchObjectiveReached(daily.objectiveId!, user.id);
   refresh();
+}
+
+/** Dopo la risposta all'utente: se la spunta ha portato l'obiettivo al 100%, avvisa il team. */
+function watchObjectiveReached(objectiveId: string, userId: string) {
+  after(async () => {
+    try {
+      await notifyIfObjectiveReached(objectiveId, userId);
+    } catch (error) {
+      console.error("Email obiettivo raggiunto non inviata:", error);
+    }
+  });
 }
 
 export async function deleteDaily(dailyId: string) {
@@ -219,10 +233,14 @@ async function manageableObjective(user: SessionUser, objectiveId: string) {
 /** Segna un passo come fatto / da fare (chiunque nel team, come le daily). */
 export async function toggleStep(stepId: string, done: boolean) {
   const user = await requireSessionUser();
-  await prisma.objectiveStep.updateMany({
+  const step = await prisma.objectiveStep.findFirst({
     where: { id: stepId, objective: { teamId: user.teamId } },
-    data: { completedAt: done ? new Date() : null },
+    select: { objectiveId: true },
   });
+  if (!step) return;
+  const wasReached = done ? await objectiveReached(step.objectiveId) : true;
+  await prisma.objectiveStep.update({ where: { id: stepId }, data: { completedAt: done ? new Date() : null } });
+  if (!wasReached) watchObjectiveReached(step.objectiveId, user.id);
   refresh();
 }
 

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { addDaysISO, isoToDateColumn } from "@/lib/dates";
 import { askClaude, AGENT_MODEL } from "@/lib/agent/claude";
+import { notifyIfObjectiveReached } from "@/lib/notifications";
 import {
   MAX_POSTPONED_PER_PERSON,
   POSTPONE_HORIZON_DAYS,
@@ -237,6 +238,11 @@ export async function runReview(teamId: string, today: string, opts: { dryRun?: 
     const toComplete = data.stepsCompleted.filter((s) => open.has(s.stepId));
     if (!opts.dryRun && toComplete.length > 0) {
       await prisma.objectiveStep.updateMany({ where: { id: { in: toComplete.map((s) => s.stepId) } }, data: { completedAt: new Date() } });
+      // Se un passo segnato dall'agente chiude un obiettivo, il team riceve l'email.
+      const doneIds = new Set(toComplete.map((s) => s.stepId));
+      for (const o of ctx.focus.filter((o) => o.steps.some((s) => doneIds.has(s.id)))) {
+        await notifyIfObjectiveReached(o.id, null).catch((e) => console.error("Email obiettivo raggiunto non inviata:", e));
+      }
     }
     const focusIds = new Set(ctx.focus.map((o) => o.id));
     return logRun(teamId, today, "review", opts.dryRun ? "dry" : "ok", {
