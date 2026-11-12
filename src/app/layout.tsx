@@ -38,7 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <Toaster
           position="bottom-right"
-          mobileOffset={{ bottom: "calc(4.5rem + env(safe-area-inset-bottom))" }}
+          mobileOffset={{ bottom: "calc(1rem + env(safe-area-inset-bottom))" }}
           toastOptions={{
             style: {
               background: "var(--surface)",

@@ -30,11 +30,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-border bg-surface/80 px-4 py-3 backdrop-blur md:px-8">
-          <Link href="/home" className="flex items-center gap-2 md:hidden">
-            <AppLogo className="h-7 w-7" />
-            <span className="text-sm font-semibold">Flowdesk</span>
-          </Link>
+        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border bg-surface/80 px-4 py-3 backdrop-blur md:px-8">
+          <div className="flex items-center gap-2 md:hidden">
+            <MobileNav teamName={session.user.teamName} />
+            <Link href="/home" className="flex items-center gap-2">
+              <AppLogo className="h-7 w-7" />
+              <span className="text-sm font-semibold">Flowdesk</span>
+            </Link>
+          </div>
           <div className="ml-auto flex items-center gap-3">
             <TextSizeMenu />
             <ThemeToggle />
@@ -46,11 +49,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="min-w-0 flex-1 px-4 pt-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:px-8 md:py-8">
+        <main className="min-w-0 flex-1 px-4 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:px-8 md:py-8">
           {children}
         </main>
       </div>
-      <MobileNav />
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { NAV_LINKS } from "@/lib/nav-links";
 import { cn } from "@/lib/utils";
 
-export function SidebarNav() {
+export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
@@ -16,6 +16,8 @@ export function SidebarNav() {
           <Link
             key={href}
             href={href}
+            onClick={onNavigate}
+            aria-current={active ? "page" : undefined}
             className={cn(
               "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-100 active:scale-[0.97]",
               active

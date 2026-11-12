@@ -47,3 +47,28 @@ export const DailySchema = z.object({
   objectiveId: z.string().min(1),
   notes: z.string().trim().max(2000, { error: "Massimo 2000 caratteri." }).optional().or(z.literal("")),
 });
+
+const clockTime = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+export const EventSchema = z
+  .object({
+    title: z.string().trim().min(2, { error: "Il titolo deve avere almeno 2 caratteri." }).max(140),
+    startDate: z.string().regex(isoDate, { error: "Scegli un giorno." }),
+    endDate: z.string().regex(isoDate).optional().or(z.literal("")),
+    startTime: z.string().regex(clockTime, { error: "Orario non valido." }).optional().or(z.literal("")),
+    endTime: z.string().regex(clockTime, { error: "Orario non valido." }).optional().or(z.literal("")),
+    // "TEAM" = riguarda tutto il team (Radix Select non accetta valori vuoti).
+    personId: z.string().min(1),
+  })
+  .superRefine((value, ctx) => {
+    const end = value.endDate || value.startDate;
+    if (end < value.startDate) {
+      ctx.addIssue({ code: "custom", path: ["endDate"], message: "La fine non può essere prima dell'inizio." });
+    }
+    if (value.endTime && !value.startTime) {
+      ctx.addIssue({ code: "custom", path: ["startTime"], message: "Indica anche l'ora di inizio." });
+    }
+    if (value.startTime && value.endTime && end === value.startDate && value.endTime <= value.startTime) {
+      ctx.addIssue({ code: "custom", path: ["endTime"], message: "L'ora di fine deve essere dopo l'inizio." });
+    }
+  });

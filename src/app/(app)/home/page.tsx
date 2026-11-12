@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, CalendarCheck2, CheckCircle2, Target, TriangleAlert } from "lucide-react";
+import { ArrowRight, CalendarCheck2, CalendarDays, CheckCircle2, Target, TriangleAlert } from "lucide-react";
 import { requireSessionUser } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 import { getTeamWork } from "@/lib/queries";
-import { formatISO } from "@/lib/dates";
+import { addDaysISO, formatISO, todayISO } from "@/lib/dates";
+import { getTeamEvents } from "@/lib/calendar";
+import { eventSummary, eventsOnDay } from "@/lib/calendar-helpers";
 import { dailiesForToday, isObjectiveLate, sortDailies } from "@/lib/daily-helpers";
 import { StatCard } from "@/components/stat-card";
 import { HomeTiles } from "@/components/home-tiles";
@@ -16,10 +18,13 @@ import { cn } from "@/lib/utils";
 
 export default async function HomePage() {
   const user = await requireSessionUser();
-  const [{ today, members, projects, objectives, dailies }, prefs] = await Promise.all([
+  const [{ today, members, projects, objectives, dailies }, prefs, events] = await Promise.all([
     getTeamWork(user.teamId),
     prisma.user.findUnique({ where: { id: user.id }, select: { homeOrder: true } }),
+    getTeamEvents(user.teamId, todayISO(), addDaysISO(todayISO(), 1)),
   ]);
+  const todayEvents = eventsOnDay(events, today);
+  const tomorrowEvents = eventsOnDay(events, addDaysISO(today, 1));
   // Ordine personale delle tessere: quelle mai spostate restano in coda, nell'ordine standard.
   const homeOrder = prefs?.homeOrder ?? [];
   const byHomeOrder = <T extends { id: string }>(tiles: T[]) => {
@@ -47,16 +52,55 @@ export default async function HomePage() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <Card className="overflow-hidden">
-        <CardContent className="p-6">
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            {formatISO(today, "EEEE d MMMM yyyy")}
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">Ciao {firstName}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {myPendingToday > 0
-              ? `Hai ${myPendingToday} daily ancora da completare oggi.`
-              : "Sei in pari con le daily di oggi."}
-          </p>
+        <CardContent className="flex flex-col gap-5 p-6 sm:flex-row sm:items-stretch sm:gap-6">
+          <div className="sm:flex-1">
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {formatISO(today, "EEEE d MMMM yyyy")}
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">Ciao {firstName}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {myPendingToday > 0
+                ? `Hai ${myPendingToday} daily ancora da completare oggi.`
+                : "Sei in pari con le daily di oggi."}
+            </p>
+          </div>
+
+          {/* Riepilogo del calendario: solo eventi inseriti a mano, niente daily. */}
+          <Link
+            href="/calendario"
+            className="group flex flex-col gap-2 border-t border-border pt-4 outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-72 sm:shrink-0 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0"
+          >
+            <p className="flex items-center gap-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <CalendarDays className="h-3.5 w-3.5" /> In calendario
+              <ArrowRight className="ml-auto h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
+            </p>
+            {[
+              { label: "Oggi", items: todayEvents, max: 3 },
+              { label: "Domani", items: tomorrowEvents, max: 2 },
+            ].map(({ label, items, max }) => (
+              <div key={label} className="flex gap-2 text-sm">
+                <p className="w-14 shrink-0 font-medium text-foreground">{label}</p>
+                <div className="min-w-0 flex-1">
+                  {items.length === 0 ? (
+                    <p className="text-muted-foreground">Nessun evento</p>
+                  ) : (
+                    <>
+                      {items.slice(0, max).map((event) => (
+                        <p key={event.id} className="flex items-baseline gap-1.5 text-foreground">
+                          <span
+                            aria-hidden
+                            className={cn("h-1.5 w-1.5 shrink-0 -translate-y-0.5 rounded-full", event.absence ? "bg-warning" : "bg-accent")}
+                          />
+                          <span className="min-w-0">{eventSummary(event)}</span>
+                        </p>
+                      ))}
+                      {items.length > max && <p className="text-xs text-muted-foreground">+{items.length - max} altri</p>}
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </Link>
         </CardContent>
       </Card>
 

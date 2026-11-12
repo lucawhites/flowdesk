@@ -86,3 +86,19 @@ export const AGENT_INSTRUCTIONS_MAX = 2000;
 /** Tessere riordinabili della Home, nell'ordine standard. */
 export const HOME_TILE_IDS = ["daily-todo", "done-today", "objectives", "late", "donut-mine", "donut-team"] as const;
 export type HomeTileId = (typeof HOME_TILE_IDS)[number];
+
+/** Evento del calendario (assenza, appuntamento…) inserito a mano. */
+export type CalendarEventItem = {
+  id: string;
+  title: string;
+  startDate: string;
+  /** Uguale a startDate per gli eventi di un giorno solo; estremi inclusi. */
+  endDate: string;
+  /** "HH:MM" oppure null (tutto il giorno). */
+  startTime: string | null;
+  endTime: string | null;
+  absence: boolean;
+  /** Chi riguarda; null = tutto il team. */
+  person: Person | null;
+  creatorId: string;
+};

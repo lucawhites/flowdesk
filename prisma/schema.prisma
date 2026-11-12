@@ -28,6 +28,7 @@ model Team {
   objectives Objective[]
   dailies    Daily[]
   agentRuns  AgentRun[]
+  events     CalendarEvent[]
 }
 
 model User {
@@ -51,6 +52,8 @@ model User {
   objectivesAssigned Objective[] @relation("ObjectiveAssignee")
   dailiesCreated     Daily[]     @relation("DailyCreator")
   dailiesAssigned    Daily[]     @relation("DailyAssignee")
+  eventsCreated      CalendarEvent[] @relation("EventCreator")
+  eventsAbout        CalendarEvent[] @relation("EventPerson")
 }
 
 // Token monouso per verificare l'indirizzo email in fase di registrazione.
@@ -198,4 +201,31 @@ model Daily {
   @@index([teamId, date])
   @@index([assigneeId])
   @@index([objectiveId])
+}
+
+// Evento del calendario inserito a mano (assenze, appuntamenti…). Non sono daily.
+model CalendarEvent {
+  id        String   @id @default(cuid())
+  title     String
+  // Un giorno solo: endDate = startDate. Più giorni (ferie): estremi inclusi.
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  // Orario facoltativo "HH:MM" (ora italiana); senza orario vale tutto il giorno.
+  startTime String?
+  endTime   String?
+  // La persona non è disponibile: servirà all'agente per non assegnarle daily.
+  absence   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId String
+
+  // Chi riguarda; null = tutto il team.
+  person   User?   @relation("EventPerson", fields: [personId], references: [id], onDelete: SetNull)
+  personId String?
+
+  creator   User   @relation("EventCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  creatorId String
+
+  @@index([teamId, startDate])
 }
