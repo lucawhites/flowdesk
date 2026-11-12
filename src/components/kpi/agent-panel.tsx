@@ -19,7 +19,8 @@ const STATUS = {
 export async function AgentPanel({ teamId, isAdmin }: { teamId: string; isAdmin: boolean }) {
   const monthStart = isoToDateColumn(todayISO().slice(0, 8) + "01");
   const [team, runs, review, month, members] = await Promise.all([
-    prisma.team.findUnique({ where: { id: teamId }, select: { agentInstructions: true } }),
+    // Le istruzioni le legge solo l'admin: agli altri non arrivano nemmeno nella pagina.
+    isAdmin ? prisma.team.findUnique({ where: { id: teamId }, select: { agentInstructions: true } }) : null,
     prisma.agentRun.findMany({ where: { teamId }, orderBy: { startedAt: "desc" }, take: 6 }),
     prisma.agentRun.findFirst({ where: { teamId, kind: "review", status: "ok" }, orderBy: { startedAt: "desc" } }),
     prisma.agentRun.aggregate({ where: { teamId, day: { gte: monthStart } }, _sum: { costUsd: true } }),
@@ -85,9 +86,11 @@ export async function AgentPanel({ teamId, isAdmin }: { teamId: string; isAdmin:
             )}
           </div>
 
-          <div className="border-t border-border pt-3">
-            <AgentInstructions initial={team?.agentInstructions ?? ""} canEdit={isAdmin} />
-          </div>
+          {isAdmin && (
+            <div className="border-t border-border pt-3">
+              <AgentInstructions initial={team?.agentInstructions ?? ""} canEdit />
+            </div>
+          )}
 
           <div className="border-t border-border pt-3 text-xs text-muted-foreground">
             Aree:{" "}
