@@ -3,13 +3,14 @@
 import { useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Check, ChevronDown, Crosshair, Pencil, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Crosshair, ListChecks, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteObjective, setFocus } from "@/app/(app)/work-actions";
 import { MetricBox, StepList } from "@/components/objective-extras";
 import { DailyDialog } from "@/components/daily-dialog";
 import { ItemMenu } from "@/components/item-menu";
 import { ObjectiveDialog } from "@/components/objective-dialog";
+import { StepsEditor } from "@/components/steps-editor";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -115,6 +116,16 @@ export function ObjectiveCard({
                 </DropdownMenuItem>
               }
             />
+            <StepsEditor
+              objectiveId={objective.id}
+              objectiveTitle={objective.title}
+              steps={objective.steps}
+              trigger={
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <ListChecks className="h-4 w-4" /> Modifica passi
+                </DropdownMenuItem>
+              }
+            />
             {currentUserRole === "ADMIN" && (
               <DropdownMenuItem
                 onSelect={() =>
@@ -175,11 +186,40 @@ export function ObjectiveCard({
           <summary className="flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
             <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
             Passi
+            {canManage && isDetail && (
+              <StepsEditor
+                objectiveId={objective.id}
+                objectiveTitle={objective.title}
+                steps={objective.steps}
+                trigger={
+                  <button
+                    type="button"
+                    onClick={(e) => e.stopPropagation()}
+                    className="ml-auto inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-accent hover:bg-surface-muted"
+                  >
+                    <Pencil className="h-3 w-3" /> Modifica passi
+                  </button>
+                }
+              />
+            )}
           </summary>
           <div className="mt-2">
             <StepList steps={objective.steps} />
           </div>
         </details>
+      )}
+
+      {objective.steps.length === 0 && canManage && isDetail && (
+        <StepsEditor
+          objectiveId={objective.id}
+          objectiveTitle={objective.title}
+          steps={objective.steps}
+          trigger={
+            <Button type="button" variant="outline" size="sm" className="self-start">
+              <ListChecks className="h-4 w-4" /> Aggiungi passi
+            </Button>
+          }
+        />
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-2">

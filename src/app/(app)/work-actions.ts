@@ -7,7 +7,7 @@ import { requireSessionUser } from "@/lib/dal";
 import { isoToDateColumn } from "@/lib/dates";
 import { notifyIfObjectiveReached, objectiveReached } from "@/lib/notifications";
 import { DailySchema, ObjectiveSchema, ProjectSchema } from "@/lib/validation";
-import { AGENT_INSTRUCTIONS_MAX, HOME_TILE_IDS, type FormState } from "@/lib/types";
+import { AGENT_INSTRUCTIONS_MAX, HOME_TILE_IDS, MAX_STEPS, STEP_TITLE_MAX, type FormState } from "@/lib/types";
 
 type SessionUser = Awaited<ReturnType<typeof requireSessionUser>>;
 
@@ -96,11 +96,30 @@ export async function saveObjective(objectiveId: string | null, _prev: FormState
     if (!canManage(user, existing)) return { message: "Non hai i permessi per modificare questo obiettivo." };
     await prisma.objective.update({ where: { id: objectiveId }, data });
   } else {
-    await prisma.objective.create({ data: { ...data, teamId: user.teamId, creatorId: user.id } });
+    // Passi facoltativi alla creazione: uno per riga.
+    const steps = stepLines(field(formData, "steps") ?? "");
+    if (steps.length > MAX_STEPS) return { message: `Massimo ${MAX_STEPS} passi (ne hai scritti ${steps.length}).` };
+    if (steps.some((t) => t.length > STEP_TITLE_MAX)) return { message: `Ogni passo può avere al massimo ${STEP_TITLE_MAX} caratteri.` };
+    await prisma.objective.create({
+      data: {
+        ...data,
+        teamId: user.teamId,
+        creatorId: user.id,
+        steps: { create: steps.map((title, i) => ({ title, position: i + 1 })) },
+      },
+    });
   }
 
   refresh();
   return { ok: true };
+}
+
+/** Righe non vuote di un elenco, senza puntini o numeri messi a mano all'inizio. */
+function stepLines(text: string) {
+  return text
+    .split("\n")
+    .map((line) => line.replace(/^\s*(?:[-•*]|\d+[.)])\s*/, "").trim())
+    .filter(Boolean);
 }
 
 export async function deleteObjective(objectiveId: string) {
@@ -242,6 +261,42 @@ export async function toggleStep(stepId: string, done: boolean) {
   await prisma.objectiveStep.update({ where: { id: stepId }, data: { completedAt: done ? new Date() : null } });
   if (!wasReached) watchObjectiveReached(step.objectiveId, user.id);
   refresh();
+}
+
+/**
+ * Salva la lista dei passi così com'è nell'editor: id esistente = aggiorna testo e
+ * posizione, id null = passo nuovo, passi non più presenti = cancellati (le loro
+ * daily restano, perdono solo il collegamento al passo). Lo stato "fatto" non cambia.
+ */
+export async function saveSteps(
+  objectiveId: string,
+  steps: { id: string | null; title: string }[],
+): Promise<{ ok: true } | { message: string }> {
+  const user = await requireSessionUser();
+  if (!(await manageableObjective(user, objectiveId))) return { message: "Non hai i permessi per modificare questo obiettivo." };
+
+  const list = steps.map((s) => ({ id: s.id, title: s.title.trim() })).filter((s) => s.title);
+  if (list.length > MAX_STEPS) return { message: `Massimo ${MAX_STEPS} passi.` };
+  if (list.some((s) => s.title.length > STEP_TITLE_MAX)) return { message: `Ogni passo può avere al massimo ${STEP_TITLE_MAX} caratteri.` };
+
+  const existing = await prisma.objectiveStep.findMany({ where: { objectiveId }, select: { id: true } });
+  const existingIds = new Set(existing.map((s) => s.id));
+  if (list.some((s) => s.id && !existingIds.has(s.id))) return { message: "La lista dei passi è cambiata nel frattempo: ricarica la pagina." };
+  const keptIds = new Set(list.map((s) => s.id).filter(Boolean));
+
+  const wasReached = await objectiveReached(objectiveId);
+  await prisma.$transaction([
+    prisma.objectiveStep.deleteMany({ where: { objectiveId, id: { notIn: [...keptIds] as string[] } } }),
+    ...list.map((s, i) =>
+      s.id
+        ? prisma.objectiveStep.update({ where: { id: s.id }, data: { title: s.title, position: i + 1 } })
+        : prisma.objectiveStep.create({ data: { objectiveId, title: s.title, position: i + 1 } }),
+    ),
+  ]);
+  // Cancellare gli ultimi passi da fare può portare l'obiettivo al 100%.
+  if (!wasReached) watchObjectiveReached(objectiveId, user.id);
+  refresh();
+  return { ok: true };
 }
 
 /** Aggiorna il valore attuale (e il target) della metrica di risultato. */

@@ -82,7 +82,10 @@ export async function getTeamWork(teamId: string) {
       include: {
         assignee: person,
         project: { select: { id: true, name: true } },
-        steps: { select: { id: true, position: true, title: true, completedAt: true }, orderBy: { position: "asc" } },
+        steps: {
+          select: { id: true, position: true, title: true, completedAt: true, _count: { select: { dailies: true } } },
+          orderBy: { position: "asc" },
+        },
         dailies: {
           select: { id: true, title: true, date: true, completedAt: true, assignee: { select: { name: true } } },
           orderBy: { date: "asc" },
@@ -125,7 +128,13 @@ export async function getTeamWork(teamId: string) {
       metric: o.metricLabel
         ? { label: o.metricLabel, unit: o.metricUnit, target: o.metricTarget, current: o.metricCurrent, approved: o.metricApproved }
         : null,
-      steps: o.steps.map((s) => ({ id: s.id, position: s.position, title: s.title, done: !!s.completedAt })),
+      steps: o.steps.map((s) => ({
+        id: s.id,
+        position: s.position,
+        title: s.title,
+        done: !!s.completedAt,
+        dailies: s._count.dailies,
+      })),
       dailies: o.dailies.map((d) => ({
         id: d.id,
         title: d.title,

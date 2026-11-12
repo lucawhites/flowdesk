@@ -60,7 +60,12 @@ export type ObjectiveMetric = {
   approved: boolean;
 };
 
-export type ObjectiveStepItem = { id: string; position: number; title: string; done: boolean };
+/** dailies = quante daily sono collegate al passo (servono all'avviso prima di cancellarlo). */
+export type ObjectiveStepItem = { id: string; position: number; title: string; done: boolean; dailies: number };
+
+/** Limiti dei passi di un obiettivo. */
+export const STEP_TITLE_MAX = 200;
+export const MAX_STEPS = 30;
 
 export type ProjectItem = {
   id: string;

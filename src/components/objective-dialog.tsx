@@ -29,7 +29,9 @@ export function ObjectiveDialog({
     <FormDialog
       title={isEdit ? "Modifica obiettivo" : "Nuovo obiettivo"}
       description={
-        isEdit ? undefined : "L'avanzamento si calcola da solo: daily completate su daily collegate all'obiettivo."
+        isEdit
+          ? undefined
+          : "L'avanzamento si calcola da solo: passi fatti su passi totali (senza passi, daily completate su daily collegate)."
       }
       trigger={trigger}
       action={saveObjective.bind(null, objective?.id ?? null)}
@@ -89,6 +91,21 @@ export function ObjectiveDialog({
               <Input id="objective-due" name="dueDate" type="date" defaultValue={objective?.dueDate ?? ""} />
             </div>
           </div>
+
+          {!isEdit && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="objective-steps">Passi (opzionale)</Label>
+              <Textarea
+                id="objective-steps"
+                name="steps"
+                rows={5}
+                placeholder={"Un passo per riga, nell'ordine in cui vanno fatti.\nEs. Chiedere il preventivo al fornitore\nApprovare il campione"}
+              />
+              <p className="text-xs text-muted-foreground">
+                Potrai aggiungerne, correggerli o riordinarli anche dopo, dalla pagina dell&apos;obiettivo.
+              </p>
+            </div>
+          )}
         </>
       )}
     </FormDialog>
