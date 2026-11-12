@@ -7,6 +7,7 @@ import { SidebarNav } from "@/components/sidebar-nav";
 import { MobileNav } from "@/components/mobile-nav";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { TextSizeMenu } from "@/components/text-size-menu";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const session = await auth();
@@ -23,7 +24,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         </Link>
         <SidebarNav />
         <div className="mt-auto border-t border-border pt-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Workspace</p>
+          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Workspace</p>
           <p className="mt-0.5 text-sm font-medium text-foreground">{session.user.teamName}</p>
         </div>
       </aside>
@@ -35,6 +36,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <span className="text-sm font-semibold">Flowdesk</span>
           </Link>
           <div className="ml-auto flex items-center gap-3">
+            <TextSizeMenu />
             <ThemeToggle />
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium leading-tight text-foreground">{session.user.name}</p>

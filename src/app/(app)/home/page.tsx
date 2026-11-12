@@ -48,7 +48,7 @@ export default async function HomePage() {
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <Card className="overflow-hidden">
         <CardContent className="p-6">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             {formatISO(today, "EEEE d MMMM yyyy")}
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">Ciao {firstName}</h1>
@@ -172,7 +172,7 @@ export default async function HomePage() {
                         <p className="truncate text-xs font-medium text-foreground group-hover:underline">{o.title}</p>
                         <p className={cn("text-xs", late ? "text-danger" : "text-muted-foreground")}>{o.progress}%</p>
                       </div>
-                      <p className="truncate text-[11px] text-muted-foreground">
+                      <p className="truncate text-[0.6875rem] text-muted-foreground">
                         {o.project.name} · {o.assignee.name}
                         {o.dueDate && ` · entro il ${formatISO(o.dueDate)}`}
                       </p>

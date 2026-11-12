@@ -53,7 +53,7 @@ export function DonutChart({
       {(centerLabel || centerSublabel) && (
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           {centerLabel && <span className="text-lg font-semibold text-foreground">{centerLabel}</span>}
-          {centerSublabel && <span className="text-[10px] text-muted-foreground">{centerSublabel}</span>}
+          {centerSublabel && <span className="text-[0.625rem] text-muted-foreground">{centerSublabel}</span>}
         </div>
       )}
     </div>

@@ -13,7 +13,7 @@ export function WeekBars({ days, today }: { days: { day: string; done: number }[
           return (
             <div key={day} className="group relative flex h-full flex-1 flex-col items-center justify-end">
               {/* Tooltip al passaggio del mouse / tocco */}
-              <span className="pointer-events-none absolute -top-1 z-10 -translate-y-full whitespace-nowrap rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-foreground opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
+              <span className="pointer-events-none absolute -top-1 z-10 -translate-y-full whitespace-nowrap rounded-md border border-border bg-surface px-2 py-1 text-[0.6875rem] text-foreground opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
                 {formatISO(day, "EEE d MMM")}: {done} daily
               </span>
               {isToday && <span className="mb-1 text-xs font-semibold text-foreground">{done}</span>}
@@ -30,7 +30,7 @@ export function WeekBars({ days, today }: { days: { day: string; done: number }[
           <span
             key={day}
             className={cn(
-              "flex-1 text-center text-[11px] capitalize",
+              "flex-1 text-center text-[0.6875rem] capitalize",
               day === today ? "font-semibold text-foreground" : "text-muted-foreground"
             )}
           >

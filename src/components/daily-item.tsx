@@ -125,7 +125,7 @@ export function DailyRow({
           {showAssignee && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-muted px-2 py-0.5 text-xs text-muted-foreground">
               <Avatar className="h-4 w-4">
-                <AvatarFallback className="text-[9px]">{initials(daily.assignee.name)}</AvatarFallback>
+                <AvatarFallback className="text-[0.5625rem]">{initials(daily.assignee.name)}</AvatarFallback>
               </Avatar>
               {daily.assignee.name}
             </span>

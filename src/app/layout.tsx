@@ -9,8 +9,8 @@ const manrope = Manrope({
   weight: ["400", "500", "600"],
 });
 
-// Applica il tema prima del primo disegno, per evitare il lampo chiaro/scuro.
-const themeScript = `(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.dataset.theme=t}catch(e){}})()`;
+// Applica tema e dimensione del testo prima del primo disegno, per evitare lampi e salti.
+const themeScript = `(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.dataset.theme=t;var z=localStorage.getItem("textSize");if(z==="s"||z==="l"||z==="xl"){document.documentElement.dataset.textSize=z}}catch(e){}})()`;
 
 export const metadata: Metadata = {
   title: "Flowdesk · Task del team",

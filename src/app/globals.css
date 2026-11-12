@@ -99,6 +99,17 @@
   --font-sans: var(--font-manrope);
 }
 
+/* Dimensione del testo scelta dall'utente: tutte le misure sono in rem, quindi scala l'intera interfaccia. */
+html[data-text-size="s"] {
+  font-size: 87.5%;
+}
+html[data-text-size="l"] {
+  font-size: 112.5%;
+}
+html[data-text-size="xl"] {
+  font-size: 125%;
+}
+
 * {
   border-color: var(--border);
 }

@@ -31,7 +31,7 @@ export function TeamView({ kpis, teamName, currentUserId }: { kpis: Kpis; teamNa
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8">
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
           {formatISO(kpis.today, "EEEE d MMMM yyyy")}
         </p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">KPI di {teamName}</h1>
@@ -78,7 +78,7 @@ export function TeamView({ kpis, teamName, currentUserId }: { kpis: Kpis; teamNa
                       </span>
                     </div>
                     <Progress value={p.progress ?? 0} />
-                    <p className="mt-1 text-[11px] text-muted-foreground">
+                    <p className="mt-1 text-[0.6875rem] text-muted-foreground">
                       {p.objectives === 0
                         ? "Nessun obiettivo"
                         : `${p.reached} su ${p.objectives} obiettivi raggiunti`}
@@ -96,7 +96,7 @@ export function TeamView({ kpis, teamName, currentUserId }: { kpis: Kpis; teamNa
         <SectionTitle>Per persona</SectionTitle>
         <Card>
           <CardContent className="p-0">
-            <div className="hidden grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))] gap-3 border-b border-border px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground sm:grid">
+            <div className="hidden grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))] gap-3 border-b border-border px-5 py-2.5 text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground sm:grid">
               <span>Persona</span>
               <span>Daily oggi</span>
               <span>Settimana</span>
@@ -111,7 +111,7 @@ export function TeamView({ kpis, teamName, currentUserId }: { kpis: Kpis; teamNa
                 >
                   <div className="col-span-2 flex items-center gap-3 sm:col-span-1">
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback className="text-[11px]">{initials(m.name)}</AvatarFallback>
+                      <AvatarFallback className="text-[0.6875rem]">{initials(m.name)}</AvatarFallback>
                     </Avatar>
                     <span className="truncate font-medium text-foreground">
                       {m.name} {m.id === currentUserId && <span className="font-normal text-muted-foreground">(tu)</span>}
