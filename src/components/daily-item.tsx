@@ -48,11 +48,20 @@ export function DailyRow({
   const canManage =
     currentUserRole === "ADMIN" || daily.creatorId === currentUserId || daily.assignee.id === currentUserId;
 
-  const toggle = (checked: boolean) =>
+  // Spuntando una daily collegata a un passo ancora aperto, si chiede se chiudere anche il passo.
+  const [askStep, setAskStep] = useState(false);
+
+  const commit = (checked: boolean, alsoStep = false) =>
     startTransition(async () => {
       setOptimisticDone(checked);
-      await toggleDaily(daily.id, checked);
+      await toggleDaily(daily.id, checked, alsoStep);
+      if (alsoStep) toast.success("Daily e passo segnati come fatti");
     });
+
+  const toggle = (checked: boolean) => {
+    if (checked && daily.step && !daily.step.done) setAskStep(true);
+    else commit(checked);
+  };
 
   const editDialog = (trigger: ReactNode) => (
     <DailyDialog
@@ -154,6 +163,41 @@ export function DailyRow({
         </ItemMenu>
       )}
 
+      {daily.step && (
+        <Dialog open={askStep} onOpenChange={setAskStep}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="pr-6">Segnare fatto anche il passo?</DialogTitle>
+              <DialogDescription>
+                Questa daily è collegata al passo «{daily.step.title}»
+                {daily.objective ? ` dell'obiettivo «${daily.objective.title}»` : ""}. Il passo è concluso?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex-wrap">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setAskStep(false);
+                  commit(true);
+                }}
+              >
+                No, solo la daily
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  setAskStep(false);
+                  commit(true, true);
+                }}
+              >
+                Sì, anche il passo
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent>
           <DialogHeader>
@@ -182,7 +226,12 @@ export function DailyRow({
               )}
               {daily.objective && <span className="block text-xs text-muted-foreground">{daily.objective.projectName}</span>}
             </DetailLine>
-            {daily.step && <DetailLine label="Passo">{daily.step.title}</DetailLine>}
+            {daily.step && (
+              <DetailLine label="Passo">
+                {daily.step.title}
+                {daily.step.done && <span className="ml-1.5 text-xs text-success">✓ fatto</span>}
+              </DetailLine>
+            )}
             {daily.byAgent && <DetailLine label="Origine">Creata dall&apos;agente pianificatore</DetailLine>}
             <DetailLine label="Note">
               {daily.notes ? (

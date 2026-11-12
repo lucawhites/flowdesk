@@ -25,7 +25,7 @@ export type DailyItem = {
   assignee: Person;
   creatorId: string;
   objective: { id: string; title: string; projectName: string } | null;
-  step: { id: string; title: string } | null;
+  step: { id: string; title: string; done: boolean } | null;
   /** Creata dall'agente pianificatore. */
   byAgent: boolean;
 };
@@ -76,6 +76,9 @@ export type ProjectItem = {
 };
 
 export type ObjectiveOption = { id: string; title: string; projectName: string };
+
+/** Passo proposto nella finestra della daily. */
+export type StepOption = { id: string; title: string; done: boolean };
 
 export type FormState =
   | {

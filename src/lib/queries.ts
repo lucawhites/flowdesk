@@ -11,7 +11,7 @@ const byPosition = { position: { sort: "asc", nulls: "last" } } as const;
 const dailyInclude = {
   assignee: person,
   objective: { select: { id: true, title: true, project: { select: { name: true } } } },
-  step: { select: { id: true, title: true } },
+  step: { select: { id: true, title: true, completedAt: true } },
 } as const;
 
 type DailyRowData = {
@@ -25,7 +25,7 @@ type DailyRowData = {
   agentRunId: string | null;
   assignee: { id: string; name: string };
   objective: { id: string; title: string; project: { name: string } } | null;
-  step: { id: string; title: string } | null;
+  step: { id: string; title: string; completedAt: Date | null } | null;
 };
 
 function toDailyItem(d: DailyRowData): DailyItem {
@@ -41,7 +41,7 @@ function toDailyItem(d: DailyRowData): DailyItem {
     objective: d.objective
       ? { id: d.objective.id, title: d.objective.title, projectName: d.objective.project.name }
       : null,
-    step: d.step,
+    step: d.step ? { id: d.step.id, title: d.step.title, done: !!d.step.completedAt } : null,
     byAgent: !!d.agentRunId,
   };
 }

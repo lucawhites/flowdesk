@@ -204,7 +204,34 @@ export function ObjectiveCard({
             )}
           </summary>
           <div className="mt-2">
-            <StepList steps={objective.steps} />
+            <StepList
+              steps={objective.steps}
+              addDaily={
+                isDetail
+                  ? (step) =>
+                      step.done ? null : (
+                        <DailyDialog
+                          members={members}
+                          objectives={objectiveOptions}
+                          currentUserId={currentUserId}
+                          today={today}
+                          defaultObjectiveId={objective.id}
+                          defaultStepId={step.id}
+                          trigger={
+                            <button
+                              type="button"
+                              aria-label={`Nuova daily per il passo: ${step.title}`}
+                              title="Nuova daily per questo passo"
+                              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-surface-muted hover:text-accent"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </button>
+                          }
+                        />
+                      )
+                  : undefined
+              }
+            />
           </div>
         </details>
       )}

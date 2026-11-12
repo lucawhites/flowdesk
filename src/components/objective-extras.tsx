@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useState, useTransition } from "react";
+import { useOptimistic, useState, useTransition, type ReactNode } from "react";
 import { Check, Gauge } from "lucide-react";
 import { toast } from "sonner";
 import { approveMetric, toggleStep, updateMetric } from "@/app/(app)/work-actions";
@@ -12,21 +12,28 @@ import type { ObjectiveMetric, ObjectiveStepItem } from "@/lib/types";
 const fmt = (n: number | null) => (n === null ? "—" : n.toLocaleString("it-IT"));
 
 /** Passi dell'obiettivo: da questi si calcola l'avanzamento. */
-export function StepList({ steps }: { steps: ObjectiveStepItem[] }) {
+export function StepList({
+  steps,
+  addDaily,
+}: {
+  steps: ObjectiveStepItem[];
+  /** Pulsante facoltativo accanto a ogni passo per creare una daily già collegata. */
+  addDaily?: (step: ObjectiveStepItem) => ReactNode;
+}) {
   return (
     <ol className="flex flex-col gap-1">
       {steps.map((step) => (
-        <StepRow key={step.id} step={step} />
+        <StepRow key={step.id} step={step} extra={addDaily?.(step)} />
       ))}
     </ol>
   );
 }
 
-function StepRow({ step }: { step: ObjectiveStepItem }) {
+function StepRow({ step, extra }: { step: ObjectiveStepItem; extra?: ReactNode }) {
   const [, startTransition] = useTransition();
   const [done, setDone] = useOptimistic(step.done);
   return (
-    <li>
+    <li className="flex items-start gap-1">
       <button
         type="button"
         onClick={() =>
@@ -50,6 +57,7 @@ function StepRow({ step }: { step: ObjectiveStepItem }) {
           {step.position}. {step.title}
         </span>
       </button>
+      {extra}
     </li>
   );
 }

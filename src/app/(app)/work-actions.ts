@@ -7,7 +7,7 @@ import { requireSessionUser } from "@/lib/dal";
 import { isoToDateColumn } from "@/lib/dates";
 import { notifyIfObjectiveReached, objectiveReached } from "@/lib/notifications";
 import { DailySchema, ObjectiveSchema, ProjectSchema } from "@/lib/validation";
-import { AGENT_INSTRUCTIONS_MAX, HOME_TILE_IDS, MAX_STEPS, STEP_TITLE_MAX, type FormState } from "@/lib/types";
+import { AGENT_INSTRUCTIONS_MAX, HOME_TILE_IDS, MAX_STEPS, STEP_TITLE_MAX, type FormState, type StepOption } from "@/lib/types";
 
 type SessionUser = Awaited<ReturnType<typeof requireSessionUser>>;
 
@@ -154,12 +154,19 @@ export async function saveDaily(dailyId: string | null, _prev: FormState, formDa
     const objective = await prisma.objective.findFirst({ where: { id: objectiveId, teamId: user.teamId } });
     if (!objective) return { message: "L'obiettivo selezionato non è valido." };
   }
+  // Passo facoltativo: deve essere dell'obiettivo scelto; senza obiettivo niente passo.
+  const rawStep = field(formData, "stepId");
+  const stepId = objectiveId && rawStep && rawStep !== "NONE" ? rawStep : null;
+  if (stepId && !(await prisma.objectiveStep.findFirst({ where: { id: stepId, objectiveId: objectiveId! }, select: { id: true } }))) {
+    return { message: "Il passo selezionato non è di questo obiettivo." };
+  }
 
   const data = {
     title: parsed.data.title,
     date: isoToDateColumn(parsed.data.date),
     assigneeId: parsed.data.assigneeId,
     objectiveId,
+    stepId,
     notes: parsed.data.notes || null,
   };
 
@@ -167,9 +174,7 @@ export async function saveDaily(dailyId: string | null, _prev: FormState, formDa
     const existing = await prisma.daily.findFirst({ where: { id: dailyId, teamId: user.teamId } });
     if (!existing) return { message: "Daily non trovata." };
     if (!canManage(user, existing)) return { message: "Non hai i permessi per modificare questa daily." };
-    // Se cambia obiettivo, il passo collegato non vale più.
-    const stepReset = existing.objectiveId !== objectiveId ? { stepId: null } : {};
-    await prisma.daily.update({ where: { id: dailyId }, data: { ...data, ...stepReset } });
+    await prisma.daily.update({ where: { id: dailyId }, data });
   } else {
     await prisma.daily.create({ data: { ...data, teamId: user.teamId, creatorId: user.id } });
   }
@@ -178,12 +183,20 @@ export async function saveDaily(dailyId: string | null, _prev: FormState, formDa
   return { ok: true };
 }
 
-export async function toggleDaily(dailyId: string, done: boolean) {
+/** Spunta una daily; con `alsoStep` segna fatto anche il passo a cui è collegata. */
+export async function toggleDaily(dailyId: string, done: boolean, alsoStep = false) {
   const user = await requireSessionUser();
-  const daily = await prisma.daily.findFirst({ where: { id: dailyId, teamId: user.teamId }, select: { objectiveId: true } });
+  const daily = await prisma.daily.findFirst({
+    where: { id: dailyId, teamId: user.teamId },
+    select: { objectiveId: true, stepId: true },
+  });
   if (!daily) return;
   const wasReached = done && daily.objectiveId ? await objectiveReached(daily.objectiveId) : true;
-  await prisma.daily.update({ where: { id: dailyId }, data: { completedAt: done ? new Date() : null } });
+  const now = new Date();
+  await prisma.daily.update({ where: { id: dailyId }, data: { completedAt: done ? now : null } });
+  if (done && alsoStep && daily.stepId) {
+    await prisma.objectiveStep.updateMany({ where: { id: daily.stepId, completedAt: null }, data: { completedAt: now } });
+  }
   if (!wasReached) watchObjectiveReached(daily.objectiveId!, user.id);
   refresh();
 }
@@ -247,6 +260,17 @@ export async function saveHomeOrder(ids: string[]) {
 async function manageableObjective(user: SessionUser, objectiveId: string) {
   const objective = await prisma.objective.findFirst({ where: { id: objectiveId, teamId: user.teamId } });
   return objective && canManage(user, objective) ? objective : null;
+}
+
+/** Passi di un obiettivo, per la scelta nella finestra della daily. */
+export async function getObjectiveSteps(objectiveId: string): Promise<StepOption[]> {
+  const user = await requireSessionUser();
+  const steps = await prisma.objectiveStep.findMany({
+    where: { objectiveId, objective: { teamId: user.teamId } },
+    select: { id: true, title: true, completedAt: true },
+    orderBy: { position: "asc" },
+  });
+  return steps.map((s) => ({ id: s.id, title: s.title, done: !!s.completedAt }));
 }
 
 /** Segna un passo come fatto / da fare (chiunque nel team, come le daily). */
