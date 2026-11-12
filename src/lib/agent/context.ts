@@ -14,6 +14,9 @@ export const MAX_POSTPONED_PER_PERSON = 2;
 /** Fin dove può rimandare, in giorni dal giorno della pianificazione. */
 export const POSTPONE_HORIZON_DAYS = 7;
 
+/** Con un'assenza solo di qualche ora (orario indicato) la persona ha al massimo questi posti. */
+export const PARTIAL_ABSENCE_MAX_SLOTS = 2;
+
 /** Posti liberi di una persona dati i suoi arretrati (totali e fuori dalla Produzione). */
 export function slotsFor(hasProductionArea: boolean, backlog: number, backlogOutsideProduction: number) {
   const extra = hasProductionArea ? PRODUCTION_EXTRA_SLOTS : 0;
@@ -25,14 +28,60 @@ export function slotsFor(hasProductionArea: boolean, backlog: number, backlogOut
   };
 }
 
+/** Assente tutto il giorno: nessun posto. Assente qualche ora: posti ridotti. */
+export function limitSlots(
+  slots: { freeSlots: number; freeSlotsOutsideProduction: number },
+  absentToday: boolean,
+  partlyAbsentToday: boolean,
+) {
+  if (absentToday) return { freeSlots: 0, freeSlotsOutsideProduction: 0 };
+  if (!partlyAbsentToday) return slots;
+  return {
+    freeSlots: Math.min(slots.freeSlots, PARTIAL_ABSENCE_MAX_SLOTS),
+    freeSlotsOutsideProduction: Math.min(slots.freeSlotsOutsideProduction, PARTIAL_ABSENCE_MAX_SLOTS),
+  };
+}
+
 export const isProduction = (projectName: string | null | undefined) =>
   projectName?.trim().toLowerCase() === PRODUCTION_AREA.toLowerCase();
+
+type AbsenceRow = {
+  title: string;
+  startDate: Date;
+  endDate: Date;
+  startTime: string | null;
+  endTime: string | null;
+  personId: string | null;
+};
+
+/**
+ * Giorni di assenza intera e assenze di qualche ora di una persona, da oggi all'orizzonte.
+ * Un'assenza senza persona (personId null) vale per tutto il team.
+ */
+export function absencesFor(rows: AbsenceRow[], personId: string, today: string, horizon: string) {
+  const fullDays = new Set<string>();
+  const partial: { date: string; from: string | null; to: string | null; reason: string }[] = [];
+  for (const e of rows.filter((e) => e.personId === null || e.personId === personId)) {
+    const start = dateColumnToISO(e.startDate);
+    const end = dateColumnToISO(e.endDate);
+    for (let day = start < today ? today : start; day <= end && day <= horizon; day = addDaysISO(day, 1)) {
+      if (e.startTime || e.endTime) partial.push({ date: day, from: e.startTime, to: e.endTime, reason: e.title });
+      else fullDays.add(day);
+    }
+  }
+  return {
+    absentDays: [...fullDays].sort(),
+    partialAbsences: partial.filter((a) => !fullDays.has(a.date)).sort((a, b) => a.date.localeCompare(b.date)),
+  };
+}
 
 /** Fotografia del team usata sia dalla pianificazione sia dalla revisione. */
 export async function loadAgentContext(teamId: string, today: string) {
   const since = isoToDateColumn(addDaysISO(today, -21));
 
-  const [team, members, objectives, openDailies] = await Promise.all([
+  const horizon = addDaysISO(today, POSTPONE_HORIZON_DAYS);
+
+  const [team, members, objectives, openDailies, absenceRows] = await Promise.all([
     prisma.team.findUnique({ where: { id: teamId }, select: { agentInstructions: true } }),
     prisma.user.findMany({
       where: { teamId },
@@ -60,12 +109,25 @@ export async function loadAgentContext(teamId: string, today: string) {
       // Stesso ordine in cui il team le vede: prima quelle ordinate a mano.
       orderBy: [{ position: { sort: "asc", nulls: "last" } }, { date: "asc" }, { createdAt: "asc" }],
     }),
+    // Assenze dal calendario che toccano i giorni in cui l'agente può pianificare o rimandare.
+    prisma.calendarEvent.findMany({
+      where: {
+        teamId,
+        absence: true,
+        startDate: { lte: isoToDateColumn(horizon) },
+        endDate: { gte: isoToDateColumn(today) },
+      },
+      select: { title: true, startDate: true, endDate: true, startTime: true, endTime: true, personId: true },
+    }),
   ]);
 
   const people = members.map((m) => {
     const backlog = openDailies.filter((d) => d.assigneeId === m.id);
     const hasProductionArea = m.areas.some(isProduction);
     const otherBacklog = backlog.filter((d) => !isProduction(d.objective?.project.name)).length;
+    const { absentDays, partialAbsences } = absencesFor(absenceRows, m.id, today, horizon);
+    const absentToday = absentDays.includes(today);
+    const partlyAbsentToday = partialAbsences.some((a) => a.date === today);
     return {
       id: m.id,
       name: m.name,
@@ -81,7 +143,12 @@ export async function loadAgentContext(teamId: string, today: string) {
         byAgent: !!d.agentRunId,
       })),
       hasProductionArea,
-      ...slotsFor(hasProductionArea, backlog.length, otherBacklog),
+      absentToday,
+      partlyAbsentToday,
+      // Giorni (YYYY-MM-DD) in cui è assente tutto il giorno e assenze di qualche ora, da oggi in avanti.
+      absentDays,
+      partialAbsences,
+      ...limitSlots(slotsFor(hasProductionArea, backlog.length, otherBacklog), absentToday, partlyAbsentToday),
     };
   });
 

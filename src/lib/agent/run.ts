@@ -10,6 +10,7 @@ import {
   isProduction,
   loadAgentContext,
   slotsFor,
+  limitSlots,
 } from "@/lib/agent/context";
 
 const ELITTER =
@@ -51,11 +52,12 @@ const PLAN_SYSTEM = `${ELITTER}
 
 Sei l'agente pianificatore di Flowdesk. Ogni mattina feriale crei le "daily" del giorno: micro-attività concrete che, sommate, completano i passi degli obiettivi del focus del mese. Poi riorganizzi la giornata di ogni persona: metti le daily in ordine di priorità e, se serve, rimandi le meno urgenti.
 
-Ricevi in JSON: la data, le persone (aree di competenza, arretrati ancora aperti nell'ordine attuale, posti liberi oggi) e gli obiettivi in focus (area, responsabile, scadenza "dueDate", metrica, passi in ordine con quello corrente, daily recenti).
+Ricevi in JSON: la data, le persone (aree di competenza, arretrati ancora aperti nell'ordine attuale, posti liberi oggi, assenze dal calendario) e gli obiettivi in focus (area, responsabile, scadenza "dueDate", metrica, passi in ordine con quello corrente, daily recenti).
 
 Regole per le nuove daily:
 - Dai a ogni nuova daily una "key" diversa: "n1", "n2", …
 - Per ogni persona crea al massimo "freeSlots" daily (più una per ogni sua daily che rimandi, vedi sotto); se non ha posti liberi non crearne. Di queste, quelle su obiettivi con area diversa da "Produzione" non possono superare "freeSlotsOutsideProduction": i posti in più sono riservati alla Produzione. Punta a riempire i posti liberi, ma solo con attività utili.
+- Assenze: chi ha "absentToday": true oggi non c'è e non riceve daily (ha 0 posti). Se è il responsabile di un obiettivo con un passo urgente, assegna la daily a un'altra persona con competenza in quell'area, se c'è. Chi ha "partlyAbsentToday": true è via qualche ora (vedi "partialAbsences"): dagli attività brevi. Tieni conto anche delle assenze dei prossimi giorni ("absentDays"): anticipa ciò che deve fare prima di partire.
 - Ogni daily è collegata a un obiettivo in focus e al suo passo corrente (currentStepId). Puoi usare il passo successivo solo se il corrente è già ben coperto da daily aperte.
 - Assegna le daily a chi ha competenza nell'area dell'obiettivo; preferisci il responsabile dell'obiettivo. "Commerciale" vale come supporto all'area Sales. Non dare a una persona daily di aree che non sono sue.
 - Una daily si fa in mezza giornata al massimo: verbo all'infinito all'inizio, concreta e verificabile (es. "Scrivere a 5 boutique di Dubai con il catalogo bracciali"), massimo 110 caratteri, niente frasi vaghe come "lavorare su" o "approfondire".
@@ -65,12 +67,15 @@ Regole per le nuove daily:
 
 Regole per riorganizzare (campi "order" e "postpone"):
 - "order": per ogni persona che oggi ha almeno due daily aperte, elenca TUTTE le sue daily di oggi dalla più urgente alla meno urgente, usando l'id degli arretrati e la key delle nuove. Criteri, in ordine: scadenze vicine o già superate (dueDate dell'obiettivo, date citate nei titoli o nelle istruzioni dell'amministratore), poi ciò che sblocca il lavoro di altri, poi il resto. Se l'ordine attuale va già bene, ripetilo uguale.
-- "postpone": puoi spostare a un giorno lavorativo successivo (entro ${POSTPONE_HORIZON_DAYS} giorni, formato YYYY-MM-DD) solo arretrati con "byAgent": true, al massimo ${MAX_POSTPONED_PER_PERSON} per persona, e solo per fare posto a qualcosa di chiaramente più urgente o perché oggi quell'attività non si può fare. Ogni daily rimandata libera un posto per quella persona. In "reason" spiega il motivo in una frase.
+- "postpone": puoi spostare a un giorno lavorativo successivo (entro ${POSTPONE_HORIZON_DAYS} giorni, formato YYYY-MM-DD) solo arretrati con "byAgent": true, al massimo ${MAX_POSTPONED_PER_PERSON} per persona, e solo per fare posto a qualcosa di chiaramente più urgente o perché oggi quell'attività non si può fare. Non rimandare mai a un giorno in cui la persona è assente ("absentDays"). Ogni daily rimandata libera un posto per quella persona. In "reason" spiega il motivo in una frase.
 - Le daily create a mano dal team ("byAgent": false) non si rimandano mai. Nessuna daily si cancella o si riscrive. Nel dubbio non rimandare: lascia "postpone" vuoto.
 - In "note" scrivi una riga sul criterio usato oggi, citando eventuali daily rimandate.`;
 
 export async function runPlan(teamId: string, today: string, opts: { dryRun?: boolean } = {}) {
   const ctx = await loadAgentContext(teamId, today);
+  if (ctx.people.length > 0 && ctx.people.every((p) => p.absentToday)) {
+    return logRun(teamId, today, "plan", "skipped", { summary: "Tutto il team è assente oggi secondo il calendario." });
+  }
   const openCount = ctx.people.reduce((n, p) => n + p.backlog.length, 0);
   const totalSlots = ctx.people.reduce((n, p) => n + p.freeSlots, 0);
   // Anche senza posti liberi c'è lavoro da fare: riordinare o rimandare le daily aperte.
@@ -89,6 +94,10 @@ export async function runPlan(teamId: string, today: string, opts: { dryRun?: bo
       backlog: p.backlog,
       freeSlots: p.freeSlots,
       freeSlotsOutsideProduction: p.freeSlotsOutsideProduction,
+      absentToday: p.absentToday,
+      partlyAbsentToday: p.partlyAbsentToday,
+      absentDays: p.absentDays,
+      partialAbsences: p.partialAbsences,
     })),
     obiettiviInFocus: ctx.focus.filter((o) => o.currentStepId),
   };
@@ -102,12 +111,14 @@ export async function runPlan(teamId: string, today: string, opts: { dryRun?: bo
     const backlog = new Map(ctx.people.flatMap((p) => p.backlog.map((d) => [d.id, { ...d, assigneeId: p.id }] as const)));
     const lastDay = addDaysISO(today, POSTPONE_HORIZON_DAYS);
     const postponedBy = new Map<string, number>();
+    const absentDaysOf = new Map(ctx.people.map((p) => [p.id, p.absentDays]));
     const postponed = data.postpone.filter((m, i, all) => {
       const daily = backlog.get(m.dailyId);
       if (!daily || !daily.byAgent || all.findIndex((x) => x.dailyId === m.dailyId) !== i) return false;
       if (!/^\d{4}-\d{2}-\d{2}$/.test(m.toDate) || m.toDate <= today || m.toDate > lastDay) return false;
       const weekday = isoToDateColumn(m.toDate).getUTCDay();
       if (Number.isNaN(weekday) || weekday === 0 || weekday === 6) return false;
+      if (absentDaysOf.get(daily.assigneeId)?.includes(m.toDate)) return false;
       const count = postponedBy.get(daily.assigneeId) ?? 0;
       if (count >= MAX_POSTPONED_PER_PERSON) return false;
       postponedBy.set(daily.assigneeId, count + 1);
@@ -120,7 +131,8 @@ export async function runPlan(teamId: string, today: string, opts: { dryRun?: bo
     const remaining = new Map(
       ctx.people.map((p) => {
         const kept = p.backlog.filter((d) => !postponedIds.has(d.id));
-        return [p.id, slotsFor(p.hasProductionArea, kept.length, kept.filter((d) => !isProduction(d.area)).length)] as const;
+        const slots = slotsFor(p.hasProductionArea, kept.length, kept.filter((d) => !isProduction(d.area)).length);
+        return [p.id, limitSlots(slots, p.absentToday, p.partlyAbsentToday)] as const;
       }),
     );
     const steps = new Map(ctx.focus.flatMap((o) => o.steps.map((s) => [s.id, o.id] as const)));
