@@ -13,7 +13,7 @@ export function DropdownMenuContent({ className, sideOffset = 6, ...props }: Rea
       <DropdownMenuPrimitive.Content
         sideOffset={sideOffset}
         className={cn(
-          "dialog-content z-50 min-w-[12rem] overflow-hidden rounded-xl border border-border bg-surface p-1 shadow-lg",
+          "popover-content origin-[--radix-dropdown-menu-content-transform-origin] z-50 min-w-[12rem] overflow-hidden rounded-xl border border-border bg-surface p-1 shadow-lg",
           className
         )}
         {...props}

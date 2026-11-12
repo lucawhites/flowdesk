@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { ArrowRight, CalendarCheck2, CheckCircle2, Target, TriangleAlert } from "lucide-react";
 import { requireSessionUser } from "@/lib/dal";
+import { prisma } from "@/lib/prisma";
 import { getTeamWork } from "@/lib/queries";
 import { formatISO } from "@/lib/dates";
 import { dailiesForToday, isObjectiveLate, sortDailies } from "@/lib/daily-helpers";
 import { StatCard } from "@/components/stat-card";
+import { HomeTiles } from "@/components/home-tiles";
 import { DailyRow } from "@/components/daily-item";
 import { EmptyState } from "@/components/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,7 +16,16 @@ import { cn } from "@/lib/utils";
 
 export default async function HomePage() {
   const user = await requireSessionUser();
-  const { today, members, projects, objectives, dailies } = await getTeamWork(user.teamId);
+  const [{ today, members, projects, objectives, dailies }, prefs] = await Promise.all([
+    getTeamWork(user.teamId),
+    prisma.user.findUnique({ where: { id: user.id }, select: { homeOrder: true } }),
+  ]);
+  // Ordine personale delle tessere: quelle mai spostate restano in coda, nell'ordine standard.
+  const homeOrder = prefs?.homeOrder ?? [];
+  const byHomeOrder = <T extends { id: string }>(tiles: T[]) => {
+    const rank = (id: string) => (homeOrder.includes(id) ? homeOrder.indexOf(id) : homeOrder.length);
+    return [...tiles].sort((a, b) => rank(a.id) - rank(b.id));
+  };
 
   const teamToday = dailiesForToday(dailies, today);
   const myToday = sortDailies(teamToday.filter((d) => d.assignee.id === user.id));
@@ -49,46 +60,66 @@ export default async function HomePage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard icon={CalendarCheck2} label="Daily da fare oggi" value={myPendingToday} tone="primary" href="/daily" />
-        <StatCard icon={CheckCircle2} label="Completate oggi" value={myDoneToday} tone="success" href="/daily" />
-        <StatCard icon={Target} label="Tuoi obiettivi aperti" value={myObjectives.length} tone="warning" href="/obiettivi?vista=mie" />
-        <StatCard icon={TriangleAlert} label="Tuoi in ritardo" value={myLate} tone="danger" href={lateHref} />
-      </div>
+      <HomeTiles
+        className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+        tiles={byHomeOrder([
+          {
+            id: "daily-todo",
+            node: <StatCard icon={CalendarCheck2} label="Daily da fare oggi" value={myPendingToday} tone="primary" href="/daily" />,
+          },
+          {
+            id: "done-today",
+            node: <StatCard icon={CheckCircle2} label="Completate oggi" value={myDoneToday} tone="success" href="/daily" />,
+          },
+          {
+            id: "objectives",
+            node: <StatCard icon={Target} label="Tuoi obiettivi aperti" value={myObjectives.length} tone="warning" href="/obiettivi?vista=mie" />,
+          },
+          {
+            id: "late",
+            node: <StatCard icon={TriangleAlert} label="Tuoi in ritardo" value={myLate} tone="danger" href={lateHref} />,
+          },
+        ])}
+      />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {[
-          { title: "Le tue daily di oggi", done: myDoneToday, total: myToday.length, href: "/daily" },
-          { title: "Daily del team oggi", done: teamDoneToday, total: teamToday.length, href: "/daily?vista=team" },
-        ].map((c) => (
-          <Link
-            key={c.title}
-            href={c.href}
-            className="rounded-2xl border border-border bg-surface shadow-sm outline-none transition-colors hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <CardContent className="flex items-center gap-4 p-4">
-              <DonutChart
-                segments={[
-                  { label: "Completate", value: c.done, colorVar: "--success" },
-                  { label: "Da fare", value: c.total - c.done, colorVar: "--accent" },
-                ]}
-                size={96}
-                strokeWidth={14}
-                centerLabel={`${pct(c.done, c.total)}%`}
-              />
-              <div className="flex-1">
-                <p className="mb-2 text-xs font-semibold text-muted-foreground">{c.title}</p>
-                <DonutLegend
-                  segments={[
-                    { label: "Completate", value: c.done, colorVar: "--success" },
-                    { label: "Da fare", value: c.total - c.done, colorVar: "--accent" },
-                  ]}
-                />
-              </div>
-            </CardContent>
-          </Link>
-        ))}
-      </div>
+      <HomeTiles
+        className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+        tiles={byHomeOrder(
+          [
+            { id: "donut-mine", title: "Le tue daily di oggi", done: myDoneToday, total: myToday.length, href: "/daily" },
+            { id: "donut-team", title: "Daily del team oggi", done: teamDoneToday, total: teamToday.length, href: "/daily?vista=team" },
+          ].map((c) => ({
+            id: c.id,
+            node: (
+              <Link
+                href={c.href}
+                className="rounded-2xl border border-border bg-surface shadow-sm outline-none transition-colors hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <CardContent className="flex items-center gap-4 p-4">
+                  <DonutChart
+                    segments={[
+                      { label: "Completate", value: c.done, colorVar: "--success" },
+                      { label: "Da fare", value: c.total - c.done, colorVar: "--accent" },
+                    ]}
+                    size={96}
+                    strokeWidth={14}
+                    centerLabel={`${pct(c.done, c.total)}%`}
+                  />
+                  <div className="flex-1">
+                    <p className="mb-2 text-xs font-semibold text-muted-foreground">{c.title}</p>
+                    <DonutLegend
+                      segments={[
+                        { label: "Completate", value: c.done, colorVar: "--success" },
+                        { label: "Da fare", value: c.total - c.done, colorVar: "--accent" },
+                      ]}
+                    />
+                  </div>
+                </CardContent>
+              </Link>
+            ),
+          }))
+        )}
+      />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="flex flex-col gap-3 lg:col-span-3">

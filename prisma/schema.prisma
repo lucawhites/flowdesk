@@ -41,6 +41,8 @@ model User {
   // Aree di competenza (es. "Produzione", "CRM"): l'agente pianificatore
   // assegna le daily di un obiettivo a chi ha competenza nella sua area.
   areas         String[]  @default([])
+  // Ordine delle tessere della Home scelto dall'utente (id delle tessere); vuoto = ordine standard.
+  homeOrder     String[]  @default([])
 
   team   Team   @relation(fields: [teamId], references: [id])
   teamId String

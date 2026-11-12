@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSessionUser } from "@/lib/dal";
 import { isoToDateColumn } from "@/lib/dates";
 import { DailySchema, ObjectiveSchema, ProjectSchema } from "@/lib/validation";
-import { AGENT_INSTRUCTIONS_MAX, type FormState } from "@/lib/types";
+import { AGENT_INSTRUCTIONS_MAX, HOME_TILE_IDS, type FormState } from "@/lib/types";
 
 type SessionUser = Awaited<ReturnType<typeof requireSessionUser>>;
 
@@ -191,6 +191,22 @@ export async function reorderItems(kind: "daily" | "objective" | "project", ids:
   else if (kind === "objective") await prisma.$transaction(ids.map((id, i) => prisma.objective.updateMany(at(id, i))));
   else await prisma.$transaction(ids.map((id, i) => prisma.project.updateMany(at(id, i))));
   refresh();
+}
+
+/**
+ * Salva l'ordine delle tessere della Home: è personale, vale solo per chi lo sceglie.
+ * Arrivano gli id di un gruppo di tessere nell'ordine nuovo; gli altri restano dove sono.
+ */
+export async function saveHomeOrder(ids: string[]) {
+  const user = await requireSessionUser();
+  const known: readonly string[] = HOME_TILE_IDS;
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > known.length) return;
+  if (!ids.every((id) => known.includes(id)) || new Set(ids).size !== ids.length) return;
+
+  const current = await prisma.user.findUnique({ where: { id: user.id }, select: { homeOrder: true } });
+  const others = (current?.homeOrder ?? []).filter((id) => known.includes(id) && !ids.includes(id));
+  await prisma.user.update({ where: { id: user.id }, data: { homeOrder: [...others, ...ids] } });
+  revalidatePath("/home");
 }
 
 // ─── Passi, metrica e focus degli obiettivi ──────────────────────────────────
