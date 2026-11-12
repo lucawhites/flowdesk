@@ -97,6 +97,15 @@ export function absencesFor(rows: AbsenceRow[], personId: string, today: string,
   };
 }
 
+/** Lunghezza massima della descrizione di un obiettivo passata all'agente. */
+const OBJECTIVE_DESCRIPTION_FOR_AGENT = 500;
+
+function clip(text: string | null, max: number) {
+  const t = text?.trim();
+  if (!t) return null;
+  return t.length > max ? `${t.slice(0, max - 1)}…` : t;
+}
+
 /** Fotografia del team usata sia dalla pianificazione sia dalla revisione. */
 export async function loadAgentContext(teamId: string, today: string) {
   const since = isoToDateColumn(addDaysISO(today, -21));
@@ -113,7 +122,7 @@ export async function loadAgentContext(teamId: string, today: string) {
     prisma.objective.findMany({
       where: { teamId, inFocus: true },
       include: {
-        project: { select: { name: true } },
+        project: { select: { name: true, agentNotes: true } },
         assignee: { select: { id: true, name: true } },
         steps: { orderBy: { position: "asc" } },
         dailies: {
@@ -188,6 +197,7 @@ export async function loadAgentContext(teamId: string, today: string) {
     return {
       id: o.id,
       title: o.title,
+      description: clip(o.description, OBJECTIVE_DESCRIPTION_FOR_AGENT),
       area: o.project.name,
       owner: o.assignee.name,
       ownerId: o.assignee.id,
@@ -214,8 +224,15 @@ export async function loadAgentContext(teamId: string, today: string) {
     };
   });
 
+  // Note dell'amministratore, solo per i progetti che hanno obiettivi in focus.
+  const projectNotes: Record<string, string> = {};
+  for (const o of objectives) {
+    const notes = o.project.agentNotes?.trim();
+    if (notes) projectNotes[o.project.name] = notes;
+  }
+
   const admin = members.find((m) => m.role === "ADMIN") ?? members[0];
-  return { people, focus, adminId: admin.id, instructions: team?.agentInstructions?.trim() || null };
+  return { people, focus, projectNotes, adminId: admin.id, instructions: team?.agentInstructions?.trim() || null };
 }
 
 export type AgentContext = Awaited<ReturnType<typeof loadAgentContext>>;

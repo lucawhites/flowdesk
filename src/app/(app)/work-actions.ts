@@ -7,7 +7,7 @@ import { requireSessionUser } from "@/lib/dal";
 import { isoToDateColumn } from "@/lib/dates";
 import { notifyIfObjectiveReached, objectiveReached } from "@/lib/notifications";
 import { DailySchema, ObjectiveSchema, ProjectSchema } from "@/lib/validation";
-import { AGENT_INSTRUCTIONS_MAX, HOME_TILE_IDS, MAX_STEPS, STEP_TITLE_MAX, type FormState, type StepOption } from "@/lib/types";
+import { AGENT_INSTRUCTIONS_MAX, HOME_TILE_IDS, PROJECT_AGENT_NOTES_MAX, MAX_STEPS, STEP_TITLE_MAX, type FormState, type StepOption } from "@/lib/types";
 
 type SessionUser = Awaited<ReturnType<typeof requireSessionUser>>;
 
@@ -352,6 +352,26 @@ export async function setFocus(objectiveId: string, inFocus: boolean) {
 }
 
 /** Salva le istruzioni libere per l'agente pianificatore (solo amministratore). */
+/** Note per l'agente su un singolo progetto: solo l'amministratore. */
+export async function saveProjectAgentNotes(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await requireSessionUser();
+  if (user.role !== "ADMIN") return { message: "Solo l'amministratore può istruire l'agente." };
+
+  const projectId = field(formData, "projectId");
+  const text = (field(formData, "notes") ?? "").trim();
+  if (!projectId) return { message: "Progetto mancante." };
+  if (text.length > PROJECT_AGENT_NOTES_MAX) {
+    return { message: `Massimo ${PROJECT_AGENT_NOTES_MAX} caratteri (ora ${text.length}).` };
+  }
+  const { count } = await prisma.project.updateMany({
+    where: { id: projectId, teamId: user.teamId },
+    data: { agentNotes: text || null },
+  });
+  if (count === 0) return { message: "Progetto non trovato." };
+  refresh();
+  return { ok: true };
+}
+
 export async function saveAgentInstructions(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requireSessionUser();
   if (user.role !== "ADMIN") return { message: "Solo l'amministratore può istruire l'agente." };

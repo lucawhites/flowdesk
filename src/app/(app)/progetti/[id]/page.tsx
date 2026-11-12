@@ -8,6 +8,8 @@ import { EmptyState } from "@/components/empty-state";
 import { ObjectiveDialog } from "@/components/objective-dialog";
 import { ObjectiveGrid } from "@/components/objective-grid";
 import { ProjectDialog } from "@/components/project-dialog";
+import { ProjectAgentNotes } from "@/components/project-agent-notes";
+import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
@@ -22,6 +24,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const objectiveOptions = objectives
     .filter((o) => !o.reached)
     .map((o) => ({ id: o.id, title: o.title, projectName: o.project.name }));
+  // Note per l'agente: si leggono a parte e solo per l'amministratore, così non arrivano al resto del team.
+  const agentNotes =
+    user.role === "ADMIN"
+      ? ((await prisma.project.findFirst({ where: { id, teamId: user.teamId }, select: { agentNotes: true } }))?.agentNotes ?? "")
+      : null;
   const total = project.objectives.length;
   const reached = project.objectives.filter((o) => o.reached).length;
   const late = project.objectives.filter((o) => isObjectiveLate(o, today)).length;
@@ -98,6 +105,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           />
         )}
       </section>
+
+      {agentNotes !== null && <ProjectAgentNotes projectId={project.id} initial={agentNotes} />}
     </div>
   );
 }

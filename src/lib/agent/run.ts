@@ -52,7 +52,7 @@ const PLAN_SYSTEM = `${ELITTER}
 
 Sei l'agente pianificatore di Flowdesk. Ogni mattina feriale crei le "daily" del giorno: micro-attività concrete che, sommate, completano i passi degli obiettivi del focus del mese. Poi riorganizzi la giornata di ogni persona: metti le daily in ordine di priorità e, se serve, rimandi le meno urgenti.
 
-Ricevi in JSON: la data, le persone (aree di competenza, arretrati ancora aperti nell'ordine attuale, posti liberi oggi, assenze dal calendario) e gli obiettivi in focus (area, responsabile, scadenza "dueDate", metrica, passi in ordine con quello corrente, daily recenti).
+Ricevi in JSON: la data, le persone (aree di competenza, arretrati ancora aperti nell'ordine attuale, posti liberi oggi, assenze dal calendario), gli obiettivi in focus (area, responsabile, scadenza "dueDate", descrizione, metrica, passi in ordine con quello corrente, daily recenti) e "noteProgetti": contesto e regole dell'amministratore per progetto (chiave = area). Rispetta le descrizioni degli obiettivi e le note del loro progetto: contano come istruzioni dell'amministratore.
 
 Regole per le nuove daily:
 - Dai a ogni nuova daily una "key" diversa: "n1", "n2", …
@@ -101,6 +101,7 @@ export async function runPlan(teamId: string, today: string, opts: { dryRun?: bo
       partialAbsences: p.partialAbsences,
     })),
     obiettiviInFocus: ctx.focus.filter((o) => o.currentStepId),
+    noteProgetti: ctx.projectNotes,
   };
 
   try {
@@ -235,7 +236,7 @@ const REVIEW_SYSTEM = `${ELITTER}
 
 Sei l'agente pianificatore di Flowdesk e fai la revisione del lunedì sugli obiettivi del focus del mese.
 
-Ricevi in JSON la data e gli obiettivi in focus con passi (fatti e da fare), metrica e daily delle ultime tre settimane (con data di completamento).
+Ricevi in JSON la data, gli obiettivi in focus con descrizione, passi (fatti e da fare), metrica e daily delle ultime tre settimane (con data di completamento) e "noteProgetti" (contesto dell'amministratore per progetto, chiave = area).
 
 Compiti:
 1. stepsCompleted: indica i passi NON ancora segnati come fatti che le daily completate dimostrano chiaramente conclusi. Sii prudente: un passo è fatto solo se il risultato del passo è raggiunto, non se ci si è solo lavorato. Nel dubbio non segnarlo.
@@ -248,7 +249,7 @@ export async function runReview(teamId: string, today: string, opts: { dryRun?: 
   if (ctx.focus.length === 0) return logRun(teamId, today, "review", "skipped", { summary: "Nessun obiettivo nel focus del mese." });
 
   try {
-    const input = { oggi: today, obiettiviInFocus: ctx.focus };
+    const input = { oggi: today, obiettiviInFocus: ctx.focus, noteProgetti: ctx.projectNotes };
     const { data, usage, model } = await askClaude(withInstructions(REVIEW_SYSTEM, ctx.instructions), input, ReviewSchema);
 
     const open = new Set(ctx.focus.flatMap((o) => o.steps.filter((s) => !s.done).map((s) => s.id)));

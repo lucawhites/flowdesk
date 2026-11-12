@@ -76,7 +76,8 @@ export async function getTeamWork(teamId: string) {
 
   const [members, projectRows, objectiveRows, dailyRows] = await Promise.all([
     getTeamMembers(teamId),
-    prisma.project.findMany({ where: { teamId }, orderBy: [byPosition, { name: "asc" }] }),
+    // Le note per l'agente restano fuori: questi dati arrivano nel browser di tutto il team.
+    prisma.project.findMany({ where: { teamId }, omit: { agentNotes: true }, orderBy: [byPosition, { name: "asc" }] }),
     prisma.objective.findMany({
       where: { teamId },
       include: {

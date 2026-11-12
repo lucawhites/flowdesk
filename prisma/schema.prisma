@@ -74,6 +74,8 @@ model Project {
   id          String   @id @default(cuid())
   name        String
   description String?
+  // Contesto e regole per l'agente su questo progetto: li vede e li scrive solo l'amministratore.
+  agentNotes  String?
   // Ordine scelto a mano trascinando le card; null = in coda, nell'ordine naturale.
   position    Int?
   createdAt   DateTime @default(now())
