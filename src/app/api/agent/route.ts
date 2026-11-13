@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isoToDateColumn, todayISO } from "@/lib/dates";
+import { addDaysISO, isoToDateColumn, todayISO } from "@/lib/dates";
 import { runPlan, runReview } from "@/lib/agent/run";
 import { proposeDailyText } from "@/lib/agent/daily-text";
 
@@ -10,7 +10,7 @@ export const maxDuration = 300;
 /**
  * Chiamata ogni mattina feriale dal Cron di Vercel (vercel.json).
  * Lunedì: prima la revisione (fa avanzare i passi), poi la pianificazione.
- * Parametri: ?task=plan|review (solo uno), ?task=instructions (una tantum: istruzioni alle daily aperte che non le hanno), ?dry=1 (non salva le daily), ?force=1 (anche se già eseguita oggi o nel weekend).
+ * Parametri: ?task=plan|review (solo uno), ?task=instructions (una tantum: istruzioni alle daily aperte che non le hanno), ?dry=1 (non salva le daily), ?force=1 (anche se già eseguita oggi o nel weekend), ?day=YYYY-MM-DD con force (pianifica in anticipo quel giorno).
  * Protetta da CRON_SECRET: Vercel lo invia come "Authorization: Bearer ...".
  */
 export async function GET(request: NextRequest) {
@@ -23,7 +23,14 @@ export async function GET(request: NextRequest) {
   const dryRun = params.get("dry") === "1";
   const force = params.get("force") === "1";
   const only = params.get("task");
-  const today = todayISO();
+  // ?day=YYYY-MM-DD (solo con force): pianifica in anticipo un giorno lavorativo dei prossimi 7,
+  // es. il venerdì sera per il lunedì. Il cron di quel giorno troverà il lavoro già fatto.
+  const day = params.get("day");
+  const realToday = todayISO();
+  if (day && (!force || !/^\d{4}-\d{2}-\d{2}$/.test(day) || day < realToday || day > addDaysISO(realToday, 7))) {
+    return NextResponse.json({ error: "day: serve force=1 e una data tra oggi e 7 giorni" }, { status: 400 });
+  }
+  const today = day ?? realToday;
   const weekday = isoToDateColumn(today).getUTCDay(); // 0 domenica, 1 lunedì
 
   if (!force && (weekday === 0 || weekday === 6)) {
