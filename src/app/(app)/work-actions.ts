@@ -335,6 +335,17 @@ export async function updateMetric(objectiveId: string, current: number | null, 
   refresh();
 }
 
+/** Toglie la metrica dall'obiettivo (stessi permessi della modifica). */
+export async function removeMetric(objectiveId: string) {
+  const user = await requireSessionUser();
+  if (!(await manageableObjective(user, objectiveId))) return;
+  await prisma.objective.update({
+    where: { id: objectiveId },
+    data: { metricLabel: null, metricUnit: null, metricTarget: null, metricCurrent: null, metricApproved: false },
+  });
+  refresh();
+}
+
 /** L'amministratore approva la metrica proposta dall'agente. */
 export async function approveMetric(objectiveId: string) {
   const user = await requireSessionUser();

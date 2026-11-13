@@ -1,9 +1,9 @@
 "use client";
 
 import { useOptimistic, useState, useTransition, type ReactNode } from "react";
-import { Check, Gauge } from "lucide-react";
+import { Check, Gauge, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { approveMetric, toggleStep, updateMetric } from "@/app/(app)/work-actions";
+import { approveMetric, removeMetric, toggleStep, updateMetric } from "@/app/(app)/work-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -129,6 +129,22 @@ export function MetricBox({
           </Button>
           <Button size="sm" type="button" variant="ghost" onClick={() => setEditing(false)}>
             Annulla
+          </Button>
+          <Button
+            size="sm"
+            type="button"
+            variant="ghost"
+            className="ml-auto text-danger"
+            disabled={pending}
+            onClick={() => {
+              if (!window.confirm(`Togliere la metrica "${metric.label}" da questo obiettivo?`)) return;
+              startTransition(async () => {
+                await removeMetric(objectiveId);
+                toast.success("Metrica tolta");
+              });
+            }}
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Togli metrica
           </Button>
         </form>
       )}
