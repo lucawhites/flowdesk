@@ -100,6 +100,8 @@ export async function getTeamWork(teamId: string) {
           select: { id: true, title: true, date: true, completedAt: true, assignee: { select: { name: true } } },
           orderBy: { date: "asc" },
         },
+        after: { select: { id: true, title: true } },
+        umbrella: { select: { id: true, title: true } },
       },
       orderBy: [byPosition, { dueDate: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }],
     }),
@@ -112,6 +114,16 @@ export async function getTeamWork(teamId: string) {
       orderBy: [{ date: "asc" }, { createdAt: "asc" }],
     }),
   ]);
+
+  const reachedById = new Map(
+    objectiveRows.map((o) => [
+      o.id,
+      objectiveProgressFrom(
+        { done: o.steps.filter((s) => s.completedAt).length, total: o.steps.length },
+        { done: o.dailies.filter((d) => d.completedAt).length, total: o.dailies.length },
+      ).reached,
+    ]),
+  );
 
   const objectives: ObjectiveItem[] = objectiveRows.map((o) => {
     const dailyDone = o.dailies.filter((d) => d.completedAt).length;
@@ -134,7 +146,15 @@ export async function getTeamWork(teamId: string) {
       stepDone,
       progress,
       reached,
-      inFocus: o.inFocus,
+      status: o.status,
+      kind: o.kind,
+      startDate: o.startDate ? dateColumnToISO(o.startDate) : null,
+      cadence: o.cadence,
+      after: o.after ? { ...o.after, reached: reachedById.get(o.after.id) ?? false } : null,
+      umbrella: o.umbrella,
+      contributors: objectiveRows
+        .filter((c) => c.umbrellaId === o.id)
+        .map((c) => ({ id: c.id, title: c.title, reached: reachedById.get(c.id) ?? false, assigneeName: c.assignee.name })),
       metric: o.metricLabel
         ? { label: o.metricLabel, unit: o.metricUnit, target: o.metricTarget, current: o.metricCurrent, approved: o.metricApproved }
         : null,
@@ -154,6 +174,14 @@ export async function getTeamWork(teamId: string) {
       })),
     };
   });
+
+  // Un ombrello avanza con gli obiettivi che gli contribuiscono: raggiunti / collegati.
+  for (const o of objectives) {
+    if (o.kind !== "UMBRELLA" || o.contributors.length === 0) continue;
+    const done = o.contributors.filter((c) => c.reached).length;
+    o.progress = Math.round((done / o.contributors.length) * 100);
+    o.reached = done === o.contributors.length;
+  }
 
   const projects: ProjectItem[] = projectRows.map((p) => {
     const own = objectives.filter((o) => o.project.id === p.id);
@@ -196,7 +224,8 @@ export async function searchTeam(teamId: string, query: string) {
         id: true,
         title: true,
         description: true,
-        inFocus: true,
+        status: true,
+        kind: true,
         dueDate: true,
         assignee: person,
         project: { select: { id: true, name: true } },

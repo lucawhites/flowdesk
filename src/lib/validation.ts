@@ -37,6 +37,13 @@ export const ObjectiveSchema = z.object({
   projectId: z.string().min(1, { error: "Scegli un progetto." }),
   assigneeId: z.string().min(1, { error: "Seleziona un responsabile." }),
   dueDate: z.string().regex(isoDate).optional().or(z.literal("")),
+  startDate: z.string().regex(isoDate).optional().or(z.literal("")),
+  kind: z.enum(["STANDARD", "ROUTINE", "DELIVERY", "UMBRELLA"]),
+  status: z.enum(["ACTIVE", "QUEUED", "PAUSED"]),
+  cadence: z.string().trim().max(120, { error: "Massimo 120 caratteri." }).optional().or(z.literal("")),
+  // "NONE" = nessuno (Radix Select non accetta valori vuoti).
+  afterId: z.string().min(1),
+  umbrellaId: z.string().min(1),
 });
 
 export const DailySchema = z.object({

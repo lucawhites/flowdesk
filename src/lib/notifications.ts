@@ -5,6 +5,7 @@ import { dailiesForToday } from "@/lib/daily-helpers";
 import { objectiveProgressFrom } from "@/lib/progress";
 import { getTeamWork } from "@/lib/queries";
 import { getAppUrl } from "@/lib/tokens";
+import { promoteQueue, type Activated } from "@/lib/objective-queue";
 import type { DailyItem } from "@/lib/types";
 import {
   EMAIL_COLORS as C,
@@ -149,9 +150,9 @@ export async function buildDigest(teamId: string): Promise<EmailMessage[]> {
         .join("")}</table>`
     : paragraph(`<span style="color:${C.mutedForeground};">Nessuna daily in programma oggi.</span>`);
 
-  // Obiettivi in focus, con quelli raggiunti in fondo.
+  // Obiettivi attivi (normali e consegne), con quelli raggiunti in fondo.
   const focus = objectives
-    .filter((o) => o.inFocus)
+    .filter((o) => o.status === "ACTIVE" && (o.kind === "STANDARD" || o.kind === "DELIVERY"))
     .sort((a, b) => Number(a.reached) - Number(b.reached) || b.progress - a.progress);
   const focusList = focus.length
     ? focus
@@ -165,7 +166,7 @@ export async function buildDigest(teamId: string): Promise<EmailMessage[]> {
           </table>`,
         )
         .join("")
-    : paragraph(`<span style="color:${C.mutedForeground};">Nessun obiettivo in focus.</span>`);
+    : paragraph(`<span style="color:${C.mutedForeground};">Nessun obiettivo attivo.</span>`);
 
   const dayLabel = formatISO(today, "EEEE d MMMM");
   const appUrl = getAppUrl();
@@ -204,7 +205,7 @@ export async function buildDigest(teamId: string): Promise<EmailMessage[]> {
         ${mineHtml}
         ${subheading("Il team oggi")}
         ${teamTable}
-        ${subheading("Obiettivi in focus")}
+        ${subheading("Obiettivi attivi")}
         ${focusList}
         ${button("Apri Flowdesk", `${appUrl}/daily`)}
         ${note("Ricevi questo riepilogo ogni giorno feriale in serata.")}
@@ -219,4 +220,46 @@ export async function sendDigest(teamId: string, onlyEmail?: string) {
   const messages = (await buildDigest(teamId)).filter((m) => !onlyEmail || m.to === onlyEmail);
   await sendEmails(messages);
   return messages.map((m) => m.to);
+}
+
+// ─── Obiettivo attivato dalla coda ───────────────────────────────────────────
+
+/**
+ * Riempie i posti attivi liberi con gli obiettivi in coda e avvisa via email chi ne è
+ * responsabile (e l'amministratore). Da chiamare quando un obiettivo si chiude, cambia
+ * stato o viene cancellato, e ogni mattina prima della pianificazione.
+ */
+export async function promoteAndNotify(teamId: string): Promise<Activated[]> {
+  const activated = await promoteQueue(teamId);
+  if (activated.length === 0) return activated;
+
+  const to = await recipients(teamId);
+  const admin = await prisma.user.findFirst({ where: { teamId, role: "ADMIN" }, select: { id: true } });
+  const appUrl = getAppUrl();
+  const messages: EmailMessage[] = [];
+  for (const person of to) {
+    const mine = activated.filter((a) => a.assigneeId === person.id);
+    const others = person.id === admin?.id ? activated.filter((a) => a.assigneeId !== person.id) : [];
+    if (mine.length === 0 && others.length === 0) continue;
+    const line = (a: Activated, own: boolean) => {
+      const who = own ? "" : ` · ${esc(firstName(to.find((p) => p.id === a.assigneeId)?.name ?? ""))}`;
+      const why = a.unlockedBy ? `Si è sbloccato perché «${esc(a.unlockedBy)}» è al 100%.` : "Era il primo della coda e si è liberato un posto.";
+      return `<p style="margin:0 0 12px;font-size:14px;line-height:1.45;"><a href="${appUrl}/obiettivi/${a.id}" style="color:${C.foreground};font-weight:600;">${esc(a.title)}</a>${who}<br><span style="font-size:12px;color:${C.mutedForeground};">${why}</span></p>`;
+    };
+    const list = [...mine.map((a) => line(a, true)), ...others.map((a) => line(a, false))].join("");
+    const first = (mine[0] ?? others[0]).title;
+    const html = emailLayout({
+      preheader: `Ora è attivo: ${first}`,
+      body: `
+        <p style="margin:0 0 14px;"><span style="display:inline-block;background:${C.accentSoft};color:${C.accent};font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;">Obiettivo attivato</span></p>
+        ${heading(mine.length ? `Ciao ${esc(firstName(person.name))}, parte un nuovo obiettivo` : "Si è attivato un obiettivo")}
+        ${list}
+        ${paragraph(`<span style="color:${C.mutedForeground};">Da domani l'agente pianifica anche le sue daily.</span>`)}
+        ${button("Apri gli obiettivi", `${appUrl}/obiettivi`)}
+      `,
+    });
+    messages.push({ to: person.email, subject: `Obiettivo attivato: ${first}`, html });
+  }
+  await sendEmails(messages);
+  return activated;
 }

@@ -3,9 +3,9 @@
 import { useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Check, ChevronDown, Crosshair, ListChecks, Pencil, Plus, Trash2 } from "lucide-react";
+import { CalendarClock, CalendarDays, Check, ChevronDown, Hourglass, Link2, ListChecks, Pause, Pencil, Play, Plus, Repeat, Trash2, Truck, Umbrella } from "lucide-react";
 import { toast } from "sonner";
-import { deleteObjective, setFocus } from "@/app/(app)/work-actions";
+import { deleteObjective, setObjectiveStatus } from "@/app/(app)/work-actions";
 import { MetricBox, StepList } from "@/components/objective-extras";
 import { DailyDialog } from "@/components/daily-dialog";
 import { ItemMenu } from "@/components/item-menu";
@@ -18,6 +18,7 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { cardClick } from "@/lib/card-click";
 import { formatISO } from "@/lib/dates";
+import { type ObjectiveStatus } from "@/lib/objective-status";
 import { isObjectiveLate } from "@/lib/daily-helpers";
 import { cn, initials } from "@/lib/utils";
 import type { ObjectiveItem, ObjectiveOption, Role, TeamMember } from "@/lib/types";
@@ -90,11 +91,7 @@ export function ObjectiveCard({
                 {formatISO(objective.dueDate)}
               </Badge>
             )}
-            {objective.inFocus && (
-              <Badge variant="primary">
-                <Crosshair className="h-3 w-3" /> Focus del mese
-              </Badge>
-            )}
+            <StatusBadges objective={objective} today={today} />
             {complete && (
               <Badge variant="success">
                 <Check className="h-3 w-3" /> Raggiunto
@@ -126,18 +123,21 @@ export function ObjectiveCard({
                 </DropdownMenuItem>
               }
             />
-            {currentUserRole === "ADMIN" && (
-              <DropdownMenuItem
-                onSelect={() =>
-                  startTransition(async () => {
-                    await setFocus(objective.id, !objective.inFocus);
-                    toast.success(objective.inFocus ? "Tolto dal focus del mese" : "Aggiunto al focus del mese");
-                  })
-                }
-              >
-                <Crosshair className="h-4 w-4" /> {objective.inFocus ? "Togli dal focus" : "Metti nel focus del mese"}
-              </DropdownMenuItem>
-            )}
+            {objective.kind !== "UMBRELLA" &&
+              STATUS_ACTIONS.filter((a) => a.status !== objective.status && (objective.kind === "STANDARD" || a.status !== "QUEUED")).map((a) => (
+                <DropdownMenuItem
+                  key={a.status}
+                  onSelect={() =>
+                    startTransition(async () => {
+                      const result = await setObjectiveStatus(objective.id, a.status);
+                      if ("message" in result) toast.error(result.message);
+                      else toast.success(a.done);
+                    })
+                  }
+                >
+                  <a.icon className="h-4 w-4" /> {a.label}
+                </DropdownMenuItem>
+              ))}
             <DropdownMenuItem
               className="text-danger data-[highlighted]:bg-danger-soft"
               onSelect={() => {
@@ -158,7 +158,11 @@ export function ObjectiveCard({
       <div>
         <div className="mb-1.5 flex items-center justify-between text-xs">
           <span className="text-muted-foreground">
-            {objective.stepTotal > 0
+            {objective.kind === "UMBRELLA"
+              ? objective.contributors.length === 0
+                ? "Nessun obiettivo collegato"
+                : `${objective.contributors.filter((c) => c.reached).length} di ${objective.contributors.length} obiettivi collegati raggiunti`
+              : objective.stepTotal > 0
               ? `${objective.stepDone} di ${objective.stepTotal} passi completati`
               : objective.dailyTotal === 0
                 ? "Nessun passo né daily collegata"
@@ -172,6 +176,27 @@ export function ObjectiveCard({
         />
       </div>
 
+      {objective.kind === "UMBRELLA" && objective.contributors.length > 0 && (
+        <ul className="flex flex-col gap-1.5">
+          {objective.contributors.map((c) => (
+            <li key={c.id} className="flex items-center gap-2 text-xs">
+              <span
+                className={cn(
+                  "flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border",
+                  c.reached ? "border-success bg-success text-white" : "border-border"
+                )}
+              >
+                {c.reached && <Check className="h-2.5 w-2.5" />}
+              </span>
+              <Link href={`/obiettivi/${c.id}`} className="min-w-0 flex-1 truncate text-foreground hover:underline">
+                {c.title}
+              </Link>
+              <span className="shrink-0 text-muted-foreground">{c.assigneeName.split(" ")[0]}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
       {objective.metric && (
         <MetricBox
           objectiveId={objective.id}
@@ -182,7 +207,7 @@ export function ObjectiveCard({
       )}
 
       {objective.steps.length > 0 && (
-        <details className="group" open={objective.inFocus || isDetail}>
+        <details className="group" open={(objective.status === "ACTIVE" && objective.kind !== "UMBRELLA") || isDetail}>
           <summary className="flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
             <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
             Passi
@@ -294,5 +319,59 @@ export function ObjectiveCard({
         />
       </div>
     </div>
+  );
+}
+
+const STATUS_ACTIONS: { status: ObjectiveStatus; label: string; done: string; icon: typeof Play }[] = [
+  { status: "ACTIVE", label: "Attiva", done: "Obiettivo attivato", icon: Play },
+  { status: "QUEUED", label: "Rimetti in coda", done: "Rimesso in coda", icon: Hourglass },
+  { status: "PAUSED", label: "Metti in pausa", done: "Messo in pausa", icon: Pause },
+];
+
+/** Stato, tipo, data di inizio, dipendenza e ombrello dell'obiettivo. */
+export function StatusBadges({ objective, today }: { objective: ObjectiveItem; today: string }) {
+  const { kind, status } = objective;
+  return (
+    <>
+      {kind === "ROUTINE" && (
+        <Badge variant="primary">
+          <Repeat className="h-3 w-3" /> Routine{objective.cadence ? ` · ${objective.cadence}` : ""}
+        </Badge>
+      )}
+      {kind === "DELIVERY" && (
+        <Badge variant="primary">
+          <Truck className="h-3 w-3" /> Consegna
+        </Badge>
+      )}
+      {kind === "UMBRELLA" && (
+        <Badge variant="neutral">
+          <Umbrella className="h-3 w-3" /> Ombrello
+        </Badge>
+      )}
+      {kind === "STANDARD" && status === "ACTIVE" && !objective.reached && <Badge variant="primary">Attivo</Badge>}
+      {kind === "STANDARD" && status === "QUEUED" && <Badge variant="neutral">In coda</Badge>}
+      {status === "PAUSED" && kind !== "UMBRELLA" && (
+        <Badge variant="warning">
+          <Pause className="h-3 w-3" /> In pausa
+        </Badge>
+      )}
+      {objective.startDate && objective.startDate > today && (
+        <Badge variant="warning">
+          <CalendarClock className="h-3 w-3" /> Non prima del {formatISO(objective.startDate)}
+        </Badge>
+      )}
+      {objective.after && status !== "ACTIVE" && (
+        <Badge variant={objective.after.reached ? "success" : "neutral"} className="max-w-full">
+          <Link2 className="h-3 w-3 shrink-0" />
+          <span className="truncate">Parte dopo: {objective.after.title}</span>
+        </Badge>
+      )}
+      {objective.umbrella && (
+        <Badge variant="neutral" className="max-w-full">
+          <Umbrella className="h-3 w-3 shrink-0" />
+          <span className="truncate">Conta per: {objective.umbrella.title}</span>
+        </Badge>
+      )}
+    </>
   );
 }

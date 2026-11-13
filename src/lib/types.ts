@@ -1,3 +1,5 @@
+import type { ObjectiveKind, ObjectiveStatus } from "@/lib/objective-status";
+
 // Dati serializzati passati dai Server Component ai componenti client.
 // Le date sono stringhe "YYYY-MM-DD" (fuso Europe/Rome), mai oggetti Date.
 
@@ -53,7 +55,18 @@ export type ObjectiveItem = {
   progress: number;
   /** Avanzamento al 100% con almeno un passo o una daily. */
   reached: boolean;
-  inFocus: boolean;
+  status: ObjectiveStatus;
+  kind: ObjectiveKind;
+  /** Prima di questa data non può diventare attivo. */
+  startDate: string | null;
+  /** Solo routine: ogni quanto servono daily. */
+  cadence: string | null;
+  /** "Parte dopo": l'obiettivo da cui dipende. */
+  after: { id: string; title: string; reached: boolean } | null;
+  /** Ombrello a cui contribuisce. */
+  umbrella: { id: string; title: string } | null;
+  /** Solo ombrelli: gli obiettivi che lo riempiono. */
+  contributors: { id: string; title: string; reached: boolean; assigneeName: string }[];
   metric: ObjectiveMetric | null;
   steps: ObjectiveStepItem[];
   dailies: { id: string; title: string; date: string; done: boolean; assigneeName: string }[];
@@ -87,6 +100,9 @@ export type ProjectItem = {
 };
 
 export type ObjectiveOption = { id: string; title: string; projectName: string };
+
+/** Obiettivo proposto nei campi "Parte dopo" e "Ombrello". */
+export type ObjectiveLinkOption = { id: string; title: string; assigneeName: string; kind: ObjectiveKind };
 
 /** Passo proposto nella finestra della daily. */
 export type StepOption = { id: string; title: string; done: boolean };

@@ -33,7 +33,7 @@ export function ProjectAgentNotes({ projectId, initial }: { projectId: string; i
         <Bot className="h-4 w-4 text-accent" /> Note per l&apos;agente
       </label>
       <p className="text-xs text-muted-foreground">
-        Contesto e regole che l&apos;agente usa quando pianifica gli obiettivi in focus di questo progetto: fornitori,
+        Contesto e regole che l&apos;agente usa quando pianifica gli obiettivi attivi e in coda di questo progetto: fornitori,
         priorità, cosa non fare. Le vedi solo tu.
       </p>
       <Textarea

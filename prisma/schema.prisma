@@ -16,10 +16,10 @@ enum Role {
 }
 
 model Team {
-  id        String   @id @default(cuid())
-  name      String
-  domain    String   @unique
-  createdAt DateTime @default(now())
+  id                String   @id @default(cuid())
+  name              String
+  domain            String   @unique
+  createdAt         DateTime @default(now())
   /// Istruzioni libere scritte dall'amministratore, lette dall'agente a ogni esecuzione.
   agentInstructions String?
 
@@ -48,10 +48,10 @@ model User {
   team   Team   @relation(fields: [teamId], references: [id])
   teamId String
 
-  objectivesCreated  Objective[] @relation("ObjectiveCreator")
-  objectivesAssigned Objective[] @relation("ObjectiveAssignee")
-  dailiesCreated     Daily[]     @relation("DailyCreator")
-  dailiesAssigned    Daily[]     @relation("DailyAssignee")
+  objectivesCreated  Objective[]     @relation("ObjectiveCreator")
+  objectivesAssigned Objective[]     @relation("ObjectiveAssignee")
+  dailiesCreated     Daily[]         @relation("DailyCreator")
+  dailiesAssigned    Daily[]         @relation("DailyAssignee")
   eventsCreated      CalendarEvent[] @relation("EventCreator")
   eventsAbout        CalendarEvent[] @relation("EventPerson")
 }
@@ -100,14 +100,28 @@ model Objective {
   dueDate     DateTime? @db.Date
   createdAt   DateTime  @default(now())
 
-  metricLabel    String?
-  metricUnit     String?
-  metricTarget   Float?
-  metricCurrent  Float?
+  metricLabel       String?
+  metricUnit        String?
+  metricTarget      Float?
+  metricCurrent     Float?
   // true quando l'utente ha approvato la metrica proposta dall'agente
-  metricApproved Boolean @default(false)
-  // Focus del mese: solo questi obiettivi generano daily dall'agente.
-  inFocus        Boolean @default(false)
+  metricApproved    Boolean         @default(false)
+  // Stato: solo gli attivi (più routine e consegne non in pausa) generano daily dall'agente.
+  status            ObjectiveStatus @default(QUEUED)
+  kind              ObjectiveKind   @default(STANDARD)
+  // Prima di questa data non può diventare attivo.
+  startDate         DateTime?       @db.Date
+  // Solo per le routine: ogni quanto servono daily, in parole ("martedì e venerdì").
+  cadence           String?
+  activatedAt       DateTime?
+  // "Parte dopo": resta in attesa finché questo obiettivo non è al 100%.
+  afterId           String?
+  after             Objective?      @relation("ObjectiveAfter", fields: [afterId], references: [id], onDelete: SetNull)
+  followers         Objective[]     @relation("ObjectiveAfter")
+  // Obiettivo ombrello a cui questo contribuisce.
+  umbrellaId        String?
+  umbrella          Objective?      @relation("ObjectiveUmbrella", fields: [umbrellaId], references: [id], onDelete: SetNull)
+  contributors      Objective[]     @relation("ObjectiveUmbrella")
   // Quando è partita l'email "Obiettivo raggiunto": si manda una volta sola.
   reachedNotifiedAt DateTime?
 
@@ -130,6 +144,21 @@ model Objective {
   @@index([projectId])
 }
 
+enum ObjectiveStatus {
+  ACTIVE
+  QUEUED
+  PAUSED
+}
+
+/// STANDARD conta nel limite di attivi; ROUTINE e DELIVERY (consegne di Produzione) hanno posti propri;
+/// UMBRELLA si riempie con gli obiettivi collegati e non genera daily.
+enum ObjectiveKind {
+  STANDARD
+  ROUTINE
+  DELIVERY
+  UMBRELLA
+}
+
 // Passo concreto di un obiettivo (i "DO" della Project Map), in ordine.
 model ObjectiveStep {
   id          String    @id @default(cuid())
@@ -149,8 +178,8 @@ model ObjectiveStep {
 // Registro delle esecuzioni dell'agente (pianificazione e revisione).
 model AgentRun {
   id           String    @id @default(cuid())
-  kind         String    // "plan" | "review" | "assist" (pulsante "Proponi istruzioni")
-  status       String    // "ok" | "dry" (prova, nulla salvato) | "error" | "skipped"
+  kind         String // "plan" | "review" | "assist" (pulsante "Proponi istruzioni")
+  status       String // "ok" | "dry" (prova, nulla salvato) | "error" | "skipped"
   day          DateTime  @db.Date
   model        String?
   inputTokens  Int       @default(0)
@@ -174,18 +203,18 @@ model AgentRun {
 // Se non completata resta visibile nei giorni successivi (carry-over):
 // "date" resta il giorno pianificato, così si sa da quanto è in ritardo.
 model Daily {
-  id          String    @id @default(cuid())
-  title       String
+  id           String    @id @default(cuid())
+  title        String
   // Riga breve visibile nell'anteprima della card.
   description  String?
   // Come svolgerla, passo per passo: proposte dall'agente, modificabili dal team.
   instructions String?
-  notes       String?
+  notes        String?
   // Ordine scelto a mano trascinando le card; null = in coda, nell'ordine naturale.
-  position    Int?
-  date        DateTime  @db.Date
-  completedAt DateTime?
-  createdAt   DateTime  @default(now())
+  position     Int?
+  date         DateTime  @db.Date
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
 
   team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId String

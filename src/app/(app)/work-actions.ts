@@ -6,9 +6,11 @@ import { prisma } from "@/lib/prisma";
 import { requireSessionUser } from "@/lib/dal";
 import { isoToDateColumn } from "@/lib/dates";
 import { proposeDailyText } from "@/lib/agent/daily-text";
-import { notifyIfObjectiveReached, objectiveReached } from "@/lib/notifications";
+import { notifyIfObjectiveReached, objectiveReached, promoteAndNotify } from "@/lib/notifications";
+import { activeCountFor } from "@/lib/objective-queue";
+import { ACTIVE_LIMIT } from "@/lib/objective-status";
 import { DailySchema, ObjectiveSchema, ProjectSchema } from "@/lib/validation";
-import { AGENT_INSTRUCTIONS_MAX, HOME_TILE_IDS, PROJECT_AGENT_NOTES_MAX, MAX_STEPS, STEP_TITLE_MAX, type FormState, type StepOption } from "@/lib/types";
+import { AGENT_INSTRUCTIONS_MAX, HOME_TILE_IDS, PROJECT_AGENT_NOTES_MAX, MAX_STEPS, STEP_TITLE_MAX, type FormState, type ObjectiveLinkOption, type StepOption } from "@/lib/types";
 
 type SessionUser = Awaited<ReturnType<typeof requireSessionUser>>;
 
@@ -74,27 +76,58 @@ export async function saveObjective(objectiveId: string | null, _prev: FormState
     projectId: field(formData, "projectId"),
     assigneeId: field(formData, "assigneeId"),
     dueDate: field(formData, "dueDate"),
+    startDate: field(formData, "startDate"),
+    kind: field(formData, "kind") ?? "STANDARD",
+    status: field(formData, "status") ?? "QUEUED",
+    cadence: field(formData, "cadence"),
+    afterId: field(formData, "afterId") ?? "NONE",
+    umbrellaId: field(formData, "umbrellaId") ?? "NONE",
   });
   if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
+  const input = parsed.data;
 
-  const project = await prisma.project.findFirst({ where: { id: parsed.data.projectId, teamId: user.teamId } });
+  const project = await prisma.project.findFirst({ where: { id: input.projectId, teamId: user.teamId } });
   if (!project) return { message: "Il progetto selezionato non è valido." };
-  if (!(await isTeamMember(parsed.data.assigneeId, user.teamId))) {
+  if (!(await isTeamMember(input.assigneeId, user.teamId))) {
     return { message: "Il responsabile selezionato non fa parte del team." };
   }
 
+  const existing = objectiveId ? await prisma.objective.findFirst({ where: { id: objectiveId, teamId: user.teamId } }) : null;
+  if (objectiveId) {
+    if (!existing) return { message: "Obiettivo non trovato." };
+    if (!canManage(user, existing)) return { message: "Non hai i permessi per modificare questo obiettivo." };
+  }
+
+  // Coda e limite valgono solo per gli obiettivi normali: routine, consegne e ombrelli non aspettano in coda.
+  const status = input.kind !== "STANDARD" && input.status === "QUEUED" ? "ACTIVE" : input.status;
+  const afterId = input.afterId === "NONE" || input.kind !== "STANDARD" ? null : input.afterId;
+  const umbrellaId = input.umbrellaId === "NONE" || input.kind === "UMBRELLA" ? null : input.umbrellaId;
+
+  const links = await checkObjectiveLinks(user.teamId, objectiveId, afterId, umbrellaId);
+  if (links) return { message: links };
+
+  const becomesActive = status === "ACTIVE" && (existing?.status !== "ACTIVE" || existing.assigneeId !== input.assigneeId);
+  if (input.kind === "STANDARD" && becomesActive) {
+    const full = await activeLimitMessage(user.teamId, input.assigneeId, objectiveId);
+    if (full) return { message: full };
+  }
+
   const data = {
-    title: parsed.data.title,
-    description: parsed.data.description || null,
-    projectId: parsed.data.projectId,
-    assigneeId: parsed.data.assigneeId,
-    dueDate: parsed.data.dueDate ? isoToDateColumn(parsed.data.dueDate) : null,
+    title: input.title,
+    description: input.description || null,
+    projectId: input.projectId,
+    assigneeId: input.assigneeId,
+    dueDate: input.dueDate ? isoToDateColumn(input.dueDate) : null,
+    startDate: input.startDate ? isoToDateColumn(input.startDate) : null,
+    kind: input.kind,
+    status,
+    cadence: input.kind === "ROUTINE" ? input.cadence || null : null,
+    afterId,
+    umbrellaId,
+    ...(becomesActive ? { activatedAt: new Date() } : {}),
   };
 
   if (objectiveId) {
-    const existing = await prisma.objective.findFirst({ where: { id: objectiveId, teamId: user.teamId } });
-    if (!existing) return { message: "Obiettivo non trovato." };
-    if (!canManage(user, existing)) return { message: "Non hai i permessi per modificare questo obiettivo." };
     await prisma.objective.update({ where: { id: objectiveId }, data });
   } else {
     // Passi facoltativi alla creazione: uno per riga.
@@ -111,8 +144,71 @@ export async function saveObjective(objectiveId: string | null, _prev: FormState
     });
   }
 
+  watchQueue(user.teamId);
   refresh();
   return { ok: true };
+}
+
+/** "Parte dopo" e ombrello: obiettivi del team, non se stesso, niente catene circolari. */
+async function checkObjectiveLinks(teamId: string, selfId: string | null, afterId: string | null, umbrellaId: string | null) {
+  if (afterId) {
+    if (afterId === selfId) return "Un obiettivo non può partire dopo se stesso.";
+    // Risale la catena dei "Parte dopo" per evitare cicli (A dopo B, B dopo A).
+    let cursor: string | null = afterId;
+    for (let i = 0; cursor && i < 50; i++) {
+      const row: { id: string; afterId: string | null } | null = await prisma.objective.findFirst({
+        where: { id: cursor, teamId },
+        select: { id: true, afterId: true },
+      });
+      if (!row) return "L'obiettivo scelto in \"Parte dopo\" non è valido.";
+      if (selfId && row.afterId === selfId) return "Così si crea un giro: quell'obiettivo aspetta già questo.";
+      cursor = row.afterId;
+    }
+  }
+  if (umbrellaId) {
+    const umbrella = await prisma.objective.findFirst({ where: { id: umbrellaId, teamId, kind: "UMBRELLA" }, select: { id: true } });
+    if (!umbrella || umbrellaId === selfId) return "L'obiettivo ombrello scelto non è valido.";
+  }
+  return null;
+}
+
+/** Messaggio se la persona ha già il massimo di obiettivi attivi (escluso quello che si sta salvando). */
+async function activeLimitMessage(teamId: string, assigneeId: string, exceptId: string | null) {
+  if ((await activeCountFor(teamId, assigneeId, exceptId ?? undefined)) < ACTIVE_LIMIT) return null;
+  const person = await prisma.user.findUnique({ where: { id: assigneeId }, select: { name: true } });
+  return `${person?.name ?? "Questa persona"} ha già ${ACTIVE_LIMIT} obiettivi attivi: rimettine uno in coda o in pausa prima di attivarne un altro.`;
+}
+
+/** Cambia lo stato dal menù dell'obiettivo. Quando si libera un posto, parte il primo della coda. */
+export async function setObjectiveStatus(objectiveId: string, status: "ACTIVE" | "QUEUED" | "PAUSED"): Promise<{ ok: true } | { message: string }> {
+  const user = await requireSessionUser();
+  if (!["ACTIVE", "QUEUED", "PAUSED"].includes(status)) return { message: "Stato non valido." };
+  const existing = await prisma.objective.findFirst({ where: { id: objectiveId, teamId: user.teamId } });
+  if (!existing) return { message: "Obiettivo non trovato." };
+  if (!canManage(user, existing)) return { message: "Non hai i permessi per cambiare lo stato di questo obiettivo." };
+  if (existing.status === status) return { ok: true };
+  if (status === "ACTIVE" && existing.kind === "STANDARD") {
+    const full = await activeLimitMessage(user.teamId, existing.assigneeId, objectiveId);
+    if (full) return { message: full };
+  }
+  await prisma.objective.update({
+    where: { id: objectiveId },
+    data: { status, ...(status === "ACTIVE" ? { activatedAt: new Date() } : {}) },
+  });
+  watchQueue(user.teamId);
+  refresh();
+  return { ok: true };
+}
+
+/** Dopo la risposta all'utente: riempie i posti attivi liberi e manda le email di attivazione. */
+function watchQueue(teamId: string) {
+  after(async () => {
+    try {
+      await promoteAndNotify(teamId);
+    } catch (error) {
+      console.error("Coda degli obiettivi non aggiornata:", error);
+    }
+  });
 }
 
 /** Righe non vuote di un elenco, senza puntini o numeri messi a mano all'inizio. */
@@ -129,6 +225,7 @@ export async function deleteObjective(objectiveId: string) {
   if (!existing || !canManage(user, existing)) return;
   // Le daily collegate restano, diventano libere (onDelete: SetNull).
   await prisma.objective.delete({ where: { id: objectiveId } });
+  watchQueue(user.teamId);
   refresh();
 }
 
@@ -271,6 +368,12 @@ function watchObjectiveReached(objectiveId: string, userId: string) {
     } catch (error) {
       console.error("Email obiettivo raggiunto non inviata:", error);
     }
+    try {
+      const objective = await prisma.objective.findUnique({ where: { id: objectiveId }, select: { teamId: true } });
+      if (objective) await promoteAndNotify(objective.teamId);
+    } catch (error) {
+      console.error("Coda degli obiettivi non aggiornata:", error);
+    }
   });
 }
 
@@ -317,7 +420,7 @@ export async function saveHomeOrder(ids: string[]) {
   revalidatePath("/home");
 }
 
-// ─── Passi, metrica e focus degli obiettivi ──────────────────────────────────
+// ─── Passi e metrica degli obiettivi ──────────────────────────────────
 
 async function manageableObjective(user: SessionUser, objectiveId: string) {
   const objective = await prisma.objective.findFirst({ where: { id: objectiveId, teamId: user.teamId } });
@@ -416,15 +519,6 @@ export async function approveMetric(objectiveId: string) {
   refresh();
 }
 
-/** Mette o toglie un obiettivo dal focus del mese seguito dall'agente (solo amministratore). */
-export async function setFocus(objectiveId: string, inFocus: boolean) {
-  const user = await requireSessionUser();
-  if (user.role !== "ADMIN") return;
-  await prisma.objective.updateMany({ where: { id: objectiveId, teamId: user.teamId }, data: { inFocus } });
-  refresh();
-}
-
-/** Salva le istruzioni libere per l'agente pianificatore (solo amministratore). */
 /** Note per l'agente su un singolo progetto: solo l'amministratore. */
 export async function saveProjectAgentNotes(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requireSessionUser();
@@ -456,4 +550,15 @@ export async function saveAgentInstructions(_prev: FormState, formData: FormData
   await prisma.team.update({ where: { id: user.teamId }, data: { agentInstructions: text || null } });
   refresh();
   return { ok: true };
+}
+
+/** Obiettivi proposti nei campi "Parte dopo" e "Ombrello" della finestra dell'obiettivo. */
+export async function getObjectiveLinkOptions(): Promise<ObjectiveLinkOption[]> {
+  const user = await requireSessionUser();
+  const rows = await prisma.objective.findMany({
+    where: { teamId: user.teamId },
+    select: { id: true, title: true, kind: true, assignee: { select: { name: true } } },
+    orderBy: [{ assignee: { name: "asc" } }, { title: "asc" }],
+  });
+  return rows.map((r) => ({ id: r.id, title: r.title, kind: r.kind, assigneeName: r.assignee.name }));
 }

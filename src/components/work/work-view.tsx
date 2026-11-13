@@ -6,7 +6,7 @@ import { CalendarCheck2, FolderKanban, Plus, Target } from "lucide-react";
 import { DailyDialog } from "@/components/daily-dialog";
 import { DailyList } from "@/components/daily-list";
 import { EmptyState } from "@/components/empty-state";
-import { ObjectiveGrid } from "@/components/objective-grid";
+import { ObjectivesBoard } from "@/components/objectives-board";
 import { ObjectiveDialog } from "@/components/objective-dialog";
 import { ProjectCard } from "@/components/project-card";
 import { ProjectDialog } from "@/components/project-dialog";
@@ -23,7 +23,10 @@ export type TasksTab = "daily" | "obiettivi" | "progetti";
 
 const HEADINGS: Record<TasksTab, { title: string; subtitle: string }> = {
   daily: { title: "Daily", subtitle: "Le microtask di oggi e dei prossimi giorni. Quelle non spuntate passano al giorno dopo." },
-  obiettivi: { title: "Obiettivi", subtitle: "Ogni obiettivo avanza con le daily completate che gli sono collegate." },
+  obiettivi: {
+    title: "Obiettivi",
+    subtitle: "Al massimo 3 attivi a persona: quando uno arriva al 100% parte il primo della coda. Routine e consegne hanno posti propri.",
+  },
   progetti: { title: "Progetti", subtitle: "Le aree di lavoro del team e l'avanzamento medio dei loro obiettivi." },
 };
 export type Scope = "mine" | "team";
@@ -83,12 +86,10 @@ export function TasksView({
   const futureDays = [...new Set([...workingDays, ...upcoming.filter((d) => d.date <= horizon).map((d) => d.date)])].sort();
   const later = upcoming.filter((d) => d.date > horizon);
 
-  const visibleObjectives = mine(objectives).filter(
+  // Obiettivi: la persona si sceglie nella vista per stato, qui solo i filtri arrivati dai link.
+  const visibleObjectives = objectives.filter(
     (o) => (!projectFilter || o.project.id === projectFilter) && (!lateOnly || isObjectiveLate(o, today))
   );
-  const objectivesByProject = projects
-    .map((p) => ({ project: p, items: visibleObjectives.filter((o) => o.project.id === p.id) }))
-    .filter((g) => g.items.length > 0);
 
   const shared = { members, currentUserId, currentUserRole, today };
 
@@ -142,7 +143,7 @@ export function TasksView({
         <div className="shrink-0">{addButton}</div>
       </div>
 
-      {tab !== "progetti" && (
+      {tab === "daily" && (
         <div className="inline-flex self-start rounded-xl bg-surface-muted p-1 text-xs font-medium">
           {(
             [
@@ -247,24 +248,16 @@ export function TasksView({
                   : "Non ci sono ancora progetti: chiedi all'amministratore di crearne uno."
               }
             />
-          ) : objectivesByProject.length === 0 ? (
-            <EmptyState
-              icon={Target}
-              message={
-                lateOnly
-                  ? "Nessun obiettivo in ritardo."
-                  : scope === "mine"
-                    ? "Nessun obiettivo assegnato a te."
-                    : "Nessun obiettivo. Creane uno per iniziare."
-              }
-            />
+          ) : lateOnly && visibleObjectives.length === 0 ? (
+            <EmptyState icon={Target} message="Nessun obiettivo in ritardo." />
           ) : (
-            objectivesByProject.map(({ project, items }) => (
-              <section key={project.id} className="flex flex-col gap-2">
-                <h2 className="text-sm font-semibold text-muted-foreground">{project.name}</h2>
-                <ObjectiveGrid objectives={items} projects={projectOptions} objectiveOptions={objectiveOptions} {...shared} />
-              </section>
-            ))
+            <ObjectivesBoard
+              objectives={visibleObjectives}
+              initialPerson={scope === "team" ? "all" : currentUserId}
+              projects={projectOptions}
+              objectiveOptions={objectiveOptions}
+              {...shared}
+            />
           )}
         </div>
       )}

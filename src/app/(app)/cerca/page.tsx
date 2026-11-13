@@ -109,7 +109,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
               <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                 <Badge>{o.project.name}</Badge>
                 <Badge>{o.assignee.name}</Badge>
-                {o.inFocus && <Badge variant="primary">Focus</Badge>}
+                {o.kind === "STANDARD" && o.status === "ACTIVE" && <Badge variant="primary">Attivo</Badge>}
                 {o.dueDate && <Badge>Scadenza {formatISO(o.dueDate)}</Badge>}
               </div>
             </ResultLink>

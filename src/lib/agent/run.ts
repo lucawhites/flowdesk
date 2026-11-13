@@ -5,7 +5,7 @@ import { addDaysISO, isoToDateColumn } from "@/lib/dates";
 import { askClaude, AGENT_MODEL } from "@/lib/agent/claude";
 import { DAILY_TEXT_RULES } from "@/lib/agent/daily-text";
 import { DAILY_DESCRIPTION_MAX, DAILY_INSTRUCTIONS_MAX } from "@/lib/types";
-import { notifyIfObjectiveReached } from "@/lib/notifications";
+import { notifyIfObjectiveReached, promoteAndNotify } from "@/lib/notifications";
 import {
   MAX_POSTPONED_PER_PERSON,
   POSTPONE_HORIZON_DAYS,
@@ -39,6 +39,7 @@ const PlanSchema = z.object({
       key: z.string(),
       assigneeId: z.string(),
       objectiveId: z.string(),
+      // Vuoto ("") solo per le routine senza passi.
       stepId: z.string(),
       title: z.string(),
       description: z.string(),
@@ -54,29 +55,37 @@ const PlanSchema = z.object({
 
 const PLAN_SYSTEM = `${ELITTER}
 
-Sei l'agente pianificatore di Flowdesk. Ogni mattina feriale crei le "daily" del giorno: micro-attività concrete che, sommate, completano i passi degli obiettivi del focus del mese. Poi riorganizzi la giornata di ogni persona: metti le daily in ordine di priorità e, se serve, rimandi le meno urgenti.
+Sei l'agente pianificatore di Flowdesk. Ogni mattina feriale crei le "daily" del giorno: micro-attività concrete che, sommate, completano i passi degli obiettivi. Poi riorganizzi la giornata di ogni persona: metti le daily in ordine di priorità e, se serve, rimandi le meno urgenti.
 
-Ricevi in JSON: la data, le persone (aree di competenza, arretrati ancora aperti nell'ordine attuale, posti liberi oggi, assenze dal calendario), gli obiettivi in focus (area, responsabile, scadenza "dueDate", descrizione, metrica, passi in ordine con quello corrente, daily recenti) e "noteProgetti": contesto e regole dell'amministratore per progetto (chiave = area). Rispetta le descrizioni degli obiettivi e le note del loro progetto: contano come istruzioni dell'amministratore.
+Ricevi in JSON: la data, le persone (aree di competenza, arretrati ancora aperti nell'ordine attuale, posti liberi oggi, assenze dal calendario), gli "obiettivi" pianificabili oggi (area, responsabile, "role", scadenza "dueDate", descrizione, metrica, passi in ordine con quello corrente, daily recenti), "scadenzeInCoda" (obiettivi in coda con scadenza vicina che oggi non puoi far avanzare) e "noteProgetti": contesto e regole dell'amministratore per progetto (chiave = area). Rispetta le descrizioni degli obiettivi e le note del loro progetto: contano come istruzioni dell'amministratore.
+
+Il campo "role" dice la priorità di ogni obiettivo:
+- "consegna": consegna di Produzione con data fissa. Massima priorità quando la scadenza è vicina; usa i posti riservati alla Produzione.
+- "attivo": uno dei (massimo 3) obiettivi su cui la persona sta lavorando adesso. Qui va la maggior parte delle daily.
+- "routine": attività ricorrente con una cadenza ("cadence", es. "martedì e venerdì", "ogni giorno lavorativo"). Crea una daily solo nei giorni che la cadenza prevede e se tra arretrati e daily recenti non ce n'è già una aperta per quella routine. Le routine possono non avere passi: in quel caso "stepId" è "".
+- "coda": i primi obiettivi in coda della persona, non ancora attivi. Usa per loro SOLO i posti che restano liberi dopo aver coperto consegne, attivi e routine: anche più daily nello stesso giorno se c'è spazio, ma solo attività utili a prepararli (contatti, materiali, informazioni). Se attivi e consegne hanno lavoro da fare, la coda aspetta.
 
 Regole per le nuove daily:
 - Dai a ogni nuova daily una "key" diversa: "n1", "n2", …
 - Per ogni persona crea al massimo "freeSlots" daily (più una per ogni sua daily che rimandi, vedi sotto); se non ha posti liberi non crearne. I posti sono di due tipi: "freeSlotsGeneral" vale per qualsiasi area, "reservedSlots" (es. {"Produzione": 2, "GFP": 1}) vale solo per obiettivi di quell'area. Le daily di un'area riservata usano prima i suoi posti riservati, poi quelli generali; le altre solo quelli generali. Punta a riempire i posti liberi, ma solo con attività utili.
 - Assenze: chi ha "absentToday": true oggi non c'è e non riceve daily (ha 0 posti). Se è il responsabile di un obiettivo con un passo urgente, assegna la daily a un'altra persona con competenza in quell'area, se c'è. Chi ha "partlyAbsentToday": true è via qualche ora (vedi "partialAbsences"): dagli attività brevi. Tieni conto anche delle assenze dei prossimi giorni ("absentDays"): anticipa ciò che deve fare prima di partire.
-- Ogni daily è collegata a un obiettivo in focus e al suo passo corrente (currentStepId). Puoi usare il passo successivo solo se il corrente è già ben coperto da daily aperte.
+- Ogni daily è collegata a uno degli "obiettivi" ricevuti e al suo passo corrente (currentStepId). Puoi usare il passo successivo solo se il corrente è già ben coperto da daily aperte.
 - Assegna le daily a chi ha competenza nell'area dell'obiettivo; preferisci il responsabile dell'obiettivo. "Commerciale" vale come supporto all'area Sales. Non dare a una persona daily di aree che non sono sue.
 - Una daily si fa in mezza giornata al massimo: verbo all'infinito all'inizio, concreta e verificabile (es. "Scrivere a 5 boutique di Dubai con il catalogo bracciali"), massimo 110 caratteri, niente frasi vaghe come "lavorare su" o "approfondire".
 - ${DAILY_TEXT_RULES}
 - Non ripetere attività già presenti tra gli arretrati o tra le daily recenti non completate; costruisci sul lavoro già fatto (daily completate) per fare il passo successivo logico.
-- Distribuisci le daily tra più obiettivi della stessa persona nel corso della settimana, non tutte sullo stesso.
+- Distribuisci le daily tra gli obiettivi attivi della stessa persona nel corso della settimana, non tutte sullo stesso.
 - Usa solo gli id ricevuti, copiati esattamente.
 
 Regole per riorganizzare (campi "order" e "postpone"):
 - "order": per ogni persona che oggi ha almeno due daily aperte, elenca TUTTE le sue daily di oggi dalla più urgente alla meno urgente, usando l'id degli arretrati e la key delle nuove. Criteri, in ordine: scadenze vicine o già superate (dueDate dell'obiettivo, date citate nei titoli o nelle istruzioni dell'amministratore), poi ciò che sblocca il lavoro di altri, poi il resto. Se l'ordine attuale va già bene, ripetilo uguale.
 - "postpone": puoi spostare a un giorno lavorativo successivo (entro ${POSTPONE_HORIZON_DAYS} giorni, formato YYYY-MM-DD) solo arretrati con "byAgent": true, al massimo ${MAX_POSTPONED_PER_PERSON} per persona, e solo per fare posto a qualcosa di chiaramente più urgente o perché oggi quell'attività non si può fare. Non rimandare mai a un giorno in cui la persona è assente ("absentDays"). Ogni daily rimandata libera un posto per quella persona. In "reason" spiega il motivo in una frase.
 - Le daily create a mano dal team ("byAgent": false) non si rimandano mai. Nessuna daily si cancella o si riscrive. Nel dubbio non rimandare: lascia "postpone" vuoto.
-- In "note" scrivi una riga sul criterio usato oggi, citando eventuali daily rimandate.`;
+- In "note" scrivi una riga sul criterio usato oggi, citando eventuali daily rimandate. Se in "scadenzeInCoda" c'è un obiettivo che rischia la scadenza, segnalalo qui in una frase (chi, cosa, entro quando).`;
 
 export async function runPlan(teamId: string, today: string, opts: { dryRun?: boolean } = {}) {
+  // Prima di pianificare: posti attivi liberi e date di inizio arrivate fanno partire la coda.
+  if (!opts.dryRun) await promoteAndNotify(teamId).catch((e) => console.error("Coda degli obiettivi non aggiornata:", e));
   const ctx = await loadAgentContext(teamId, today);
   if (ctx.people.length > 0 && ctx.people.every((p) => p.absentToday)) {
     return logRun(teamId, today, "plan", "skipped", { summary: "Tutto il team è assente oggi secondo il calendario." });
@@ -84,9 +93,9 @@ export async function runPlan(teamId: string, today: string, opts: { dryRun?: bo
   const openCount = ctx.people.reduce((n, p) => n + p.backlog.length, 0);
   const totalSlots = ctx.people.reduce((n, p) => n + p.freeSlots, 0);
   // Anche senza posti liberi c'è lavoro da fare: riordinare o rimandare le daily aperte.
-  if (ctx.focus.length === 0 || (totalSlots === 0 && openCount === 0)) {
+  if (ctx.objectives.length === 0 || (totalSlots === 0 && openCount === 0)) {
     return logRun(teamId, today, "plan", "skipped", {
-      summary: ctx.focus.length === 0 ? "Nessun obiettivo nel focus del mese." : "Niente da pianificare.",
+      summary: ctx.objectives.length === 0 ? "Nessun obiettivo attivo." : "Niente da pianificare.",
     });
   }
 
@@ -105,7 +114,8 @@ export async function runPlan(teamId: string, today: string, opts: { dryRun?: bo
       absentDays: p.absentDays,
       partialAbsences: p.partialAbsences,
     })),
-    obiettiviInFocus: ctx.focus.filter((o) => o.currentStepId),
+    obiettivi: ctx.objectives.filter((o) => o.currentStepId || o.role === "routine"),
+    scadenzeInCoda: ctx.queueDeadlines,
     noteProgetti: ctx.projectNotes,
   };
 
@@ -145,11 +155,18 @@ export async function runPlan(teamId: string, today: string, opts: { dryRun?: bo
         return [p.id, limitSlots(slots, p.absentToday, p.partlyAbsentToday)] as const;
       }),
     );
-    const steps = new Map(ctx.focus.flatMap((o) => o.steps.map((s) => [s.id, o.id] as const)));
-    const areaOf = new Map(ctx.focus.map((o) => [o.id, o.area]));
-    const accepted = data.dailies.filter((d) => {
+    const steps = new Map(ctx.objectives.flatMap((o) => o.steps.map((s) => [s.id, o.id] as const)));
+    const areaOf = new Map(ctx.objectives.map((o) => [o.id, o.area]));
+    const roleOf = new Map(ctx.objectives.map((o) => [o.id, o.role]));
+    // Gli obiettivi in coda prendono solo i posti rimasti: si valutano per ultimi.
+    const byPriority = [...data.dailies].sort(
+      (a, b) => Number(roleOf.get(a.objectiveId) === "coda") - Number(roleOf.get(b.objectiveId) === "coda"),
+    );
+    const accepted = byPriority.filter((d) => {
       const left = remaining.get(d.assigneeId);
-      if (!left || left.freeSlots <= 0 || steps.get(d.stepId) !== d.objectiveId || !d.title.trim()) return false;
+      const role = roleOf.get(d.objectiveId);
+      const stepOk = d.stepId === "" ? role === "routine" : steps.get(d.stepId) === d.objectiveId;
+      if (!left || left.freeSlots <= 0 || !role || !stepOk || !d.title.trim()) return false;
       const area = reservedAreaOf(areaOf.get(d.objectiveId));
       if (area && (left.reservedSlots[area] ?? 0) > 0) left.reservedSlots[area] -= 1;
       else if (left.freeSlotsGeneral > 0) left.freeSlotsGeneral -= 1;
@@ -217,7 +234,7 @@ export async function runPlan(teamId: string, today: string, opts: { dryRun?: bo
               teamId,
               assigneeId: d.assigneeId,
               objectiveId: d.objectiveId,
-              stepId: d.stepId,
+              stepId: d.stepId || null,
               creatorId: ctx.adminId,
               agentRunId: run.id,
             },
@@ -241,9 +258,9 @@ const ReviewSchema = z.object({
 
 const REVIEW_SYSTEM = `${ELITTER}
 
-Sei l'agente pianificatore di Flowdesk e fai la revisione del lunedì sugli obiettivi del focus del mese.
+Sei l'agente pianificatore di Flowdesk e fai la revisione del lunedì sugli obiettivi attivi e sulle consegne.
 
-Ricevi in JSON la data, gli obiettivi in focus con descrizione, passi (fatti e da fare), metrica e daily delle ultime tre settimane (con data di completamento) e "noteProgetti" (contesto dell'amministratore per progetto, chiave = area).
+Ricevi in JSON la data, gli obiettivi attivi e le consegne con descrizione, passi (fatti e da fare), metrica e daily delle ultime tre settimane (con data di completamento) e "noteProgetti" (contesto dell'amministratore per progetto, chiave = area).
 
 Compiti:
 1. stepsCompleted: indica i passi NON ancora segnati come fatti che le daily completate dimostrano chiaramente conclusi. Sii prudente: un passo è fatto solo se il risultato del passo è raggiunto, non se ci si è solo lavorato. Nel dubbio non segnarlo.
@@ -253,23 +270,26 @@ Usa solo gli id ricevuti.`;
 
 export async function runReview(teamId: string, today: string, opts: { dryRun?: boolean } = {}) {
   const ctx = await loadAgentContext(teamId, today);
-  if (ctx.focus.length === 0) return logRun(teamId, today, "review", "skipped", { summary: "Nessun obiettivo nel focus del mese." });
+  const reviewed = ctx.objectives.filter((o) => o.role === "attivo" || o.role === "consegna");
+  if (reviewed.length === 0) return logRun(teamId, today, "review", "skipped", { summary: "Nessun obiettivo attivo." });
 
   try {
-    const input = { oggi: today, obiettiviInFocus: ctx.focus, noteProgetti: ctx.projectNotes };
+    const input = { oggi: today, obiettivi: reviewed, noteProgetti: ctx.projectNotes };
     const { data, usage, model } = await askClaude(withInstructions(REVIEW_SYSTEM, ctx.instructions), input, ReviewSchema);
 
-    const open = new Set(ctx.focus.flatMap((o) => o.steps.filter((s) => !s.done).map((s) => s.id)));
+    const open = new Set(reviewed.flatMap((o) => o.steps.filter((s) => !s.done).map((s) => s.id)));
     const toComplete = data.stepsCompleted.filter((s) => open.has(s.stepId));
     if (!opts.dryRun && toComplete.length > 0) {
       await prisma.objectiveStep.updateMany({ where: { id: { in: toComplete.map((s) => s.stepId) } }, data: { completedAt: new Date() } });
       // Se un passo segnato dall'agente chiude un obiettivo, il team riceve l'email.
       const doneIds = new Set(toComplete.map((s) => s.stepId));
-      for (const o of ctx.focus.filter((o) => o.steps.some((s) => doneIds.has(s.id)))) {
+      for (const o of reviewed.filter((o) => o.steps.some((s) => doneIds.has(s.id)))) {
         await notifyIfObjectiveReached(o.id, null).catch((e) => console.error("Email obiettivo raggiunto non inviata:", e));
       }
+      // Un obiettivo chiuso dalla revisione libera un posto: parte il primo della coda.
+      await promoteAndNotify(teamId).catch((e) => console.error("Coda degli obiettivi non aggiornata:", e));
     }
-    const focusIds = new Set(ctx.focus.map((o) => o.id));
+    const focusIds = new Set(reviewed.map((o) => o.id));
     return logRun(teamId, today, "review", opts.dryRun ? "dry" : "ok", {
       model,
       usage,

@@ -1,6 +1,11 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { addDaysISO, dateColumnToISO, isoToDateColumn, romeISO } from "@/lib/dates";
+import { objectiveProgressFrom } from "@/lib/progress";
+import { isReadyToStart, QUEUE_LOOKAHEAD } from "@/lib/objective-status";
+
+/** Fra quanti giorni una scadenza di un obiettivo in coda va segnalata. */
+const QUEUE_DEADLINE_WARNING_DAYS = 21;
 
 /** Massimo di daily aperte per persona in un giorno, arretrati inclusi. */
 export const MAX_DAILIES_PER_PERSON = 4;
@@ -119,19 +124,21 @@ export async function loadAgentContext(teamId: string, today: string) {
       select: { id: true, name: true, areas: true, role: true },
       orderBy: { name: "asc" },
     }),
+    // Attivi (normali, routine, consegne) e in coda; gli ombrelli non generano daily.
     prisma.objective.findMany({
-      where: { teamId, inFocus: true },
+      where: { teamId, status: { in: ["ACTIVE", "QUEUED"] }, kind: { not: "UMBRELLA" } },
       include: {
         project: { select: { name: true, agentNotes: true } },
         assignee: { select: { id: true, name: true } },
         steps: { orderBy: { position: "asc" } },
+        after: { select: { title: true, steps: { select: { completedAt: true } }, dailies: { select: { completedAt: true } } } },
         dailies: {
           where: { OR: [{ date: { gte: since } }, { completedAt: { gte: since } }] },
           include: { assignee: { select: { name: true } }, step: { select: { position: true } } },
           orderBy: { date: "asc" },
         },
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: [{ position: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }],
     }),
     // Arretrati: daily non completate pianificate fino a oggi (con il carry-over sono "di oggi").
     prisma.daily.findMany({
@@ -187,7 +194,41 @@ export async function loadAgentContext(teamId: string, today: string) {
     };
   });
 
-  const focus = objectives.map((o) => {
+  // Che ruolo ha ogni obiettivo nella pianificazione di oggi.
+  const reached = (o: { steps: { completedAt: Date | null }[]; dailies: { completedAt: Date | null }[] }) =>
+    objectiveProgressFrom(
+      { done: o.steps.filter((s) => s.completedAt).length, total: o.steps.length },
+      { done: o.dailies.filter((d) => d.completedAt).length, total: o.dailies.length },
+    ).reached;
+  const started = (o: (typeof objectives)[number]) => !o.startDate || dateColumnToISO(o.startDate) <= today;
+  const roleOf = new Map<string, "attivo" | "routine" | "consegna" | "coda">();
+  for (const o of objectives) {
+    if (o.status !== "ACTIVE" || !started(o)) continue;
+    if (o.kind === "ROUTINE") roleOf.set(o.id, "routine");
+    else if (reached(o)) continue;
+    else roleOf.set(o.id, o.kind === "DELIVERY" ? "consegna" : "attivo");
+  }
+  // In coda: per persona, i primi pronti a partire nell'ordine della coda (prima chi è appena sbloccato).
+  const queued = objectives.filter((o) => o.kind === "STANDARD" && o.status === "QUEUED");
+  for (const m of members) {
+    queued
+      .filter((o) => o.assigneeId === m.id && isReadyToStart({ startDate: o.startDate ? dateColumnToISO(o.startDate) : null, afterReached: o.after ? reached(o.after) : null }, today))
+      .slice(0, QUEUE_LOOKAHEAD)
+      .forEach((o) => roleOf.set(o.id, "coda"));
+  }
+  // Scadenze vicine di obiettivi in coda che l'agente non può ancora far avanzare: solo da segnalare.
+  const deadlineHorizon = addDaysISO(today, QUEUE_DEADLINE_WARNING_DAYS);
+  const queueDeadlines = queued
+    .filter((o) => !roleOf.has(o.id) && o.dueDate && dateColumnToISO(o.dueDate) <= deadlineHorizon)
+    .map((o) => ({
+      title: o.title,
+      owner: o.assignee.name,
+      dueDate: dateColumnToISO(o.dueDate!),
+      waitingFor: o.after && !reached(o.after) ? o.after.title : null,
+      startDate: o.startDate ? dateColumnToISO(o.startDate) : null,
+    }));
+
+  const planned = objectives.filter((o) => roleOf.has(o.id)).map((o) => {
     const current = o.steps.find((s) => !s.completedAt) ?? null;
     const lastDone = o.dailies
       .filter((d) => d.completedAt)
@@ -197,6 +238,8 @@ export async function loadAgentContext(teamId: string, today: string) {
     return {
       id: o.id,
       title: o.title,
+      role: roleOf.get(o.id)!,
+      cadence: o.kind === "ROUTINE" ? o.cadence : null,
       description: clip(o.description, OBJECTIVE_DESCRIPTION_FOR_AGENT),
       area: o.project.name,
       owner: o.assignee.name,
@@ -224,15 +267,15 @@ export async function loadAgentContext(teamId: string, today: string) {
     };
   });
 
-  // Note dell'amministratore, solo per i progetti che hanno obiettivi in focus.
+  // Note dell'amministratore, solo per i progetti degli obiettivi pianificabili oggi.
   const projectNotes: Record<string, string> = {};
-  for (const o of objectives) {
+  for (const o of objectives.filter((x) => roleOf.has(x.id))) {
     const notes = o.project.agentNotes?.trim();
     if (notes) projectNotes[o.project.name] = notes;
   }
 
   const admin = members.find((m) => m.role === "ADMIN") ?? members[0];
-  return { people, focus, projectNotes, adminId: admin.id, instructions: team?.agentInstructions?.trim() || null };
+  return { people, objectives: planned, queueDeadlines, projectNotes, adminId: admin.id, instructions: team?.agentInstructions?.trim() || null };
 }
 
 export type AgentContext = Awaited<ReturnType<typeof loadAgentContext>>;
