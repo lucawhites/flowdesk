@@ -10,7 +10,7 @@ export const MAX_DAILIES_PER_PERSON = 4;
  * obiettivi del progetto con lo stesso nome. Le sue daily di quell'area occupano prima
  * i posti riservati, poi quelli normali.
  */
-export const RESERVED_SLOTS: Record<string, number> = { Produzione: 2, GFP: 2 };
+export const RESERVED_SLOTS: Record<string, number> = { Produzione: 2, GFP: 2, Sales: 2 };
 
 /** Quante daily (solo create dall'agente) l'agente può rimandare a persona in una mattina. */
 export const MAX_POSTPONED_PER_PERSON = 2;
