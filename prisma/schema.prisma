@@ -149,7 +149,7 @@ model ObjectiveStep {
 // Registro delle esecuzioni dell'agente (pianificazione e revisione).
 model AgentRun {
   id           String    @id @default(cuid())
-  kind         String    // "plan" | "review"
+  kind         String    // "plan" | "review" | "assist" (pulsante "Proponi istruzioni")
   status       String    // "ok" | "dry" (prova, nulla salvato) | "error" | "skipped"
   day          DateTime  @db.Date
   model        String?
@@ -176,6 +176,10 @@ model AgentRun {
 model Daily {
   id          String    @id @default(cuid())
   title       String
+  // Riga breve visibile nell'anteprima della card.
+  description  String?
+  // Come svolgerla, passo per passo: proposte dall'agente, modificabili dal team.
+  instructions String?
   notes       String?
   // Ordine scelto a mano trascinando le card; null = in coda, nell'ordine naturale.
   position    Int?

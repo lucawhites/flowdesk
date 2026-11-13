@@ -14,17 +14,22 @@ export type AgentUsage = { inputTokens: number; outputTokens: number; costUsd: n
  * Fallback lato server attivo: se Opus rifiuta, la stessa richiesta passa al
  * modello di riserva scelto da Anthropic invece di fallire.
  */
-export async function askClaude<T extends z.ZodType>(system: string, input: unknown, schema: T) {
+export async function askClaude<T extends z.ZodType>(
+  system: string,
+  input: unknown,
+  schema: T,
+  opts: { effort?: "low" | "medium"; maxTokens?: number } = {},
+) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY non impostata");
   const client = new Anthropic({ apiKey, timeout: 240_000 });
 
   const response = await client.beta.messages.parse({
     model: AGENT_MODEL,
-    max_tokens: 16000,
+    max_tokens: opts.maxTokens ?? 16000,
     betas: ["server-side-fallback-2026-07-01"],
     fallbacks: "default",
-    output_config: { effort: "medium", format: betaZodOutputFormat(schema) },
+    output_config: { effort: opts.effort ?? "medium", format: betaZodOutputFormat(schema) },
     system,
     messages: [{ role: "user", content: JSON.stringify(input, null, 1) }],
   });

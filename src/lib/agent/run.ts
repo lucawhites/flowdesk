@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { addDaysISO, isoToDateColumn } from "@/lib/dates";
 import { askClaude, AGENT_MODEL } from "@/lib/agent/claude";
+import { DAILY_TEXT_RULES } from "@/lib/agent/daily-text";
+import { DAILY_DESCRIPTION_MAX, DAILY_INSTRUCTIONS_MAX } from "@/lib/types";
 import { notifyIfObjectiveReached } from "@/lib/notifications";
 import {
   MAX_POSTPONED_PER_PERSON,
@@ -39,6 +41,8 @@ const PlanSchema = z.object({
       objectiveId: z.string(),
       stepId: z.string(),
       title: z.string(),
+      description: z.string(),
+      instructions: z.string(),
     }),
   ),
   // Daily già esistenti da spostare a un altro giorno.
@@ -61,6 +65,7 @@ Regole per le nuove daily:
 - Ogni daily è collegata a un obiettivo in focus e al suo passo corrente (currentStepId). Puoi usare il passo successivo solo se il corrente è già ben coperto da daily aperte.
 - Assegna le daily a chi ha competenza nell'area dell'obiettivo; preferisci il responsabile dell'obiettivo. "Commerciale" vale come supporto all'area Sales. Non dare a una persona daily di aree che non sono sue.
 - Una daily si fa in mezza giornata al massimo: verbo all'infinito all'inizio, concreta e verificabile (es. "Scrivere a 5 boutique di Dubai con il catalogo bracciali"), massimo 110 caratteri, niente frasi vaghe come "lavorare su" o "approfondire".
+- ${DAILY_TEXT_RULES}
 - Non ripetere attività già presenti tra gli arretrati o tra le daily recenti non completate; costruisci sul lavoro già fatto (daily completate) per fare il passo successivo logico.
 - Distribuisci le daily tra più obiettivi della stessa persona nel corso della settimana, non tutte sullo stesso.
 - Usa solo gli id ricevuti, copiati esattamente.
@@ -205,6 +210,8 @@ export async function runPlan(teamId: string, today: string, opts: { dryRun?: bo
           prisma.daily.create({
             data: {
               title: d.title.trim().slice(0, 200),
+              description: d.description.trim().slice(0, DAILY_DESCRIPTION_MAX) || null,
+              instructions: d.instructions.trim().slice(0, DAILY_INSTRUCTIONS_MAX) || null,
               date: isoToDateColumn(today),
               position: positions.get(d.key) ?? null,
               teamId,
@@ -276,10 +283,10 @@ export async function runReview(teamId: string, today: string, opts: { dryRun?: 
 
 // ─── Registro ────────────────────────────────────────────────────────────────
 
-async function logRun(
+export async function logRun(
   teamId: string,
   today: string,
-  kind: "plan" | "review",
+  kind: "plan" | "review" | "assist",
   status: "ok" | "dry" | "error" | "skipped",
   extra: {
     model?: string;

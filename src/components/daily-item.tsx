@@ -2,9 +2,9 @@
 
 import { useOptimistic, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
-import { Pencil, Sparkles, StickyNote, Target, Trash2, Undo2 } from "lucide-react";
+import { Loader2, Pencil, Sparkles, StickyNote, Target, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
-import { deleteDaily, toggleDaily } from "@/app/(app)/work-actions";
+import { deleteDaily, proposeDailyInstructions, toggleDaily } from "@/app/(app)/work-actions";
 import { DailyDialog } from "@/components/daily-dialog";
 import { ItemMenu } from "@/components/item-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -102,6 +102,9 @@ export function DailyRow({
         >
           {daily.title}
         </button>
+        {daily.description && (
+          <p className={cn("mt-0.5 line-clamp-2 text-xs text-muted-foreground", done && "line-through")}>{daily.description}</p>
+        )}
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
           {daily.objective && (
             <Link href={`/obiettivi/${daily.objective.id}`} className="max-w-full rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -213,34 +216,62 @@ export function DailyRow({
             </DialogDescription>
           </DialogHeader>
 
+          {daily.description && <p className="pb-1 text-sm text-foreground">{daily.description}</p>}
+
           <dl className="flex flex-col gap-3 text-sm">
             <DetailLine label="Giorno">{formatISO(daily.date, "EEEE d MMMM yyyy")}</DetailLine>
             <DetailLine label="Responsabile">{daily.assignee.name}</DetailLine>
-            <DetailLine label="Obiettivo">
-              {daily.objective ? (
-                <Link href={`/obiettivi/${daily.objective.id}`} className="font-medium text-accent hover:underline">
-                  {daily.objective.title}
-                </Link>
-              ) : (
-                <span className="text-muted-foreground">Nessuno (daily libera)</span>
-              )}
-              {daily.objective && <span className="block text-xs text-muted-foreground">{daily.objective.projectName}</span>}
-            </DetailLine>
-            {daily.step && (
-              <DetailLine label="Passo">
-                {daily.step.title}
-                {daily.step.done && <span className="ml-1.5 text-xs text-success">✓ fatto</span>}
-              </DetailLine>
-            )}
-            {daily.byAgent && <DetailLine label="Origine">Creata dall&apos;agente pianificatore</DetailLine>}
-            <DetailLine label="Note">
-              {daily.notes ? (
-                <span className="whitespace-pre-wrap">{daily.notes}</span>
-              ) : (
-                <span className="text-muted-foreground">Nessuna nota</span>
-              )}
-            </DetailLine>
           </dl>
+
+          <DetailSection
+            title="Istruzioni"
+            action={
+              canManage && !daily.instructions ? <ProposeInstructionsButton dailyId={daily.id} /> : undefined
+            }
+          >
+            {daily.instructions ? (
+              <p className="whitespace-pre-wrap">{daily.instructions}</p>
+            ) : (
+              <p className="text-muted-foreground">Nessuna istruzione</p>
+            )}
+          </DetailSection>
+
+          <DetailSection title="Note">
+            {daily.notes ? (
+              <p className="whitespace-pre-wrap">{daily.notes}</p>
+            ) : (
+              <p className="text-muted-foreground">Nessuna nota</p>
+            )}
+          </DetailSection>
+
+          <DetailSection title="Origine">
+            <dl className="flex flex-col gap-2">
+              {daily.objective ? (
+                <>
+                  <DetailLine label="Progetto">{daily.objective.projectName}</DetailLine>
+                  <DetailLine label="Obiettivo">
+                    <Link href={`/obiettivi/${daily.objective.id}`} className="font-medium text-accent hover:underline">
+                      {daily.objective.title}
+                    </Link>
+                  </DetailLine>
+                  {daily.step && (
+                    <DetailLine label="Passo">
+                      {daily.step.title}
+                      {daily.step.done && <span className="ml-1.5 text-xs text-success">✓ fatto</span>}
+                    </DetailLine>
+                  )}
+                </>
+              ) : (
+                <DetailLine label="Obiettivo">
+                  <span className="text-muted-foreground">Nessuno (daily libera)</span>
+                </DetailLine>
+              )}
+              <DetailLine label="Creata">
+                {daily.byAgent ? "Dall'agente pianificatore" : `Da ${daily.creatorName}`}, {formatISO(daily.createdOn, "d MMMM")}
+              </DetailLine>
+              {carried && !done && <DetailLine label="Riportata">Dal {formatISO(daily.date, "d MMMM")}</DetailLine>}
+            </dl>
+          </DetailSection>
 
           <DialogFooter className="flex-wrap">
             {canManage &&
@@ -272,5 +303,40 @@ function DetailLine({ label, children }: { label: string; children: ReactNode })
       <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
       <dd className="min-w-0 text-foreground">{children}</dd>
     </div>
+  );
+}
+
+function DetailSection({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="mt-1 flex flex-col gap-2 border-t border-border pt-3 text-sm">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3>
+        {action}
+      </div>
+      <div className="text-foreground">{children}</div>
+    </section>
+  );
+}
+
+/** Fa scrivere all'agente descrizione (se manca) e istruzioni, e le salva sulla daily. */
+function ProposeInstructionsButton({ dailyId }: { dailyId: string }) {
+  const [pending, startTransition] = useTransition();
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      disabled={pending}
+      onClick={() =>
+        startTransition(async () => {
+          const result = await proposeDailyInstructions(dailyId);
+          if ("error" in result) toast.error(result.error);
+          else toast.success("Istruzioni aggiunte: puoi modificarle da Modifica");
+        })
+      }
+    >
+      {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+      {pending ? "Sto scrivendo…" : "Proponi istruzioni"}
+    </Button>
   );
 }

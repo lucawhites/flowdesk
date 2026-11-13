@@ -10,6 +10,7 @@ const byPosition = { position: { sort: "asc", nulls: "last" } } as const;
 
 const dailyInclude = {
   assignee: person,
+  creator: person,
   objective: { select: { id: true, title: true, project: { select: { name: true } } } },
   step: { select: { id: true, title: true, completedAt: true } },
 } as const;
@@ -17,11 +18,15 @@ const dailyInclude = {
 type DailyRowData = {
   id: string;
   title: string;
+  description: string | null;
+  instructions: string | null;
   notes: string | null;
   position: number | null;
   date: Date;
   completedAt: Date | null;
+  createdAt: Date;
   creatorId: string;
+  creator: { id: string; name: string };
   agentRunId: string | null;
   assignee: { id: string; name: string };
   objective: { id: string; title: string; project: { name: string } } | null;
@@ -32,12 +37,16 @@ function toDailyItem(d: DailyRowData): DailyItem {
   return {
     id: d.id,
     title: d.title,
+    description: d.description,
+    instructions: d.instructions,
     notes: d.notes,
     position: d.position,
     date: dateColumnToISO(d.date),
     completedOn: d.completedAt ? romeISO(d.completedAt) : null,
     assignee: d.assignee,
     creatorId: d.creatorId,
+    creatorName: d.creator.name,
+    createdOn: romeISO(d.createdAt),
     objective: d.objective
       ? { id: d.objective.id, title: d.objective.title, projectName: d.objective.project.name }
       : null,
@@ -197,7 +206,7 @@ export async function searchTeam(teamId: string, query: string) {
       take: SEARCH_LIMIT,
     }),
     prisma.daily.findMany({
-      where: { teamId, OR: [{ title: has }, { notes: has }] },
+      where: { teamId, OR: [{ title: has }, { description: has }, { instructions: has }, { notes: has }] },
       include: dailyInclude,
       // Prima le più recenti: chi cerca di solito vuole l'ultima volta che se n'è parlato.
       orderBy: [{ date: "desc" }, { createdAt: "desc" }],

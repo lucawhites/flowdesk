@@ -21,7 +21,7 @@ export async function AgentPanel({ teamId, isAdmin }: { teamId: string; isAdmin:
   const [team, runs, review, month, members] = await Promise.all([
     // Le istruzioni le legge solo l'admin: agli altri non arrivano nemmeno nella pagina.
     isAdmin ? prisma.team.findUnique({ where: { id: teamId }, select: { agentInstructions: true } }) : null,
-    prisma.agentRun.findMany({ where: { teamId }, orderBy: { startedAt: "desc" }, take: 6 }),
+    prisma.agentRun.findMany({ where: { teamId, kind: { in: ["plan", "review"] } }, orderBy: { startedAt: "desc" }, take: 6 }),
     prisma.agentRun.findFirst({ where: { teamId, kind: "review", status: "ok" }, orderBy: { startedAt: "desc" } }),
     prisma.agentRun.aggregate({ where: { teamId, day: { gte: monthStart } }, _sum: { costUsd: true } }),
     prisma.user.findMany({ where: { teamId }, select: { name: true, areas: true }, orderBy: { name: "asc" } }),

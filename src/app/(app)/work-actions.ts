@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSessionUser } from "@/lib/dal";
 import { isoToDateColumn } from "@/lib/dates";
+import { proposeDailyText } from "@/lib/agent/daily-text";
 import { notifyIfObjectiveReached, objectiveReached } from "@/lib/notifications";
 import { DailySchema, ObjectiveSchema, ProjectSchema } from "@/lib/validation";
 import { AGENT_INSTRUCTIONS_MAX, HOME_TILE_IDS, PROJECT_AGENT_NOTES_MAX, MAX_STEPS, STEP_TITLE_MAX, type FormState, type StepOption } from "@/lib/types";
@@ -141,6 +142,8 @@ export async function saveDaily(dailyId: string | null, _prev: FormState, formDa
     date: field(formData, "date"),
     assigneeId: field(formData, "assigneeId"),
     objectiveId: field(formData, "objectiveId") ?? "NONE",
+    description: field(formData, "description"),
+    instructions: field(formData, "instructions"),
     notes: field(formData, "notes"),
   });
   if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
@@ -167,6 +170,8 @@ export async function saveDaily(dailyId: string | null, _prev: FormState, formDa
     assigneeId: parsed.data.assigneeId,
     objectiveId,
     stepId,
+    description: parsed.data.description || null,
+    instructions: parsed.data.instructions || null,
     notes: parsed.data.notes || null,
   };
 
@@ -179,6 +184,63 @@ export async function saveDaily(dailyId: string | null, _prev: FormState, formDa
     await prisma.daily.create({ data: { ...data, teamId: user.teamId, creatorId: user.id } });
   }
 
+  refresh();
+  return { ok: true };
+}
+
+/**
+ * Pulsante "Proponi istruzioni" nella finestra di creazione/modifica: l'agente propone
+ * descrizione e istruzioni a partire da quanto inserito finora (niente viene salvato).
+ */
+export async function suggestDailyText(input: {
+  title: string;
+  notes: string;
+  assigneeId: string;
+  objectiveId: string;
+  stepId: string;
+}): Promise<{ description: string; instructions: string } | { error: string }> {
+  const user = await requireSessionUser();
+  const title = input.title.trim();
+  if (title.length < 2) return { error: "Scrivi prima cosa c'è da fare." };
+  const objectiveId = input.objectiveId && input.objectiveId !== "NONE" ? input.objectiveId : null;
+  const stepId = objectiveId && input.stepId && input.stepId !== "NONE" ? input.stepId : null;
+  try {
+    return await proposeDailyText(user.teamId, {
+      title: title.slice(0, 200),
+      notes: input.notes.trim().slice(0, 2000) || null,
+      assigneeId: input.assigneeId,
+      objectiveId,
+      stepId,
+    });
+  } catch (e) {
+    console.error("Proposta istruzioni non riuscita:", e);
+    return { error: "L'agente non ha risposto. Riprova tra poco." };
+  }
+}
+
+/** Pulsante "Proponi istruzioni" nella finestra di dettaglio: propone e salva subito. */
+export async function proposeDailyInstructions(dailyId: string): Promise<{ ok: true } | { error: string }> {
+  const user = await requireSessionUser();
+  const daily = await prisma.daily.findFirst({ where: { id: dailyId, teamId: user.teamId } });
+  if (!daily) return { error: "Daily non trovata." };
+  if (!canManage(user, daily)) return { error: "Non hai i permessi per modificare questa daily." };
+  try {
+    const text = await proposeDailyText(user.teamId, {
+      title: daily.title,
+      notes: daily.notes,
+      assigneeId: daily.assigneeId,
+      objectiveId: daily.objectiveId,
+      stepId: daily.stepId,
+    });
+    // La descrizione già scritta da qualcuno non si tocca.
+    await prisma.daily.update({
+      where: { id: dailyId },
+      data: { instructions: text.instructions || null, description: daily.description ?? (text.description || null) },
+    });
+  } catch (e) {
+    console.error("Proposta istruzioni non riuscita:", e);
+    return { error: "L'agente non ha risposto. Riprova tra poco." };
+  }
   refresh();
   return { ok: true };
 }

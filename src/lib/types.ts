@@ -16,6 +16,10 @@ export type Person = { id: string; name: string };
 export type DailyItem = {
   id: string;
   title: string;
+  /** Riga breve mostrata nell'anteprima della card. */
+  description: string | null;
+  /** Come svolgerla: proposte dall'agente, modificabili. */
+  instructions: string | null;
   notes: string | null;
   /** Ordine scelto a mano; null = in coda. */
   position: number | null;
@@ -24,6 +28,9 @@ export type DailyItem = {
   completedOn: string | null;
   assignee: Person;
   creatorId: string;
+  creatorName: string;
+  /** Giorno di creazione (fuso italiano). */
+  createdOn: string;
   objective: { id: string; title: string; projectName: string } | null;
   step: { id: string; title: string; done: boolean } | null;
   /** Creata dall'agente pianificatore. */
@@ -62,6 +69,10 @@ export type ObjectiveMetric = {
 
 /** dailies = quante daily sono collegate al passo (servono all'avviso prima di cancellarlo). */
 export type ObjectiveStepItem = { id: string; position: number; title: string; done: boolean; dailies: number };
+
+/** Limiti dei testi di una daily. */
+export const DAILY_DESCRIPTION_MAX = 200;
+export const DAILY_INSTRUCTIONS_MAX = 3000;
 
 /** Limiti dei passi di un obiettivo. */
 export const STEP_TITLE_MAX = 200;
