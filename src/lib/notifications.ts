@@ -59,8 +59,9 @@ export async function notifyIfObjectiveReached(objectiveId: string, closedByUser
   if (!(await objectiveReached(objectiveId))) return;
 
   // Segna l'invio prima di inviare: se due spunte arrivano insieme parte un'email sola.
+  // Le routine non si "raggiungono" mai (100% vuol dire solo che le daily di oggi sono fatte).
   const claimed = await prisma.objective.updateMany({
-    where: { id: objectiveId, reachedNotifiedAt: null },
+    where: { id: objectiveId, reachedNotifiedAt: null, kind: { not: "ROUTINE" } },
     data: { reachedNotifiedAt: new Date() },
   });
   if (claimed.count === 0) return;
