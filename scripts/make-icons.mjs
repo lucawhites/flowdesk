@@ -1,4 +1,4 @@
-// Rigenera le icone dell'app (anello di avanzamento in vetro su fondo scuro, variante "A").
+// Rigenera le icone dell'app (anello di avanzamento in vetro su fondo crema, variante "B", vetro chiaro).
 // Uso: node scripts/make-icons.mjs
 // Se cambi il disegno, aggiorna anche src/components/app-logo.tsx.
 import sharp from "sharp";
@@ -6,7 +6,7 @@ import sharp from "sharp";
 const defs = `
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#34322d"/><stop offset="1" stop-color="#0d0d0c"/>
+      <stop offset="0" stop-color="#fbf8f2"/><stop offset="1" stop-color="#e6dfd2"/>
     </linearGradient>
     <linearGradient id="orange" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#f09a77"/><stop offset="1" stop-color="#c4613f"/>
@@ -34,12 +34,11 @@ const check = (stroke) =>
 // (cerchio centrale dell'80%) senza uscirne.
 const art = `
   <g transform="translate(50 50) scale(1.25) translate(-50 -50)">
-    <circle cx="50" cy="50" r="26" fill="none" stroke="#fff" stroke-width="9" opacity="0.07"/>
-    <g filter="url(#glow)" opacity="0.7">${arc("#d97757", 12)}</g>
-    ${arc("url(#orange)", 9)}
-    <g transform="translate(-1.6 -1.6)" opacity="0.55" filter="url(#soft)">${arc("#fff", 2.2)}</g>
-    <g transform="translate(0 1.2)" opacity="0.35" filter="url(#shadow)">${check("#000")}</g>
-    ${check("#f7f3ea")}
+    <circle cx="50" cy="50" r="26" fill="none" stroke="#141413" stroke-width="9" opacity="0.08"/>
+    <g filter="url(#glow)" opacity="0.45">${arc("#d97757", 11)}</g>
+    <g opacity="0.92">${arc("url(#orange)", 9)}</g>
+    <g transform="translate(-1.6 -1.6)" opacity="0.75" filter="url(#soft)">${arc("#fff", 2.4)}</g>
+    ${check("#141413")}
   </g>`;
 
 // rx 22 = angoli arrotondati; rx 0 = a tutto campo (iPhone e icone "maskable"
@@ -48,7 +47,7 @@ const svg = (rx) =>
   Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${defs}
       <rect width="100" height="100" rx="${rx}" fill="url(#bg)"/>${art}
-      <rect width="100" height="100" rx="${rx}" fill="url(#sheen)" opacity="0.2"/>
+      <rect width="100" height="100" rx="${rx}" fill="url(#sheen)" opacity="0.35"/>
       ${rx ? `<rect x="0.6" y="0.6" width="98.8" height="98.8" rx="${rx - 0.5}" fill="none" stroke="url(#edge)" stroke-width="1.2"/>` : ""}
     </svg>`,
   );
