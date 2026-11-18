@@ -1,7 +1,7 @@
 import { useId } from "react";
 
-// Marchio Flowdesk: lo stesso disegno dell'icona dell'app (scripts/make-icons.mjs, variante "vetro chiaro").
-// Colori fissi in entrambi i temi; il bordo sottile lo stacca dal fondo chiaro.
+// Marchio Flowdesk: lo stesso disegno dell'icona dell'app (scripts/make-icons.mjs, variante "vetro scuro").
+// Colori fissi in entrambi i temi; il bordo sottile lo stacca dal fondo scuro.
 // Gli id dei gradienti sono unici per ogni logo: due loghi nella stessa pagina (uno nascosto) non si disturbano.
 export function AppLogo({ className = "h-8 w-8" }: { className?: string }) {
   const id = useId().replace(/:/g, "");
@@ -13,8 +13,8 @@ export function AppLogo({ className = "h-8 w-8" }: { className?: string }) {
     <svg viewBox="0 0 100 100" aria-hidden="true" className={`${className} shrink-0 rounded-[22%] ring-1 ring-border`}>
       <defs>
         <linearGradient id={`${id}-bg`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#fbf8f2" />
-          <stop offset="1" stopColor="#e6dfd2" />
+          <stop offset="0" stopColor="#34322d" />
+          <stop offset="1" stopColor="#0d0d0c" />
         </linearGradient>
         <linearGradient id={`${id}-orange`} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#f09a77" />
@@ -34,17 +34,17 @@ export function AppLogo({ className = "h-8 w-8" }: { className?: string }) {
       </defs>
       <rect width="100" height="100" fill={ref("bg")} />
       <g transform="translate(50 50) scale(1.25) translate(-50 -50)">
-        <circle cx="50" cy="50" r="26" fill="none" stroke="#141413" strokeWidth="9" opacity="0.08" />
-        <g filter={ref("glow")} opacity="0.45">
-          <circle {...arc} stroke="#d97757" strokeWidth="11" />
+        <circle cx="50" cy="50" r="26" fill="none" stroke="#fff" strokeWidth="9" opacity="0.07" />
+        <g filter={ref("glow")} opacity="0.7">
+          <circle {...arc} stroke="#d97757" strokeWidth="12" />
         </g>
-        <circle {...arc} stroke={ref("orange")} strokeWidth="9" opacity="0.92" />
-        <g transform="translate(-1.6 -1.6)" opacity="0.75" filter={ref("soft")}>
-          <circle {...arc} stroke="#fff" strokeWidth="2.4" />
+        <circle {...arc} stroke={ref("orange")} strokeWidth="9" />
+        <g transform="translate(-1.6 -1.6)" opacity="0.55" filter={ref("soft")}>
+          <circle {...arc} stroke="#fff" strokeWidth="2.2" />
         </g>
-        <path {...check} stroke="#141413" />
+        <path {...check} stroke="#f7f3ea" />
       </g>
-      <rect width="100" height="100" fill={ref("sheen")} opacity="0.35" />
+      <rect width="100" height="100" fill={ref("sheen")} opacity="0.2" />
     </svg>
   );
 }
