@@ -2,6 +2,7 @@
 
 import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { syncThemeColor } from "@/lib/theme-color";
 
 /**
  * Interruttore chiaro/scuro in stile iPhone. Lo stato vive in <html data-theme>.
@@ -11,6 +12,7 @@ export function ThemeToggle({ className }: { className?: string }) {
   function toggle() {
     const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = next;
+    syncThemeColor();
     try {
       localStorage.setItem("theme", next);
     } catch {

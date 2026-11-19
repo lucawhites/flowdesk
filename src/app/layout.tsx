@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { SPLASH_SCREENS } from "@/lib/splash-screens";
+import { THEME_COLORS } from "@/lib/theme-color";
 
 // Applica tema e dimensione del testo prima del primo disegno, per evitare lampi e salti.
 const themeScript = `(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.dataset.theme=t;var z=localStorage.getItem("textSize");if(z==="s"||z==="l"||z==="xl"){document.documentElement.dataset.textSize=z}}catch(e){}})()`;
@@ -24,10 +25,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  // Colore della barra di stato e della barra di Safari, uguale allo sfondo dell'app nei due temi.
+  // Colore iniziale della barra di stato; poi segue il tema scelto in Flowdesk (src/lib/theme-color.ts).
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f6f7" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0b0c" },
+    { media: "(prefers-color-scheme: light)", color: THEME_COLORS.light },
+    { media: "(prefers-color-scheme: dark)", color: THEME_COLORS.dark },
   ],
 };
 

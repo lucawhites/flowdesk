@@ -22,7 +22,7 @@ const TABS = [
 // icone del colore del testo; la sezione attiva ha icona arancio e una capsula di vetro grigio
 // chiaro dietro icona e scritta (stili in globals.css, .tab-capsule).
 const item =
-  "my-1.5 flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[1.75rem] text-[0.6875rem] font-semibold outline-none transition-[transform,background-color] duration-150 active:scale-[0.94] focus-visible:ring-2 focus-visible:ring-ring";
+  "my-1.5 flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[1.75rem] text-[0.65rem] font-semibold tracking-[-0.01em] outline-none transition-[transform,background-color] duration-150 active:scale-[0.94] focus-visible:ring-2 focus-visible:ring-ring";
 
 export function TabBar() {
   const pathname = usePathname();
@@ -31,7 +31,7 @@ export function TabBar() {
     <nav
       aria-label="Sezioni"
       style={{ viewTransitionName: "app-tabbar" }}
-      className="tab-capsule fixed inset-x-3 bottom-[max(0.75rem,calc(env(safe-area-inset-bottom)-0.375rem))] z-30 flex h-[4.25rem] rounded-[2.25rem] border px-1.5 md:hidden"
+      className="tab-capsule fixed inset-x-2 bottom-[max(0.75rem,calc(env(safe-area-inset-bottom)-0.375rem))] z-30 flex h-[4.25rem] rounded-[2.25rem] border px-1 md:hidden"
     >
       {TABS.map(({ href, label, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);
