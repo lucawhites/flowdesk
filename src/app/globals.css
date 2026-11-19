@@ -511,6 +511,17 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
   }
 }
 
+/* iPhone: il tocco lungo sulla barra non deve selezionare il testo né aprire il menù
+   Copia / anteprima del link, altrimenti interrompe il trascinamento della lente. */
+.tab-capsule,
+.tab-capsule * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* Capsula della sezione attiva: scivola tra le voci con effetto molla (src/components/tab-bar.tsx). */
 .tab-lens {
   background: var(--cap-active);

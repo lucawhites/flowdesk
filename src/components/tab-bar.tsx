@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 // Icone piene (Fluent), come i simboli delle app iPhone: in arancio sulla sezione attiva si notano
@@ -35,6 +35,18 @@ export function TabBar() {
   const pathname = usePathname();
   const router = useRouter();
   const trackRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
+
+  // iPhone: col dito sulla barra niente gesti di sistema (selezione del testo, menù Copia,
+  // anteprima del link). Il tocco semplice e il trascinamento li gestiscono i pointer qui sotto;
+  // il "click" del dito non arriva più, quindi la navigazione al tocco parte da onPointerUp.
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const block = (e: TouchEvent) => e.preventDefault();
+    nav.addEventListener("touchstart", block, { passive: false });
+    return () => nav.removeEventListener("touchstart", block);
+  }, []);
   const press = useRef<Press | null>(null);
   const suppressClick = useRef(false);
 
@@ -71,6 +83,8 @@ export function TabBar() {
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
+    // Niente selezione del testo (che su iPhone col tocco lungo apre il menù Copia).
+    window.getSelection()?.removeAllRanges();
     press.current = { startX: e.clientX, moved: false, pointerId: e.pointerId };
     setLens(lensAt(e.clientX));
   };
@@ -97,6 +111,9 @@ export function TabBar() {
       // Trascinamento: apre la sezione sotto il dito; il click che segue va ignorato.
       suppressClick.current = true;
       window.setTimeout(() => (suppressClick.current = false), 400);
+      go(slotAt(e.clientX));
+    } else if (e.pointerType === "touch") {
+      // Tocco semplice col dito (il click è bloccato insieme ai gesti di sistema).
       go(slotAt(e.clientX));
     }
   };
@@ -127,6 +144,7 @@ export function TabBar() {
 
   return (
     <nav
+      ref={navRef}
       aria-label="Sezioni"
       style={{ viewTransitionName: "app-tabbar", touchAction: "none" }}
       className="tab-capsule fixed inset-x-2 bottom-[max(0.75rem,calc(env(safe-area-inset-bottom)-0.375rem))] z-30 h-[4.25rem] rounded-[2.25rem] border px-1 select-none md:hidden"
