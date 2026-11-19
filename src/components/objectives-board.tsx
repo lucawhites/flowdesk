@@ -59,10 +59,8 @@ export function ObjectivesBoard({
               aria-selected={person === p.id}
               onClick={() => setPerson(p.id)}
               className={cn(
-                "min-h-9 cursor-pointer rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
-                person === p.id
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-surface text-foreground hover:border-primary/40"
+                "btn-press min-h-9 cursor-pointer rounded-full px-3.5 py-1.5 text-sm font-medium",
+                person === p.id ? "btn-gloss bg-primary text-primary-foreground" : "btn-glass text-foreground"
               )}
             >
               {p.label}

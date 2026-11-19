@@ -17,6 +17,7 @@ import {
   startOfWeekISO,
   todayISO,
 } from "@/lib/dates";
+import { CalendarViewSwitch } from "@/components/calendar/view-switch";
 import { EventDialog } from "@/components/calendar/event-dialog";
 import { EventRow } from "@/components/calendar/event-row";
 import { EmptyState } from "@/components/empty-state";
@@ -132,28 +133,7 @@ export default async function CalendarPage({
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-        <div className="inline-flex self-start rounded-xl bg-surface-muted p-1 text-xs font-medium">
-          {(
-            [
-              ["settimana", "Settimana", weekHref],
-              ["mese", "Mese", monthHref],
-            ] as const
-          ).map(([value, label, href]) => (
-            <Link
-              key={value}
-              href={href}
-              aria-current={view === value ? "page" : undefined}
-              className={cn(
-                "rounded-lg px-3 py-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-                view === value
-                  ? "bg-surface text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
+        <CalendarViewSwitch view={view} weekHref={weekHref} monthHref={monthHref} />
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <Link
             href={prevHref}

@@ -25,7 +25,7 @@ export function HeaderSearchLink() {
     <Link
       href="/cerca"
       aria-label="Cerca"
-      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-muted text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+      className="btn-glass btn-press flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-foreground/80 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring md:hidden"
     >
       <Search className="h-4 w-4" />
     </Link>

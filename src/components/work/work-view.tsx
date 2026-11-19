@@ -14,9 +14,9 @@ import { SortableList } from "@/components/sortable-list";
 import { reorderItems } from "@/app/(app)/work-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { LensSegmented } from "@/components/ui/lens-segmented";
 import { dayHeading, nextWorkingDays } from "@/lib/dates";
 import { dailiesForToday, isObjectiveLate, upcomingDailies } from "@/lib/daily-helpers";
-import { cn } from "@/lib/utils";
 import type { DailyItem, ObjectiveItem, ObjectiveOption, ProjectItem, Role, TeamMember } from "@/lib/types";
 
 export type TasksTab = "daily" | "obiettivi" | "progetti";
@@ -150,26 +150,15 @@ export function TasksView({
       </div>
 
       {tab === "daily" && (
-        <div className="inline-flex self-start rounded-xl bg-surface-muted p-1 text-xs font-medium">
-          {(
-            [
-              ["mine", "Mie"],
-              ["team", "Tutto il team"],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setScope(value)}
-              className={cn(
-                "cursor-pointer rounded-lg px-3 py-1.5 transition-colors",
-                scope === value ? "bg-surface text-foreground shadow-sm" : "text-muted-foreground"
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <LensSegmented
+          ariaLabel="Daily da mostrare"
+          value={scope}
+          onChange={setScope}
+          options={[
+            { value: "mine", label: "Mie" },
+            { value: "team", label: "Tutto il team" },
+          ]}
+        />
       )}
 
       {/* ─── Daily ─── */}

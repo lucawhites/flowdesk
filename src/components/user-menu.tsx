@@ -22,7 +22,7 @@ export function UserMenu({ name, email }: { name: string; email: string }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer">
+      <DropdownMenuTrigger className="btn-press flex items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer">
         <Avatar>
           <AvatarFallback>{initials(name)}</AvatarFallback>
         </Avatar>

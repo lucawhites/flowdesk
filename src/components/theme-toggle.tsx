@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore } from "react";
 import { Moon, Sun, SunMoon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LensSegmented } from "@/components/ui/lens-segmented";
 import { applyThemeChoice, readThemeChoice, type ThemeChoice as Choice } from "@/lib/theme-color";
 
 /**
@@ -49,29 +50,16 @@ export function ThemeChoice() {
   const choice = picked ?? stored;
 
   return (
-    <div role="radiogroup" aria-label="Tema" className="grid grid-cols-3 gap-1 rounded-xl bg-foreground/10 p-1">
-      {CHOICES.map(({ value, label, icon: Icon }) => {
-        const active = choice === value;
-        return (
-          <button
-            key={value}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            onClick={() => {
-              applyThemeChoice(value);
-              setChoice(value);
-            }}
-            className={cn(
-              "flex cursor-pointer flex-col items-center gap-1 rounded-lg py-2 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-              active ? "bg-surface text-foreground shadow-sm" : "text-muted-foreground"
-            )}
-          >
-            <Icon className={cn("h-4 w-4", active && "text-accent")} />
-            {label}
-          </button>
-        );
-      })}
-    </div>
+    <LensSegmented
+      ariaLabel="Tema"
+      fill
+      size="lg"
+      value={choice}
+      onChange={(value) => {
+        applyThemeChoice(value);
+        setChoice(value);
+      }}
+      options={CHOICES.map(({ value, label, icon: Icon }) => ({ value, label, icon: <Icon className="h-4 w-4" /> }))}
+    />
   );
 }
