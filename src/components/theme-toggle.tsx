@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Moon, Sun, SunMoon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { applyThemeChoice, readThemeChoice, type ThemeChoice as Choice } from "@/lib/theme-color";
@@ -33,6 +33,8 @@ export function ThemeToggle({ className }: { className?: string }) {
   );
 }
 
+const noopSubscribe = () => () => {};
+
 const CHOICES: { value: Choice; label: string; icon: typeof Sun }[] = [
   { value: "light", label: "Chiaro", icon: Sun },
   { value: "dark", label: "Scuro", icon: Moon },
@@ -41,8 +43,10 @@ const CHOICES: { value: Choice; label: string; icon: typeof Sun }[] = [
 
 /** Scelta del tema nel menù del telefono: Chiaro, Scuro o Automatico (segue l'iPhone). */
 export function ThemeChoice() {
-  // Il menù si apre solo dopo un tocco, quindi qui localStorage è già disponibile.
-  const [choice, setChoice] = useState<Choice | null>(() => (typeof window === "undefined" ? null : readThemeChoice()));
+  // Scelta salvata sul dispositivo (null durante il rendering sul server), poi quella toccata.
+  const stored = useSyncExternalStore(noopSubscribe, readThemeChoice, () => null);
+  const [picked, setChoice] = useState<Choice | null>(null);
+  const choice = picked ?? stored;
 
   return (
     <div role="radiogroup" aria-label="Tema" className="grid grid-cols-3 gap-1 rounded-xl bg-foreground/10 p-1">

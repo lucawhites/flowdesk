@@ -9,6 +9,8 @@ import { PullToRefresh } from "@/components/pull-to-refresh";
 import { TabBar } from "@/components/tab-bar";
 import { PwaSetup } from "@/components/pwa-setup";
 import { openDailiesToday } from "@/lib/push";
+import { prisma } from "@/lib/prisma";
+import { DEFAULT_PALETTE, isPaletteId } from "@/lib/palettes";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TextSizeMenu } from "@/components/text-size-menu";
@@ -19,7 +21,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (!session?.user) {
     redirect("/login");
   }
-  const openToday = await openDailiesToday(session.user.id);
+  const [openToday, prefs] = await Promise.all([
+    openDailiesToday(session.user.id),
+    prisma.user.findUnique({ where: { id: session.user.id }, select: { palette: true } }),
+  ]);
+  const palette = prefs && isPaletteId(prefs.palette) ? prefs.palette : DEFAULT_PALETTE;
 
   return (
     <div className="flex min-h-screen w-full bg-background">
@@ -65,7 +71,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
         <TabBar />
-        <PwaSetup openToday={openToday} />
+        <PwaSetup openToday={openToday} palette={palette} />
       </div>
     </div>
   );

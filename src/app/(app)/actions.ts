@@ -4,6 +4,7 @@ import { signOut } from "@/auth";
 import { requireSessionUser } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 import { openDailiesToday, pushEnabled, sendPush } from "@/lib/push";
+import { isPaletteId } from "@/lib/palettes";
 
 export async function logout() {
   await signOut({ redirectTo: "/login" });
@@ -38,4 +39,12 @@ export async function savePushSubscription(sub: SubscriptionInput): Promise<{ ok
 export async function removePushSubscription(endpoint: string) {
   const user = await requireSessionUser();
   await prisma.pushSubscription.deleteMany({ where: { endpoint, userId: user.id } });
+}
+
+/** Palette di colori scelta in Impostazioni: vale per l'account, su tutti i dispositivi. */
+export async function savePalette(palette: string): Promise<{ ok: boolean }> {
+  const user = await requireSessionUser();
+  if (!isPaletteId(palette)) return { ok: false };
+  await prisma.user.update({ where: { id: user.id }, data: { palette } });
+  return { ok: true };
 }

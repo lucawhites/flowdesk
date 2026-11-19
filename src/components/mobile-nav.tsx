@@ -7,8 +7,6 @@ import { X } from "lucide-react";
 import { AppLogo } from "@/components/app-logo";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { OPEN_MENU_EVENT } from "@/components/tab-bar";
-import { TextSizeMenu } from "@/components/text-size-menu";
-import { ThemeChoice } from "@/components/theme-toggle";
 
 // Menù del telefono: si apre con "Altro" nella barra in basso ed entra da DESTRA, dal lato del
 // pollice. Il bordo sinistro resta all'iPhone per il gesto "indietro".
@@ -159,13 +157,6 @@ export function MobileNav({ teamName }: { teamName?: string | null }) {
             </DialogPrimitive.Close>
           </div>
           <SidebarNav onNavigate={close} />
-          <div className="mt-6 flex flex-col gap-3 border-t border-border pt-4">
-            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Aspetto</p>
-            <ThemeChoice />
-            <div className="flex items-center justify-between px-1 text-sm text-foreground">
-              Dimensione del testo <TextSizeMenu />
-            </div>
-          </div>
           {teamName && (
             <div className="mt-auto border-t border-border pt-4">
               <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Workspace</p>
