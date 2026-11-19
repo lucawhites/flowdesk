@@ -3,7 +3,10 @@
 import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/** Interruttore chiaro/scuro in stile iPhone. Lo stato vive in <html data-theme>. */
+/**
+ * Interruttore chiaro/scuro in stile iPhone. Lo stato vive in <html data-theme>.
+ * Binario spento grigio semitrasparente (come iOS): resta visibile anche sul vetro del menù.
+ */
 export function ThemeToggle({ className }: { className?: string }) {
   function toggle() {
     const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
@@ -22,7 +25,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       aria-label="Cambia tema chiaro/scuro"
       title="Tema chiaro/scuro"
       className={cn(
-        "relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full bg-surface-muted transition-colors duration-200 dark:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full bg-foreground/15 transition-colors duration-200 dark:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         className
       )}
     >

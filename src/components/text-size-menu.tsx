@@ -39,7 +39,7 @@ export function TextSizeMenu() {
       <DropdownMenuTrigger
         aria-label="Dimensione del testo"
         title="Dimensione del testo"
-        className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full bg-surface-muted text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full bg-foreground/10 text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
       >
         <AArrowUp className="h-4 w-4" />
       </DropdownMenuTrigger>

@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarCheck2, CalendarDays, Home, Menu, Target } from "lucide-react";
+// Icone piene (Fluent), come i simboli delle app iPhone: in arancio sulla sezione attiva si notano
+// molto più delle icone a contorno usate nel resto dell'app.
+import { CalendarIcon, DailyIcon, HomeIcon, MoreIcon, ObjectivesIcon } from "@/components/tab-icons";
 import { cn } from "@/lib/utils";
 
 // Barra in basso come nelle app iPhone, solo su telefono: le sezioni più usate a portata di pollice.
@@ -10,10 +12,10 @@ import { cn } from "@/lib/utils";
 export const OPEN_MENU_EVENT = "flowdesk:open-menu";
 
 const TABS = [
-  { href: "/home", label: "Home", icon: Home },
-  { href: "/daily", label: "Daily", icon: CalendarCheck2 },
-  { href: "/obiettivi", label: "Obiettivi", icon: Target },
-  { href: "/calendario", label: "Calendario", icon: CalendarDays },
+  { href: "/home", label: "Home", icon: HomeIcon },
+  { href: "/daily", label: "Daily", icon: DailyIcon },
+  { href: "/obiettivi", label: "Obiettivi", icon: ObjectivesIcon },
+  { href: "/calendario", label: "Calendario", icon: CalendarIcon },
 ] as const;
 
 // Capsula sospesa in vetro come nell'app Musica di iPhone: molto trasparente, staccata dal bordo,
@@ -40,7 +42,7 @@ export function TabBar() {
             aria-current={active ? "page" : undefined}
             className={cn(item, active ? "text-accent" : "text-foreground")}
           >
-            <Icon className="h-[1.625rem] w-[1.625rem]" strokeWidth={2.2} />
+            <Icon className="h-7 w-7" />
             <span className="truncate">{label}</span>
           </Link>
         );
@@ -50,7 +52,7 @@ export function TabBar() {
         onClick={() => window.dispatchEvent(new Event(OPEN_MENU_EVENT))}
         className={cn(item, "cursor-pointer text-foreground")}
       >
-        <Menu className="h-[1.625rem] w-[1.625rem]" strokeWidth={2.2} />
+        <MoreIcon className="h-7 w-7" />
         <span>Altro</span>
       </button>
     </nav>
