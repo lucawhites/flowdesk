@@ -25,7 +25,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 : "font-medium text-muted-foreground hover:bg-surface-muted hover:text-foreground active:bg-surface-muted"
             )}
           >
-            <Icon className={cn("h-4 w-4", active && "text-accent")} />
+            <Icon className={cn("h-5 w-5 shrink-0", active ? "text-accent" : "text-foreground/80")} />
             {label}
           </Link>
         );

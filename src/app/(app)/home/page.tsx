@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, CalendarCheck2, CalendarDays, CheckCircle2, Target, TriangleAlert } from "lucide-react";
+import { ArrowRight, CalendarCheck2 } from "lucide-react";
+import { CalendarIcon, CalendarTodoIcon, DailyIcon, ObjectivesIcon, WarningIcon } from "@/components/tab-icons";
 import { requireSessionUser } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 import { getTeamWork } from "@/lib/queries";
@@ -70,7 +71,7 @@ export default async function HomePage() {
             className="group flex flex-col gap-2 border-t border-border pt-4 outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-72 sm:shrink-0 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0"
           >
             <p className="flex items-center gap-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              <CalendarDays className="h-3.5 w-3.5" /> In calendario
+              <CalendarIcon className="h-4 w-4" /> In calendario
               <ArrowRight className="ml-auto h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
             </p>
             {[
@@ -108,19 +109,19 @@ export default async function HomePage() {
         tiles={byHomeOrder([
           {
             id: "daily-todo",
-            node: <StatCard icon={CalendarCheck2} label="Daily da fare oggi" value={myPendingToday} tone="primary" href="/daily" />,
+            node: <StatCard icon={CalendarTodoIcon} label="Daily da fare oggi" value={myPendingToday} tone="primary" href="/daily" />,
           },
           {
             id: "done-today",
-            node: <StatCard icon={CheckCircle2} label="Completate oggi" value={myDoneToday} tone="success" href="/daily" />,
+            node: <StatCard icon={DailyIcon} label="Completate oggi" value={myDoneToday} tone="success" href="/daily" />,
           },
           {
             id: "objectives",
-            node: <StatCard icon={Target} label="Tuoi obiettivi aperti" value={myObjectives.length} tone="warning" href="/obiettivi?vista=mie" />,
+            node: <StatCard icon={ObjectivesIcon} label="Tuoi obiettivi aperti" value={myObjectives.length} tone="warning" href="/obiettivi?vista=mie" />,
           },
           {
             id: "late",
-            node: <StatCard icon={TriangleAlert} label="Tuoi in ritardo" value={myLate} tone="danger" href={lateHref} />,
+            node: <StatCard icon={WarningIcon} label="Tuoi in ritardo" value={myLate} tone="danger" href={lateHref} />,
           },
         ])}
       />

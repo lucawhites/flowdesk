@@ -1,11 +1,13 @@
-import { BarChart3, CalendarCheck2, CalendarDays, FolderKanban, Home, Settings, Target } from "lucide-react";
+// Voci del menù (barra laterale su computer, menù "Altro" sul telefono).
+// Icone piene Fluent, le stesse della barra in basso.
+import { CalendarIcon, DailyIcon, HomeIcon, KpiIcon, ObjectivesIcon, ProjectsIcon, SettingsIcon } from "@/components/tab-icons";
 
 export const NAV_LINKS = [
-  { href: "/home", label: "Home", icon: Home },
-  { href: "/daily", label: "Daily", icon: CalendarCheck2 },
-  { href: "/calendario", label: "Calendario", icon: CalendarDays },
-  { href: "/obiettivi", label: "Obiettivi", icon: Target },
-  { href: "/progetti", label: "Progetti", icon: FolderKanban },
-  { href: "/team", label: "KPI", icon: BarChart3 },
-  { href: "/impostazioni", label: "Impostazioni", icon: Settings },
+  { href: "/home", label: "Home", icon: HomeIcon },
+  { href: "/daily", label: "Daily", icon: DailyIcon },
+  { href: "/calendario", label: "Calendario", icon: CalendarIcon },
+  { href: "/obiettivi", label: "Obiettivi", icon: ObjectivesIcon },
+  { href: "/progetti", label: "Progetti", icon: ProjectsIcon },
+  { href: "/team", label: "KPI", icon: KpiIcon },
+  { href: "/impostazioni", label: "Impostazioni", icon: SettingsIcon },
 ] as const;

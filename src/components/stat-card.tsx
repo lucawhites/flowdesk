@@ -28,7 +28,7 @@ export function StatCard({
     <Card className={cn(href && "h-full transition-colors group-hover:border-primary/40")}>
       <CardContent className="flex items-center gap-3 p-4">
         <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", toneClass)}>
-          <Icon className="h-4.5 w-4.5" />
+          <Icon className="h-5 w-5" />
         </span>
         <div className="min-w-0">
           <p className="truncate text-lg font-semibold leading-tight text-foreground">{value}</p>

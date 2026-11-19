@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { CalendarCheck2, CheckCircle2, Target, TriangleAlert, Undo2 } from "lucide-react";
+import { CheckCircle2, Target, Undo2 } from "lucide-react";
+import { CalendarTodoIcon, DailyIcon, ObjectivesIcon, WarningIcon } from "@/components/tab-icons";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
@@ -39,15 +40,15 @@ export function TeamView({ kpis, teamName, currentUserId }: { kpis: Kpis; teamNa
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard icon={CalendarCheck2} label={`Daily oggi · ${todayRate}%`} value={`${kpis.doneToday}/${kpis.todayTotal}`} tone="primary" />
-        <StatCard icon={CheckCircle2} label="Completate in settimana" value={kpis.doneThisWeek} tone="success" />
+        <StatCard icon={CalendarTodoIcon} label={`Daily oggi · ${todayRate}%`} value={`${kpis.doneToday}/${kpis.todayTotal}`} tone="primary" />
+        <StatCard icon={DailyIcon} label="Completate in settimana" value={kpis.doneThisWeek} tone="success" />
         <StatCard
-          icon={Target}
+          icon={ObjectivesIcon}
           label={`Obiettivi aperti${kpis.openObjectivesProgress !== null ? ` · ${kpis.openObjectivesProgress}%` : ""}`}
           value={kpis.openObjectives}
           tone="neutral"
         />
-        <StatCard icon={TriangleAlert} label="In ritardo" value={lateTotal} tone={lateTotal > 0 ? "danger" : "neutral"} />
+        <StatCard icon={WarningIcon} label="In ritardo" value={lateTotal} tone={lateTotal > 0 ? "danger" : "neutral"} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
