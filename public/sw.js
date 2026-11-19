@@ -1,9 +1,10 @@
 // Service worker di Flowdesk.
 // 1) Senza rete: le pagine già aperte si rivedono dall'ultima copia salvata; le altre mostrano /offline.html.
-//    I file statici dell'app (JS, CSS, icone) restano in memoria e si caricano subito.
+//    Codice e stili dell'app restano in memoria e si caricano subito; icone e immagini si
+//    ricontrollano sempre in rete (così un'icona nuova non resta bloccata sulla vecchia).
 // 2) Notifiche push: le mostra, aggiorna il numero sull'icona e al tocco apre la pagina giusta.
 // Cambiando questo file, aumentare VERSION: i vecchi archivi vengono cancellati.
-const VERSION = "v1";
+const VERSION = "v2";
 const STATIC_CACHE = `flowdesk-static-${VERSION}`;
 const PAGES_CACHE = `flowdesk-pages-${VERSION}`;
 const OFFLINE_URL = "/offline.html";
@@ -30,8 +31,25 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return;
 
-  // File statici con nome versionato: prima la memoria, poi la rete.
-  if (url.pathname.startsWith("/_next/static/") || /\.(png|svg|ico|webmanifest)$/.test(url.pathname)) {
+  // Immagini, icone e manifest (nome fisso): prima la rete, così un'icona nuova arriva subito;
+  // senza rete la copia salvata.
+  if (/\.(png|svg|ico|webmanifest)$/.test(url.pathname) || url.pathname === "/manifest.webmanifest") {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // File statici con nome versionato (cambia a ogni pubblicazione): prima la memoria, poi la rete.
+  if (url.pathname.startsWith("/_next/static/")) {
     event.respondWith(
       caches.match(request).then(
         (hit) =>
