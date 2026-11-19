@@ -2,6 +2,24 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+type Tone = "neutral" | "primary" | "success" | "danger" | "warning" | "info";
+
+// Sfumatura delle icone (dal chiaro in alto al colore pieno in basso), come le icone di iPhone.
+// I colori seguono palette e tema chiaro/scuro perché sono variabili CSS.
+const GRADIENTS: Record<Tone, [string, string]> = {
+  primary: ["var(--accent-light)", "var(--accent)"],
+  success: ["color-mix(in srgb, var(--success) 55%, #ffffff)", "var(--success)"],
+  warning: ["color-mix(in srgb, var(--warning) 50%, #ffffff)", "var(--warning)"],
+  danger: ["color-mix(in srgb, var(--danger) 55%, #ffffff)", "var(--danger)"],
+  neutral: ["var(--muted-foreground)", "var(--foreground)"],
+  // Blu degli obiettivi: uguale in tutte le palette e leggibile sia in chiaro sia in scuro.
+  info: ["#7cb3ff", "#2563eb"],
+};
+
+/**
+ * Scheda numerica in stile widget iPhone: numero grande in alto a sinistra, icona piena e
+ * sfumata in alto a destra, descrizione sotto.
+ */
 export function StatCard({
   icon: Icon,
   label,
@@ -9,31 +27,32 @@ export function StatCard({
   tone = "neutral",
   href,
 }: {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; fill?: string }>;
   label: string;
   value: number | string;
-  tone?: "neutral" | "primary" | "success" | "danger" | "warning";
+  tone?: Tone;
   /** Se presente, il riquadro è un collegamento. */
   href?: string;
 }) {
-  const toneClass = {
-    neutral: "bg-surface-muted text-muted-foreground",
-    primary: "bg-accent-soft text-accent",
-    success: "bg-success-soft text-success",
-    danger: "bg-danger-soft text-danger",
-    warning: "bg-warning-soft text-warning",
-  }[tone];
+  const gradientId = `stat-gradient-${tone}`;
+  const [from, to] = GRADIENTS[tone];
 
   const card = (
-    <Card className={cn(href && "h-full transition-colors group-hover:border-primary/40")}>
-      <CardContent className="flex items-center gap-3 p-4">
-        <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", toneClass)}>
-          <Icon className="h-5 w-5" />
-        </span>
-        <div className="min-w-0">
-          <p className="truncate text-lg font-semibold leading-tight text-foreground">{value}</p>
-          <p className="text-xs leading-snug text-muted-foreground">{label}</p>
+    <Card className={cn("h-full", href && "transition-colors group-hover:border-primary/40")}>
+      <CardContent className="flex h-full flex-col gap-1.5 p-4">
+        <div className="flex items-start justify-between gap-2">
+          <p className="truncate text-[1.75rem] font-semibold leading-none tracking-tight text-foreground">{value}</p>
+          <svg width="0" height="0" className="absolute" aria-hidden>
+            <defs>
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" style={{ stopColor: from }} />
+                <stop offset="1" style={{ stopColor: to }} />
+              </linearGradient>
+            </defs>
+          </svg>
+          <Icon className="h-7 w-7 shrink-0" fill={`url(#${gradientId})`} />
         </div>
+        <p className="text-xs leading-snug text-muted-foreground">{label}</p>
       </CardContent>
     </Card>
   );

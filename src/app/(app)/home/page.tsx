@@ -117,7 +117,7 @@ export default async function HomePage() {
           },
           {
             id: "objectives",
-            node: <StatCard icon={ObjectivesIcon} label="Tuoi obiettivi aperti" value={myObjectives.length} tone="warning" href="/obiettivi?vista=mie" />,
+            node: <StatCard icon={ObjectivesIcon} label="Tuoi obiettivi aperti" value={myObjectives.length} tone="info" href="/obiettivi?vista=mie" />,
           },
           {
             id: "late",

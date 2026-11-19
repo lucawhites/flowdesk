@@ -46,7 +46,7 @@ export function TeamView({ kpis, teamName, currentUserId }: { kpis: Kpis; teamNa
           icon={ObjectivesIcon}
           label={`Obiettivi aperti${kpis.openObjectivesProgress !== null ? ` · ${kpis.openObjectivesProgress}%` : ""}`}
           value={kpis.openObjectives}
-          tone="neutral"
+          tone="info"
         />
         <StatCard icon={WarningIcon} label="In ritardo" value={lateTotal} tone={lateTotal > 0 ? "danger" : "neutral"} />
       </div>

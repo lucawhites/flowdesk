@@ -15,7 +15,8 @@ export function HomeTiles({ tiles, className }: { tiles: { id: string; node: Rea
       renderItem={(tile, handle) => (
         <div className="relative grid h-full [&>a]:block">
           {tile.node}
-          {handle && <span className="absolute right-0.5 top-1">{handle}</span>}
+          {/* Maniglia per riordinare in basso a destra: in alto a destra c'è l'icona della scheda. */}
+          {handle && <span className="absolute bottom-1 right-0.5">{handle}</span>}
         </div>
       )}
     />
