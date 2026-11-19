@@ -145,6 +145,24 @@ body {
   }
 }
 
+/* iPhone: Safari dà al campo data una larghezza minima sua (e lo centra), così esce dal riquadro.
+   Qui torna largo quanto il contenitore e allineato a sinistra come gli altri campi. */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  max-width: 100%;
+}
+
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value,
+input[type="datetime-local"]::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+}
+
 ::selection {
   background: var(--accent-soft);
   color: var(--foreground);

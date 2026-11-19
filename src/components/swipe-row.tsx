@@ -51,8 +51,6 @@ export function SwipeRow({
 
     const onStart = (e: TouchEvent) => {
       if (e.touches.length !== 1) return;
-      // Dal bordo sinistro del telefono parte il menù laterale, non l'azione della riga.
-      if (e.touches[0].clientX <= 44 && window.matchMedia("(max-width: 767px)").matches) return;
       const target = e.target as HTMLElement;
       // Maniglia di riordino, campi e menù: niente gesto.
       if (target.closest('[aria-label="Trascina per riordinare"], input, textarea, [role="menu"], [data-no-swipe]')) return;

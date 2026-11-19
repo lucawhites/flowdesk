@@ -12,14 +12,15 @@ export function SelectTrigger({ className, children, ...props }: React.Component
   return (
     <SelectPrimitive.Trigger
       className={cn(
-        "flex h-10 w-full items-center justify-between rounded-lg border border-border bg-surface px-3 text-sm text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring data-[placeholder]:text-muted-foreground cursor-pointer",
+        "flex h-10 w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 text-left text-sm text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring data-[placeholder]:text-muted-foreground cursor-pointer",
         className
       )}
       {...props}
     >
-      {children}
+      {/* Il valore scelto sta su una riga: se è lungo viene troncato con i puntini (il testo intero è nella tendina). */}
+      <span className="min-w-0 flex-1 truncate">{children}</span>
       <SelectPrimitive.Icon asChild>
-        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
@@ -30,7 +31,7 @@ export function SelectContent({ className, children, ...props }: React.Component
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
         className={cn(
-          "popover-content origin-[--radix-select-content-transform-origin] z-50 max-h-72 min-w-[var(--radix-select-trigger-width)] overflow-hidden glass rounded-xl border border-border/70 p-1 shadow-lg",
+          "popover-content origin-[--radix-select-content-transform-origin] z-50 max-h-72 min-w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-1.5rem)] overflow-hidden glass rounded-xl border border-border/70 p-1 shadow-lg",
           className
         )}
         position="popper"

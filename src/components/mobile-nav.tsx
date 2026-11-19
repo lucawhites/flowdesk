@@ -8,10 +8,10 @@ import { AppLogo } from "@/components/app-logo";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { OPEN_MENU_EVENT } from "@/components/tab-bar";
 
-// Gesto come su iPhone: scorrendo dal bordo sinistro il menù segue il dito; al rilascio
-// si apre o si richiude in base a quanto è uscito e alla velocità. Trascinandolo a sinistra si chiude.
-// Si muove solo `transform` (e l'opacità del velo): è la cosa più leggera da animare.
-const EDGE = 44; // px dal bordo sinistro da cui parte il gesto (fuori dalla zona "indietro" di Safari quando possibile)
+// Il menù si apre dai pulsanti (☰ in alto, "Altro" in basso). Il bordo sinistro resta all'iPhone
+// per il gesto "indietro": aprire il menù da lì faceva partire i due gesti insieme.
+// Da aperto si chiude trascinandolo a sinistra: segue il dito e al rilascio si chiude o torna
+// al suo posto in base a quanto è rientrato e alla velocità. Si muove solo `transform`.
 const LOCK = 10; // px di movimento prima di decidere se il gesto è orizzontale
 const SETTLE_MS = 260;
 const EASE = "cubic-bezier(0.32, 0.72, 0, 1)";
@@ -58,10 +58,8 @@ export function MobileNav({ teamName }: { teamName?: string | null }) {
     const onStart = (e: TouchEvent) => {
       if (!mobile.matches || e.touches.length !== 1 || settling) return;
       const t = e.touches[0];
-      const isOpen = openRef.current;
-      // Da chiuso: solo dal bordo sinistro, e non se è aperta un'altra finestra.
-      if (!isOpen && (t.clientX > EDGE || document.querySelector('[role="dialog"]'))) return;
-      drag.current = { startX: t.clientX, startY: t.clientY, startT: e.timeStamp, lastX: t.clientX, lastT: e.timeStamp, locked: false, from: isOpen ? "open" : "closed" };
+      if (!openRef.current) return;
+      drag.current = { startX: t.clientX, startY: t.clientY, startT: e.timeStamp, lastX: t.clientX, lastT: e.timeStamp, locked: false, from: "open" };
     };
 
     const onMove = (e: TouchEvent) => {
@@ -72,13 +70,12 @@ export function MobileNav({ teamName }: { teamName?: string | null }) {
       const dy = t.clientY - d.startY;
       if (!d.locked) {
         if (Math.abs(dx) < LOCK && Math.abs(dy) < LOCK) return;
-        // Verticale, o nella direzione sbagliata: lascia scorrere la pagina.
-        if (Math.abs(dy) > Math.abs(dx) || (d.from === "closed" ? dx < 0 : dx > 0)) {
+        // Verticale, o verso destra: lascia scorrere il menù.
+        if (Math.abs(dy) > Math.abs(dx) || dx > 0) {
           drag.current = null;
           return;
         }
         d.locked = true;
-        if (d.from === "closed") setOpen(true);
       }
       e.preventDefault();
       d.lastX = t.clientX;

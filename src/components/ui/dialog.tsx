@@ -10,23 +10,31 @@ export const DialogTrigger = DialogPrimitive.Trigger;
 export const DialogClose = DialogPrimitive.Close;
 
 // Sul telefono (sotto i 640px) la finestra è un foglio che sale dal basso, come su iPhone:
-// si chiude trascinandolo giù dalla maniglia o dal bordo alto (quando il contenuto è in cima).
+// la maniglia resta sempre visibile in alto; si chiude trascinandolo giù dalla maniglia
+// (sempre) o dal contenuto (quando è scorso fino in cima).
 // Da 640px in su resta la finestra centrata.
 const SHEET_CLOSE_PX = 110;
 const SHEET_MS = 260;
 const SHEET_EASE = "cubic-bezier(0.32, 0.72, 0, 1)";
 
-// `el` arriva da una ref a callback: il contenuto esiste solo quando la finestra è aperta.
-function useSheetDrag(el: HTMLDivElement | null, closeRef: React.RefObject<HTMLButtonElement | null>) {
+// `el` (il foglio) e `scroller` (la parte che scorre) arrivano da ref a callback:
+// esistono solo quando la finestra è aperta.
+function useSheetDrag(
+  el: HTMLDivElement | null,
+  scroller: HTMLDivElement | null,
+  closeRef: React.RefObject<HTMLButtonElement | null>
+) {
   React.useEffect(() => {
-    if (!el) return;
+    if (!el || !scroller) return;
+    // Dalla maniglia si trascina sempre; dal contenuto solo quando è scorso fino in cima.
+    const atTop = (target: HTMLElement) => !!target.closest("[data-sheet-handle]") || scroller.scrollTop <= 0;
     const phone = window.matchMedia("(max-width: 639px)");
     let start: { y: number; x: number; t: number; locked: boolean } | null = null;
     let dy = 0;
 
     const onStart = (e: TouchEvent) => {
-      if (!phone.matches || e.touches.length !== 1 || el.scrollTop > 0) return;
       const target = e.target as HTMLElement;
+      if (!phone.matches || e.touches.length !== 1 || !atTop(target)) return;
       if (target.closest("input, textarea, select, [role='listbox'], [role='menu']")) return;
       start = { y: e.touches[0].clientY, x: e.touches[0].clientX, t: e.timeStamp, locked: false };
       dy = 0;
@@ -37,7 +45,7 @@ function useSheetDrag(el: HTMLDivElement | null, closeRef: React.RefObject<HTMLB
       const mx = e.touches[0].clientX - start.x;
       if (!start.locked) {
         if (Math.abs(my) < 8 && Math.abs(mx) < 8) return;
-        if (my <= 0 || Math.abs(mx) > my || el.scrollTop > 0) {
+        if (my <= 0 || Math.abs(mx) > my || !atTop(e.target as HTMLElement)) {
           start = null;
           return;
         }
@@ -75,13 +83,14 @@ function useSheetDrag(el: HTMLDivElement | null, closeRef: React.RefObject<HTMLB
       el.removeEventListener("touchend", onEnd);
       el.removeEventListener("touchcancel", onEnd);
     };
-  }, [el, closeRef]);
+  }, [el, scroller, closeRef]);
 }
 
 export function DialogContent({ className, children, ...props }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>) {
   const [contentEl, setContentEl] = React.useState<HTMLDivElement | null>(null);
+  const [scrollEl, setScrollEl] = React.useState<HTMLDivElement | null>(null);
   const closeRef = React.useRef<HTMLButtonElement>(null);
-  useSheetDrag(contentEl, closeRef);
+  useSheetDrag(contentEl, scrollEl, closeRef);
 
   return (
     <DialogPrimitive.Portal>
@@ -89,19 +98,27 @@ export function DialogContent({ className, children, ...props }: React.Component
       <DialogPrimitive.Content
         ref={setContentEl}
         className={cn(
-          // Telefono: foglio dal basso, a tutta larghezza, sopra la barra di sistema.
-          "dialog-content fixed inset-x-0 bottom-0 z-50 max-h-[calc(100dvh-3rem)] w-full overflow-y-auto overscroll-contain glass rounded-t-3xl border-t border-border/70 px-5 pt-7 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-lg outline-none",
+          // Telefono: foglio dal basso, a tutta larghezza. Maniglia e X restano ferme in alto,
+          // scorre solo il contenuto sotto.
+          "dialog-content fixed inset-x-0 bottom-0 z-50 flex max-h-[calc(100dvh-3rem)] w-full flex-col overflow-hidden glass rounded-t-3xl border-t border-border/70 shadow-lg outline-none",
           // Da 640px: finestra centrata.
-          "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100%-2rem)] sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:border sm:p-6",
+          "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100%-2rem)] sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:border",
           className
         )}
         {...props}
       >
-        <div aria-hidden className="absolute left-1/2 top-2 h-1.5 w-10 -translate-x-1/2 rounded-full bg-foreground/20 sm:hidden" />
-        {children}
+        <div data-sheet-handle aria-hidden className="flex h-7 shrink-0 items-start justify-center pt-2 sm:hidden">
+          <span className="h-1.5 w-10 rounded-full bg-foreground/20" />
+        </div>
+        <div
+          ref={setScrollEl}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:p-6"
+        >
+          {children}
+        </div>
         <DialogPrimitive.Close
           ref={closeRef}
-          className="absolute right-4 top-4 rounded-md text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+          className="absolute right-4 top-5 rounded-md text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer sm:top-4"
         >
           <X className="h-4 w-4" />
           <span className="sr-only">Chiudi</span>
