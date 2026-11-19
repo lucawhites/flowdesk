@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSessionUser } from "@/lib/dal";
-import { isoToDateColumn } from "@/lib/dates";
+import { isoToDateColumn, nextWorkingDays, todayISO } from "@/lib/dates";
 import { proposeDailyText } from "@/lib/agent/daily-text";
 import { notifyIfObjectiveReached, objectiveReached, promoteAndNotify } from "@/lib/notifications";
 import { activeCountFor } from "@/lib/objective-queue";
@@ -375,6 +375,20 @@ function watchObjectiveReached(objectiveId: string, userId: string) {
       console.error("Coda degli obiettivi non aggiornata:", error);
     }
   });
+}
+
+/**
+ * Gesto "scorri a sinistra" sulla daily: la sposta al prossimo giorno lavorativo
+ * (venerdì → lunedì). Restituisce il nuovo giorno, o null se non è permesso.
+ */
+export async function postponeDaily(dailyId: string): Promise<string | null> {
+  const user = await requireSessionUser();
+  const existing = await prisma.daily.findFirst({ where: { id: dailyId, teamId: user.teamId } });
+  if (!existing || !canManage(user, existing) || existing.completedAt) return null;
+  const [next] = nextWorkingDays(todayISO(), 1);
+  await prisma.daily.update({ where: { id: dailyId }, data: { date: isoToDateColumn(next) } });
+  refresh();
+  return next;
 }
 
 export async function deleteDaily(dailyId: string) {

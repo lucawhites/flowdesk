@@ -5,6 +5,7 @@ import { AppLogo } from "@/components/app-logo";
 import { auth } from "@/auth";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { MobileNav } from "@/components/mobile-nav";
+import { PullToRefresh } from "@/components/pull-to-refresh";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TextSizeMenu } from "@/components/text-size-menu";
@@ -52,6 +53,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
+        <PullToRefresh />
         <main className="min-w-0 flex-1 px-4 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:px-8 md:py-8">
           {children}
         </main>

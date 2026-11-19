@@ -2,11 +2,12 @@
 
 import { useOptimistic, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
-import { Loader2, Pencil, Sparkles, StickyNote, Target, Trash2, Undo2 } from "lucide-react";
+import { CalendarClock, Check, Loader2, Pencil, RotateCcw, Sparkles, StickyNote, Target, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
-import { deleteDaily, proposeDailyInstructions, toggleDaily } from "@/app/(app)/work-actions";
+import { deleteDaily, postponeDaily, proposeDailyInstructions, toggleDaily } from "@/app/(app)/work-actions";
 import { DailyDialog } from "@/components/daily-dialog";
 import { ItemMenu } from "@/components/item-menu";
+import { SwipeRow } from "@/components/swipe-row";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { cardClick } from "@/lib/card-click";
-import { formatISO } from "@/lib/dates";
+import { addDaysISO, formatISO } from "@/lib/dates";
 import { isCarriedOver } from "@/lib/daily-helpers";
 import { cn, initials } from "@/lib/utils";
 import type { DailyItem, ObjectiveOption, Role, TeamMember } from "@/lib/types";
@@ -74,7 +75,27 @@ export function DailyRow({
     />
   );
 
+  // Gesti sul telefono: a destra segna fatta (o riapre), a sinistra sposta al prossimo giorno lavorativo.
+  const postpone = () =>
+    startTransition(async () => {
+      const next = await postponeDaily(daily.id);
+      if (next) toast.success(next === addDaysISO(today, 1) ? "Spostata a domani" : `Spostata a ${formatISO(next, "EEEE d MMM")}`);
+      else toast.error("Non è stato possibile spostare la daily");
+    });
+
   return (
+    <SwipeRow
+      left={
+        done
+          ? { label: "Riapri", icon: <RotateCcw className="h-4 w-4" />, tone: "bg-primary text-primary-foreground", run: () => toggle(false) }
+          : { label: "Fatta", icon: <Check className="h-4 w-4" />, tone: "bg-success text-background", run: () => toggle(true) }
+      }
+      right={
+        !done && canManage
+          ? { label: "Domani", icon: <CalendarClock className="h-4 w-4" />, tone: "bg-warning text-background", run: postpone }
+          : undefined
+      }
+    >
     <div
       onClick={cardClick(() => setDetailOpen(true))}
       className={cn(
@@ -294,6 +315,7 @@ export function DailyRow({
         </DialogContent>
       </Dialog>
     </div>
+    </SwipeRow>
   );
 }
 
