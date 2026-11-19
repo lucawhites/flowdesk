@@ -16,8 +16,11 @@ const TABS = [
   { href: "/calendario", label: "Calendario", icon: CalendarDays },
 ] as const;
 
+// Capsula sospesa in vetro (stile app Apple recenti): staccata dal bordo, con ombra, icone del colore
+// del testo e una pillola arancio chiaro dietro la sezione attiva. Più visibile della barra a filo.
 const item =
-  "flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 pt-1.5 text-[0.625rem] font-medium outline-none transition-[color,transform] duration-100 active:scale-[0.94] focus-visible:text-accent";
+  "group flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-[0.625rem] font-medium outline-none transition-transform duration-100 active:scale-[0.94]";
+const pill = "flex h-7 w-12 items-center justify-center rounded-full transition-colors duration-150 group-focus-visible:ring-2 group-focus-visible:ring-ring";
 
 export function TabBar() {
   const pathname = usePathname();
@@ -26,32 +29,34 @@ export function TabBar() {
     <nav
       aria-label="Sezioni"
       style={{ viewTransitionName: "app-tabbar" }}
-      className="glass-bar fixed inset-x-0 bottom-0 z-30 flex border-t border-border/70 pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="tab-capsule fixed inset-x-3 bottom-[max(0.75rem,calc(env(safe-area-inset-bottom)-0.375rem))] z-30 flex h-16 rounded-[2rem] border px-1 md:hidden"
     >
-      <div className="flex h-14 w-full">
-        {TABS.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(`${href}/`);
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-current={active ? "page" : undefined}
-              className={cn(item, active ? "text-accent" : "text-muted-foreground")}
-            >
+      {TABS.map(({ href, label, icon: Icon }) => {
+        const active = pathname === href || pathname.startsWith(`${href}/`);
+        return (
+          <Link
+            key={href}
+            href={href}
+            aria-current={active ? "page" : undefined}
+            className={cn(item, active ? "font-semibold text-accent" : "text-foreground/80")}
+          >
+            <span className={cn(pill, active && "bg-accent-soft")}>
               <Icon className="h-[1.375rem] w-[1.375rem]" strokeWidth={active ? 2.3 : 1.9} />
-              <span className="truncate">{label}</span>
-            </Link>
-          );
-        })}
-        <button
-          type="button"
-          onClick={() => window.dispatchEvent(new Event(OPEN_MENU_EVENT))}
-          className={cn(item, "cursor-pointer text-muted-foreground")}
-        >
+            </span>
+            <span className="truncate">{label}</span>
+          </Link>
+        );
+      })}
+      <button
+        type="button"
+        onClick={() => window.dispatchEvent(new Event(OPEN_MENU_EVENT))}
+        className={cn(item, "cursor-pointer text-foreground/80")}
+      >
+        <span className={pill}>
           <Menu className="h-[1.375rem] w-[1.375rem]" strokeWidth={1.9} />
-          <span>Altro</span>
-        </button>
-      </div>
+        </span>
+        <span>Altro</span>
+      </button>
     </nav>
   );
 }

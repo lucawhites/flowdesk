@@ -86,11 +86,59 @@ function useSheetDrag(
   }, [el, scroller, closeRef]);
 }
 
-export function DialogContent({ className, children, ...props }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>) {
+// Telefono con la tastiera aperta: iOS la mette sopra la pagina senza spostare gli elementi fissi,
+// quindi il foglio finirebbe dietro. Qui il foglio si appoggia sopra la tastiera (visualViewport)
+// e il campo toccato viene portato in vista.
+function useKeyboardAware(el: HTMLDivElement | null) {
+  React.useEffect(() => {
+    const vv = window.visualViewport;
+    if (!el || !vv) return;
+    const sheet: HTMLDivElement = el;
+    const phone = window.matchMedia("(max-width: 639px)");
+
+    const update = () => {
+      if (!phone.matches) return;
+      const keyboard = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      if (keyboard > 80) {
+        sheet.style.setProperty("bottom", `${keyboard}px`);
+        sheet.style.setProperty("max-height", `${vv.height - 12}px`);
+        sheet.setAttribute("data-keyboard", "open");
+      } else {
+        sheet.style.removeProperty("bottom");
+        sheet.style.removeProperty("max-height");
+        sheet.removeAttribute("data-keyboard");
+      }
+    };
+    const onFocus = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (!phone.matches || !target.matches("input, textarea, select, [contenteditable='true']")) return;
+      // Dopo che la tastiera è salita.
+      window.setTimeout(() => target.scrollIntoView({ block: "center", behavior: "smooth" }), 320);
+    };
+
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    sheet.addEventListener("focusin", onFocus);
+    update();
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      sheet.removeEventListener("focusin", onFocus);
+    };
+  }, [el]);
+}
+
+export function DialogContent({
+  className,
+  children,
+  onOpenAutoFocus,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>) {
   const [contentEl, setContentEl] = React.useState<HTMLDivElement | null>(null);
   const [scrollEl, setScrollEl] = React.useState<HTMLDivElement | null>(null);
   const closeRef = React.useRef<HTMLButtonElement>(null);
   useSheetDrag(contentEl, scrollEl, closeRef);
+  useKeyboardAware(contentEl);
 
   return (
     <DialogPrimitive.Portal>
@@ -106,13 +154,22 @@ export function DialogContent({ className, children, ...props }: React.Component
           className
         )}
         {...props}
+        onOpenAutoFocus={(event) => {
+          onOpenAutoFocus?.(event);
+          // Sugli schermi touch nessun campo prende il cursore da solo: la tastiera si apre
+          // solo quando tocchi un campo, così il foglio si vede tutto.
+          if (!event.defaultPrevented && window.matchMedia("(pointer: coarse)").matches) {
+            event.preventDefault();
+            contentEl?.focus({ preventScroll: true });
+          }
+        }}
       >
         <div data-sheet-handle aria-hidden className="flex h-7 shrink-0 items-start justify-center pt-2 sm:hidden">
           <span className="h-1.5 w-10 rounded-full bg-foreground/20" />
         </div>
         <div
           ref={setScrollEl}
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:p-6"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] in-data-[keyboard=open]:pb-4 sm:p-6"
         >
           {children}
         </div>

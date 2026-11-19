@@ -47,8 +47,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <HeaderSearch />
           <div className="ml-auto flex items-center gap-3">
             <HeaderSearchLink />
-            <TextSizeMenu />
-            <ThemeToggle />
+            {/* Sul telefono dimensione del testo e tema stanno nel menù "Altro". */}
+            <div className="hidden items-center gap-3 md:flex">
+              <TextSizeMenu />
+              <ThemeToggle />
+            </div>
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium leading-tight text-foreground">{session.user.name}</p>
               <p className="text-xs leading-tight text-muted-foreground">{session.user.email}</p>
@@ -58,7 +61,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         </header>
 
         <PullToRefresh />
-        <main className="min-w-0 flex-1 px-4 pt-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:px-8 md:py-8">
+        <main className="min-w-0 flex-1 px-4 pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:px-8 md:py-8">
           {children}
         </main>
         <TabBar />

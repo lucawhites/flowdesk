@@ -45,8 +45,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <Toaster
           position="bottom-right"
-          // Sul telefono le notifiche stanno sopra la barra in basso (3.5rem).
-          mobileOffset={{ bottom: "calc(4.5rem + env(safe-area-inset-bottom))" }}
+          // Sul telefono le notifiche stanno sopra la capsula in basso.
+          mobileOffset={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom))" }}
           toastOptions={{
             className: "glass",
             style: {
