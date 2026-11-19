@@ -13,7 +13,7 @@ import { DailyRow } from "@/components/daily-item";
 import { EmptyState } from "@/components/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { DonutChart, DonutLegend } from "@/components/donut-chart";
+import { ProgressRing } from "@/components/progress-ring";
 import { cn } from "@/lib/utils";
 
 export default async function HomePage() {
@@ -47,7 +47,6 @@ export default async function HomePage() {
 
   const objectiveOptions = openObjectives.map((o) => ({ id: o.id, title: o.title, projectName: o.project.name }));
   const firstName = (user.name ?? "").split(" ")[0];
-  const pct = (done: number, total: number) => (total > 0 ? Math.round((done / total) * 100) : 0);
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
@@ -140,23 +139,21 @@ export default async function HomePage() {
                 className="rounded-2xl border border-border bg-surface shadow-sm outline-none transition-colors hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <CardContent className="flex items-center gap-4 p-4">
-                  <DonutChart
-                    segments={[
-                      { label: "Completate", value: c.done, colorVar: "--success" },
-                      { label: "Da fare", value: c.total - c.done, colorVar: "--accent" },
-                    ]}
-                    size={96}
-                    strokeWidth={14}
-                    centerLabel={`${pct(c.done, c.total)}%`}
-                  />
-                  <div className="flex-1">
-                    <p className="mb-2 text-xs font-semibold text-muted-foreground">{c.title}</p>
-                    <DonutLegend
-                      segments={[
-                        { label: "Completate", value: c.done, colorVar: "--success" },
-                        { label: "Da fare", value: c.total - c.done, colorVar: "--accent" },
-                      ]}
-                    />
+                  <ProgressRing id={c.id} done={c.done} total={c.total} />
+                  <div className="min-w-0 flex-1">
+                    <p className="mb-1 text-xs font-semibold text-muted-foreground">{c.title}</p>
+                    {c.total > 0 ? (
+                      <>
+                        <p className="text-xl font-semibold text-foreground">
+                          {c.done} <span className="text-sm font-normal text-muted-foreground">di {c.total} fatte</span>
+                        </p>
+                        <p className={cn("mt-0.5 text-xs", c.done >= c.total ? "text-success" : "text-muted-foreground")}>
+                          {c.done >= c.total ? "Tutto completato" : `${c.total - c.done} da fare`}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Nessuna daily per oggi</p>
+                    )}
                   </div>
                 </CardContent>
               </Link>

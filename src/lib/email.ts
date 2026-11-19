@@ -56,20 +56,21 @@ export async function sendVerificationEmail(email: string, verifyUrl: string) {
 // Palette chiara di globals.css, accento arancio usato con misura.
 
 export const EMAIL_COLORS = {
-  background: "#f4f2eb",
-  surface: "#faf9f5",
-  muted: "#ebe8de",
-  foreground: "#141413",
-  mutedForeground: "#6f6d65",
-  border: "#e0dcd0",
-  accent: "#d97757",
-  accentSoft: "#f5e2d9",
-  success: "#627548",
-  successSoft: "#e5eadb",
+  background: "#f6f6f7",
+  surface: "#ffffff",
+  muted: "#efeff1",
+  foreground: "#18181b",
+  mutedForeground: "#63636b",
+  border: "#e4e4e7",
+  accent: "#cc4a1c",
+  accentSoft: "#fdece4",
+  success: "#15803d",
+  successSoft: "#dcfce7",
 } as const;
 
 const C = EMAIL_COLORS;
-const FONT = "Manrope, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif";
+// Font di sistema, come nell'app: SF Pro su iPhone e Mac, Segoe UI su Windows, Roboto su Android.
+const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
 
 /** Testo inserito dagli utenti (titoli, nomi): va sempre passato di qui. */
 export function esc(text: string) {
@@ -84,7 +85,6 @@ export function emailLayout({ preheader, body }: { preheader: string; body: stri
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body style="margin:0;padding:0;background:${C.background};">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(preheader)}</div>

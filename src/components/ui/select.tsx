@@ -30,7 +30,7 @@ export function SelectContent({ className, children, ...props }: React.Component
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
         className={cn(
-          "popover-content origin-[--radix-select-content-transform-origin] z-50 max-h-72 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-xl border border-border bg-surface p-1 shadow-lg",
+          "popover-content origin-[--radix-select-content-transform-origin] z-50 max-h-72 min-w-[var(--radix-select-trigger-width)] overflow-hidden glass rounded-xl border border-border/70 p-1 shadow-lg",
           className
         )}
         position="popper"
@@ -47,7 +47,7 @@ export function SelectItem({ className, children, ...props }: React.ComponentPro
   return (
     <SelectPrimitive.Item
       className={cn(
-        "relative flex cursor-pointer select-none items-center rounded-lg py-2 pl-8 pr-3 text-sm text-foreground outline-none transition-colors data-[highlighted]:bg-surface-muted",
+        "relative flex cursor-pointer select-none items-center rounded-lg py-2 pl-8 pr-3 text-sm text-foreground outline-none transition-colors data-[highlighted]:bg-foreground/[0.06]",
         className
       )}
       {...props}

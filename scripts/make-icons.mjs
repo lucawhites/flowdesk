@@ -1,55 +1,63 @@
-// Rigenera le icone dell'app (anello di avanzamento in vetro su fondo scuro, variante "A").
+// Rigenera le icone dell'app: monogramma F in vetro arancio su grafite (variante "E1").
 // Uso: node scripts/make-icons.mjs
 // Se cambi il disegno, aggiorna anche src/components/app-logo.tsx.
+//
+// Qualità: l'SVG viene rasterizzato a 1200 dpi (≈1700 px) e poi ridotto con Lanczos,
+// così bordi, sfumature e bagliori restano nitidi a ogni misura.
 import sharp from "sharp";
 
 const defs = `
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#34322d"/><stop offset="1" stop-color="#0d0d0c"/>
+      <stop offset="0" stop-color="#3d3d44"/><stop offset="1" stop-color="#0f0f11"/>
     </linearGradient>
     <linearGradient id="orange" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#f09a77"/><stop offset="1" stop-color="#c4613f"/>
+      <stop offset="0" stop-color="#ffb08a"/><stop offset="1" stop-color="#e2501c"/>
+    </linearGradient>
+    <linearGradient id="orangeV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffb894"/><stop offset="1" stop-color="#e2501c"/>
     </linearGradient>
     <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset="0.45" stop-color="#fff" stop-opacity="0.15"/>
-      <stop offset="0.5" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".45" stop-color="#fff" stop-opacity=".1"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity="0"/>
     </linearGradient>
     <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.55"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.05"/>
-      <stop offset="1" stop-color="#fff" stop-opacity="0.3"/>
+      <stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset=".5" stop-color="#fff" stop-opacity=".04"/>
+      <stop offset="1" stop-color="#fff" stop-opacity=".25"/>
     </linearGradient>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
-    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6"/></filter>
-    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="10"/></filter>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.2"/></filter>
   </defs>`;
 
-const arc = (stroke, width) =>
-  `<circle cx="50" cy="50" r="26" fill="none" stroke="${stroke}" stroke-width="${width}"
-    stroke-linecap="round" stroke-dasharray="114 164" transform="rotate(-90 50 50)"/>`;
-const check = (stroke) =>
-  `<path d="M40 51l7 7 13-15" fill="none" stroke="${stroke}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>`;
+// Pillola = rettangolo con punte tonde; bordo di luce e riflesso in alto le fanno sembrare vetro.
+const pill = (x, y, w, h, fill, opacity) =>
+  `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${Math.min(w, h) / 2}" fill="${fill}" opacity="${opacity}"/>`;
+const rim = (x, y, w, h) =>
+  `<rect x="${x + 0.4}" y="${y + 0.4}" width="${w - 0.8}" height="${h - 0.8}" rx="${Math.min(w, h) / 2 - 0.4}" fill="none" stroke="url(#edge)" stroke-width=".8"/>`;
+const highlight = (x, y, w, r) =>
+  `<path d="M${x + r} ${y + 1.6}h${w - 2 * r}" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".7" filter="url(#soft)"/>`;
 
-// Disegno ingrandito del 25%: riempie la zona sicura delle icone "maskable"
-// (cerchio centrale dell'80%) senza uscirne.
+// La F: asta, braccio alto, braccio centrale. Spostata di 2 a destra perché l'asta
+// pesa più dei bracci: così la lettera sembra centrata (centratura ottica).
+// Sta tutta nel cerchio centrale dell'80%, la zona sicura delle icone "maskable".
 const art = `
-  <g transform="translate(50 50) scale(1.25) translate(-50 -50)">
-    <circle cx="50" cy="50" r="26" fill="none" stroke="#fff" stroke-width="9" opacity="0.07"/>
-    <g filter="url(#glow)" opacity="0.7">${arc("#d97757", 12)}</g>
-    ${arc("url(#orange)", 9)}
-    <g transform="translate(-1.6 -1.6)" opacity="0.55" filter="url(#soft)">${arc("#fff", 2.2)}</g>
-    <g transform="translate(0 1.2)" opacity="0.35" filter="url(#shadow)">${check("#000")}</g>
-    ${check("#f7f3ea")}
+  <ellipse cx="51" cy="54" rx="22" ry="24" fill="#f27a4c" opacity=".42" filter="url(#glow)"/>
+  <g transform="translate(2 0)">
+    ${pill(31, 22, 15, 57, "url(#orangeV)", 0.92)}
+    ${pill(31, 22, 40, 15, "url(#orange)", 0.88)}
+    ${pill(31, 45, 30, 14, "url(#orange)", 0.85)}
+    ${rim(31, 22, 15, 57)}${rim(31, 22, 40, 15)}${rim(31, 45, 30, 14)}
+    ${highlight(31, 22, 40, 7.5)}${highlight(31, 45, 30, 7)}
   </g>`;
 
-// rx 22 = angoli arrotondati; rx 0 = a tutto campo (iPhone e icone "maskable"
-// ritagliano da soli la forma, quindi niente bordo di luce).
+// rx 22 = angoli arrotondati con bordo di luce; rx 0 = a tutto campo (iPhone e icone
+// "maskable" ritagliano da soli la forma, quindi niente bordo).
 const svg = (rx) =>
   Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${defs}
       <rect width="100" height="100" rx="${rx}" fill="url(#bg)"/>${art}
-      <rect width="100" height="100" rx="${rx}" fill="url(#sheen)" opacity="0.2"/>
-      ${rx ? `<rect x="0.6" y="0.6" width="98.8" height="98.8" rx="${rx - 0.5}" fill="none" stroke="url(#edge)" stroke-width="1.2"/>` : ""}
+      <rect width="100" height="100" rx="${rx}" fill="url(#sheen)" opacity=".16"/>
+      ${rx ? `<rect x=".6" y=".6" width="98.8" height="98.8" rx="${rx - 0.5}" fill="none" stroke="url(#edge)" stroke-width="1.1"/>` : ""}
     </svg>`,
   );
 
@@ -62,6 +70,9 @@ const out = [
 ];
 
 for (const [file, size, rx] of out) {
-  await sharp(svg(rx), { density: 1200 }).resize(size, size).png().toFile(file);
+  await sharp(svg(rx), { density: 1200 })
+    .resize(size, size, { kernel: "lanczos3" })
+    .png({ compressionLevel: 9, adaptiveFiltering: true })
+    .toFile(file);
   console.log(file);
 }

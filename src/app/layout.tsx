@@ -33,8 +33,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           position="bottom-right"
           mobileOffset={{ bottom: "calc(1rem + env(safe-area-inset-bottom))" }}
           toastOptions={{
+            className: "glass",
             style: {
-              background: "var(--surface)",
               color: "var(--foreground)",
               border: "1px solid var(--border)",
             },

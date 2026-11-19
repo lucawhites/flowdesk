@@ -16,7 +16,11 @@ export function Progress({
       {...props}
     >
       <ProgressPrimitive.Indicator
-        className={cn("h-full flex-1 rounded-full bg-accent transition-all duration-500", indicatorClassName)}
+        className={cn(
+          "progress-fill h-full flex-1 rounded-full transition-all duration-500",
+          // Sfumatura arancio di base; un colore passato da fuori (es. rosso se in ritardo) la sostituisce.
+          indicatorClassName || "bg-linear-to-r from-accent-light to-accent"
+        )}
         style={{ transform: `translateX(-${100 - (value ?? 0)}%)` }}
       />
     </ProgressPrimitive.Root>

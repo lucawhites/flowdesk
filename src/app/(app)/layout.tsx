@@ -31,7 +31,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border bg-surface/80 px-4 py-3 backdrop-blur md:px-8">
+        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 glass-bar border-b border-border/70 px-4 py-3 md:px-8">
           <div className="flex items-center gap-2 md:hidden">
             <MobileNav teamName={session.user.teamName} />
             <Link href="/home" className="flex items-center gap-2">

@@ -21,10 +21,10 @@ export function MobileNav({ teamName }: { teamName?: string | null }) {
         <Menu className="h-5 w-5" />
       </DialogPrimitive.Trigger>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="dialog-overlay fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] md:hidden" />
+        <DialogPrimitive.Overlay className="dialog-overlay fixed inset-0 z-50 bg-black/30 backdrop-blur-[3px] md:hidden" />
         <DialogPrimitive.Content
           aria-describedby={undefined}
-          className="drawer-content fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-border bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] shadow-lg outline-none md:hidden"
+          className="drawer-content fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col glass border-r border-border/70 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] shadow-lg outline-none md:hidden"
         >
           <div className="mb-8 flex items-center justify-between">
             <Link href="/home" onClick={close} className="flex items-center gap-2 px-1">

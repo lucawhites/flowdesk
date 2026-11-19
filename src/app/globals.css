@@ -2,26 +2,30 @@
 
 :root {
   color-scheme: light;
-  --background: #f4f2eb;
-  --surface: #faf9f5;
-  --surface-muted: #ebe8de;
-  --foreground: #141413;
-  --muted-foreground: #6f6d65;
-  --border: #e0dcd0;
-  --primary: #141413;
-  --primary-foreground: #faf9f5;
-  --primary-soft: #e8e6dc;
-  --accent: #d97757;
-  --accent-soft: #f5e2d9;
-  --success: #627548;
-  --success-soft: #e5eadb;
-  --warning: #a8661f;
-  --warning-soft: #f4e6d3;
-  --danger: #b2473a;
-  --danger-soft: #f3dfda;
-  --ring: #d97757;
-  /* Barre dei grafici: arancio più scuro, validato per contrasto ≥ 3:1. */
-  --chart-1: #c96442;
+  --background: #f6f6f7;
+  --surface: #ffffff;
+  --surface-muted: #efeff1;
+  --foreground: #18181b;
+  --muted-foreground: #63636b;
+  --border: #e4e4e7;
+  --primary: #18181b;
+  --primary-foreground: #ffffff;
+  --primary-soft: #ececef;
+  --accent: #cc4a1c;
+  --accent-soft: #fdece4;
+  /* Inizio chiaro della sfumatura arancio (anello di avanzamento). */
+  --accent-light: #f59a72;
+  --success: #15803d;
+  --success-soft: #dcfce7;
+  --warning: #b45309;
+  --warning-soft: #fef3c7;
+  --danger: #dc2626;
+  --danger-soft: #fee2e2;
+  --ring: #cc4a1c;
+  /* Barre dei grafici: arancio validato per contrasto ≥ 3:1 sul bianco. */
+  --chart-1: #e0663a;
+  /* Barre dei giorni passati: stesso arancio, più tenue. */
+  --chart-1-soft: #f5c3ac;
 }
 
 /* Tema: lo script in <head> imposta data-theme su <html> (scelta salvata o
@@ -29,49 +33,53 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-  --background: #141413;
-  --surface: #1c1b19;
-  --surface-muted: #272622;
-  --foreground: #faf9f5;
-  --muted-foreground: #a3a197;
-  --border: #33322d;
-  --primary: #faf9f5;
-  --primary-foreground: #141413;
-  --primary-soft: #2e2d29;
-  --accent: #e0896b;
-  --accent-soft: #3b2820;
-  --success: #9bb07c;
-  --success-soft: #252e1c;
-  --warning: #dba45e;
-  --warning-soft: #392b17;
-  --danger: #e27d6f;
-  --danger-soft: #3d211d;
-  --ring: #e0896b;
-  --chart-1: #cf6f4f;
+  --background: #0b0b0c;
+  --surface: #18181b;
+  --surface-muted: #232327;
+  --foreground: #fafafa;
+  --muted-foreground: #a1a1aa;
+  --border: #2a2a2e;
+  --primary: #fafafa;
+  --primary-foreground: #18181b;
+  --primary-soft: #27272a;
+  --accent: #f27a4c;
+  --accent-soft: #3a1d12;
+  --accent-light: #f9ab8a;
+  --success: #4ade80;
+  --success-soft: #12301d;
+  --warning: #fbbf24;
+  --warning-soft: #3a2a0a;
+  --danger: #f87171;
+  --danger-soft: #3b1515;
+  --ring: #f27a4c;
+  --chart-1: #f27a4c;
+  --chart-1-soft: #6b3420;
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --background: #141413;
-  --surface: #1c1b19;
-  --surface-muted: #272622;
-  --foreground: #faf9f5;
-  --muted-foreground: #a3a197;
-  --border: #33322d;
-  --primary: #faf9f5;
-  --primary-foreground: #141413;
-  --primary-soft: #2e2d29;
-  --accent: #e0896b;
-  --accent-soft: #3b2820;
-  --success: #9bb07c;
-  --success-soft: #252e1c;
-  --warning: #dba45e;
-  --warning-soft: #392b17;
-  --danger: #e27d6f;
-  --danger-soft: #3d211d;
-  --ring: #e0896b;
-  --chart-1: #cf6f4f;
+  --background: #0b0b0c;
+  --surface: #18181b;
+  --surface-muted: #232327;
+  --foreground: #fafafa;
+  --muted-foreground: #a1a1aa;
+  --border: #2a2a2e;
+  --primary: #fafafa;
+  --primary-foreground: #18181b;
+  --primary-soft: #27272a;
+  --accent: #f27a4c;
+  --accent-soft: #3a1d12;
+  --accent-light: #f9ab8a;
+  --success: #4ade80;
+  --success-soft: #12301d;
+  --warning: #fbbf24;
+  --warning-soft: #3a2a0a;
+  --danger: #f87171;
+  --danger-soft: #3b1515;
+  --ring: #f27a4c;
+  --chart-1: #f27a4c;
+  --chart-1-soft: #6b3420;
 }
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
@@ -89,6 +97,8 @@
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-chart-1: var(--chart-1);
+  --color-chart-1-soft: var(--chart-1-soft);
+  --color-accent-light: var(--accent-light);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
@@ -96,6 +106,8 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-ring: var(--ring);
+  /* Ombra delle schede: leggera e neutra. */
+  --shadow-sm: 0 1px 2px rgb(16 16 20 / 0.04), 0 2px 8px rgb(16 16 20 / 0.05);
   /* Font di sistema: SF Pro su iPhone e Mac, Segoe UI su Windows, Roboto su Android. */
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
@@ -187,7 +199,80 @@ body {
   animation: popover-in 120ms ease-out;
 }
 
+/* Vetro in stile Apple, solo su elementi che stanno sopra il contenuto
+   (intestazione, menu, finestre, notifiche): mai sulle schede delle liste,
+   per non pesare sulla fluidità e non ridurre la leggibilità.
+   Senza supporto alla sfocatura o con "Riduci trasparenza" diventa un pannello pieno. */
+.glass,
+.glass-bar {
+  --glass-bg: var(--surface);
+  background: var(--glass-bg);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    --glass-bg: color-mix(in srgb, var(--surface) 78%, transparent);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+  }
+  .glass-bar {
+    --glass-bg: color-mix(in srgb, var(--surface) 72%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-bar {
+    --glass-bg: var(--surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Le notifiche (sonner) hanno un proprio sfondo più specifico: qui prende quello del vetro. */
+[data-sonner-toaster] [data-sonner-toast].glass {
+  background: var(--glass-bg);
+}
+
+/* Grafici: barre che crescono e avanzamento che si riempie, una volta all'apertura. */
+@keyframes bar-grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+.chart-bar {
+  transform-origin: bottom;
+  animation: bar-grow 700ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes progress-fill {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+.progress-fill {
+  animation: progress-fill 900ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* Anello di avanzamento: l'arco si disegna una volta all'apertura della pagina. */
+@keyframes ring-draw {
+  from {
+    stroke-dashoffset: var(--ring-length);
+  }
+}
+
+.progress-ring-arc {
+  animation: ring-draw 900ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .progress-ring-arc,
+  .chart-bar,
+  .progress-fill,
   .dialog-content[data-state="open"],
   .drawer-content[data-state="open"],
   .popover-content[data-state="open"] {
