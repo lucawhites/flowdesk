@@ -44,6 +44,7 @@ export function TasksView({
   initialProjectFilter,
   initialScope,
   initialLateOnly,
+  initialNewDaily = null,
   currentUserId,
   currentUserRole,
 }: {
@@ -56,6 +57,7 @@ export function TasksView({
   initialProjectFilter: string | null;
   initialScope: Scope | null;
   initialLateOnly: boolean;
+  initialNewDaily?: { title: string } | null;
   currentUserId: string;
   currentUserRole: Role;
 }) {
@@ -101,6 +103,10 @@ export function TasksView({
         objectives={objectiveOptions}
         currentUserId={currentUserId}
         today={today}
+        defaultOpen={!!initialNewDaily}
+        defaultTitle={initialNewDaily?.title || undefined}
+        // Chiusa la finestra, il link torna /daily: ricaricando non si riapre.
+        onClose={initialNewDaily ? () => router.replace("/daily") : undefined}
         trigger={
           <Button size="sm">
             <Plus className="h-4 w-4" /> Nuova daily

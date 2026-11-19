@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { addDaysISO, isoToDateColumn, todayISO } from "@/lib/dates";
 import { runPlan, runReview } from "@/lib/agent/run";
 import { proposeDailyText } from "@/lib/agent/daily-text";
+import { sendMorningPush } from "@/lib/push";
 
 // Una chiamata a Claude può durare qualche decina di secondi.
 export const maxDuration = 300;
@@ -49,6 +50,14 @@ export async function GET(request: NextRequest) {
     }
     if ((only === "plan" || !only) && !(await already("plan"))) {
       results.push(await runPlan(team.id, today, { dryRun }));
+    }
+    // Solo il giro automatico del mattino (non le prove o i rilanci a mano): notifica con le daily del giorno.
+    if (!force && !dryRun && !day) {
+      try {
+        await sendMorningPush(team.id);
+      } catch (error) {
+        console.error("Notifiche del mattino non inviate:", error);
+      }
     }
   }
 

@@ -20,7 +20,7 @@ export function LoginForm() {
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="password">Password</Label>
-        <Input id="password" name="password" type="password" placeholder="••••••••" required />
+        <Input id="password" name="password" type="password" autoComplete="current-password" placeholder="••••••••" required />
         {state?.errors?.password && <p className="text-xs text-danger">{state.errors.password[0]}</p>}
       </div>
       {state?.message && (

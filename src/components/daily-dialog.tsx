@@ -29,6 +29,9 @@ export function DailyDialog({
   defaultStepId,
   defaultAssigneeId,
   defaultDate,
+  defaultTitle,
+  defaultOpen,
+  onClose,
   trigger,
 }: {
   members: TeamMember[];
@@ -41,6 +44,10 @@ export function DailyDialog({
   defaultStepId?: string;
   defaultAssigneeId?: string;
   defaultDate?: string;
+  /** Titolo già scritto (es. dal link dei Comandi rapidi). */
+  defaultTitle?: string;
+  defaultOpen?: boolean;
+  onClose?: () => void;
   trigger: ReactNode;
 }) {
   const isEdit = !!daily;
@@ -53,12 +60,14 @@ export function DailyDialog({
       action={saveDaily.bind(null, daily?.id ?? null)}
       submitLabel={isEdit ? "Salva" : "Crea daily"}
       successMessage={isEdit ? "Daily aggiornata" : "Daily creata"}
+      defaultOpen={defaultOpen}
+      onClose={onClose}
     >
       {(state) => (
         <>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="daily-title">Cosa c&apos;è da fare</Label>
-            <Input id="daily-title" name="title" placeholder="Es. Chiamare il fornitore" defaultValue={daily?.title} required autoFocus />
+            <Input id="daily-title" name="title" enterKeyHint="done" placeholder="Es. Chiamare il fornitore" defaultValue={daily?.title ?? defaultTitle} required autoFocus />
             <FieldError messages={state?.errors?.title} />
           </div>
 

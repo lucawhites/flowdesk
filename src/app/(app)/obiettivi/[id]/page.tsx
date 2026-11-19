@@ -6,6 +6,8 @@ import { getObjectiveDailies, getTeamWork } from "@/lib/queries";
 import { DailyRow } from "@/components/daily-item";
 import { EmptyState } from "@/components/empty-state";
 import { ObjectiveCard } from "@/components/objective-card";
+import { ShareButton } from "@/components/share-button";
+import { formatISO } from "@/lib/dates";
 
 export default async function ObjectivePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,12 +29,27 @@ export default async function ObjectivePage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <Link
-        href={`/progetti/${objective.project.id}`}
-        className="flex items-center gap-1 self-start text-xs font-medium text-accent hover:underline"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" /> {objective.project.name}
-      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <Link
+          href={`/progetti/${objective.project.id}`}
+          className="flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> {objective.project.name}
+        </Link>
+        <ShareButton
+          title={objective.title}
+          text={[
+            `Obiettivo: ${objective.title}`,
+            `${objective.project.name} · ${objective.assignee.name} · ${objective.progress}% fatto`,
+            objective.dueDate ? `Scadenza: ${formatISO(objective.dueDate, "d MMMM")}` : null,
+          ]
+            .filter(Boolean)
+            .join("\n")}
+          path={`/obiettivi/${objective.id}`}
+          variant="ghost"
+          size="sm"
+        />
+      </div>
 
       <ObjectiveCard
         variant="detail"

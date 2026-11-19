@@ -46,9 +46,18 @@ export function MobileNav({ teamName }: { teamName?: string | null }) {
     const w = width();
     setOffset({ x: toOpen ? 0 : -w, w });
     window.setTimeout(() => {
-      setSettling(false);
-      setOffset(null);
-      if (!toOpen) setOpen(false);
+      if (toOpen) {
+        setSettling(false);
+        setOffset(null);
+        return;
+      }
+      // Già fuori schermo col dito: si chiude subito (lo stile in linea ha animation: none,
+      // quindi niente seconda animazione di uscita), poi si azzera la posizione.
+      setOpen(false);
+      window.setTimeout(() => {
+        setSettling(false);
+        setOffset(null);
+      }, 0);
     }, SETTLE_MS);
   };
 

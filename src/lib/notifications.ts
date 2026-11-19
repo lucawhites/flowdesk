@@ -5,6 +5,7 @@ import { dailiesForToday } from "@/lib/daily-helpers";
 import { objectiveProgressFrom } from "@/lib/progress";
 import { getTeamWork } from "@/lib/queries";
 import { getAppUrl } from "@/lib/tokens";
+import { sendPush } from "@/lib/push";
 import { promoteQueue, type Activated } from "@/lib/objective-queue";
 import type { DailyItem } from "@/lib/types";
 import {
@@ -104,6 +105,16 @@ export async function notifyIfObjectiveReached(objectiveId: string, closedByUser
 
   const to = await recipients(objective.teamId);
   await sendEmails(to.map((r) => ({ to: r.email, subject: `Obiettivo raggiunto: ${objective.title}`, html })));
+  // Notifica sul telefono a tutto il team, tranne chi ha messo l'ultima spunta.
+  await sendPush(
+    to.map((r) => r.id).filter((id) => id !== closedByUserId),
+    {
+      title: "Obiettivo raggiunto",
+      body: `${objective.title} (${objective.project.name}) è al 100%.`,
+      url: `/obiettivi/${objective.id}`,
+      tag: `raggiunto-${objective.id}`,
+    }
+  );
 }
 
 // ─── Riepilogo serale ────────────────────────────────────────────────────────

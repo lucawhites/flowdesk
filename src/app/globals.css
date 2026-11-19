@@ -228,6 +228,64 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
   animation: drawer-in 200ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+/* Uscite: Radix aspetta la fine dell'animazione prima di togliere l'elemento,
+   così menù, fogli e finestre escono con lo stesso movimento con cui entrano. */
+@keyframes overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes drawer-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes content-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+}
+
+@keyframes sheet-out {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+.dialog-overlay[data-state="closed"] {
+  animation: overlay-out 200ms ease-in forwards;
+}
+
+.drawer-content[data-state="closed"] {
+  animation: drawer-out 220ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.dialog-content[data-state="closed"] {
+  animation: content-out 150ms ease-in forwards;
+}
+
+@media (max-width: 639px) {
+  .dialog-content[data-state="closed"] {
+    animation: sheet-out 260ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  }
+}
+
 /* Menù e tendine: li posiziona Radix, quindi niente traslazione da finestra centrata. */
 @keyframes popover-in {
   from {
@@ -303,6 +361,58 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
   animation: progress-fill 900ms cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
+/* Passaggio tra le pagine (View Transitions, src/app/(app)/template.tsx): la pagina vecchia
+   sfuma veloce, la nuova entra salendo di poco. Intestazione e barra in basso restano ferme. */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(.page-out) {
+  animation: 120ms ease-in both vt-fade-out;
+}
+
+::view-transition-new(.page-in) {
+  animation: 260ms cubic-bezier(0.32, 0.72, 0, 1) 60ms both vt-rise-in;
+}
+
+::view-transition-group(app-header),
+::view-transition-group(app-tabbar) {
+  animation: none;
+  z-index: 100;
+}
+
+::view-transition-old(app-header),
+::view-transition-old(app-tabbar) {
+  display: none;
+}
+
+::view-transition-new(app-header),
+::view-transition-new(app-tabbar) {
+  animation: none;
+}
+
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
+
 /* Anello di avanzamento: l'arco si disegna una volta all'apertura della pagina. */
 @keyframes ring-draw {
   from {
@@ -318,6 +428,9 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
   .progress-ring-arc,
   .chart-bar,
   .progress-fill,
+  .dialog-overlay[data-state="closed"],
+  .dialog-content[data-state="closed"],
+  .drawer-content[data-state="closed"],
   .dialog-content[data-state="open"],
   .drawer-content[data-state="open"],
   .popover-content[data-state="open"] {

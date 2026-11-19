@@ -48,12 +48,28 @@ model User {
   team   Team   @relation(fields: [teamId], references: [id])
   teamId String
 
-  objectivesCreated  Objective[]     @relation("ObjectiveCreator")
-  objectivesAssigned Objective[]     @relation("ObjectiveAssignee")
-  dailiesCreated     Daily[]         @relation("DailyCreator")
-  dailiesAssigned    Daily[]         @relation("DailyAssignee")
-  eventsCreated      CalendarEvent[] @relation("EventCreator")
-  eventsAbout        CalendarEvent[] @relation("EventPerson")
+  objectivesCreated  Objective[]        @relation("ObjectiveCreator")
+  objectivesAssigned Objective[]        @relation("ObjectiveAssignee")
+  dailiesCreated     Daily[]            @relation("DailyCreator")
+  dailiesAssigned    Daily[]            @relation("DailyAssignee")
+  eventsCreated      CalendarEvent[]    @relation("EventCreator")
+  eventsAbout        CalendarEvent[]    @relation("EventPerson")
+  pushSubscriptions  PushSubscription[]
+}
+
+// Iscrizione alle notifiche push di un dispositivo (es. l'iPhone con Flowdesk installata).
+// Una persona può averne più di una; si cancella da sola quando il dispositivo la revoca.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@index([userId])
 }
 
 // Token monouso per verificare l'indirizzo email in fase di registrazione.

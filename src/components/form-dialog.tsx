@@ -23,6 +23,8 @@ export function FormDialog({
   action,
   submitLabel,
   successMessage,
+  defaultOpen = false,
+  onClose,
   children,
 }: {
   title: string;
@@ -31,9 +33,17 @@ export function FormDialog({
   action: (prev: FormState, formData: FormData) => Promise<FormState>;
   submitLabel: string;
   successMessage: string;
+  /** Aperta subito (es. arrivando da un link dei Comandi rapidi). */
+  defaultOpen?: boolean;
+  /** Chiamata quando la finestra si chiude (salvata o annullata). */
+  onClose?: () => void;
   children: (state: FormState) => ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useState(defaultOpen);
+  const setOpen = (value: boolean) => {
+    setOpenState(value);
+    if (!value) onClose?.();
+  };
   const [state, formAction, pending] = useActionState<FormState, FormData>(async (prev, formData) => {
     const result = await action(prev, formData);
     if (result?.ok) {

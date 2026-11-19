@@ -1,10 +1,20 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+// Tastiera del telefono: per i testi l'iniziale maiuscola automatica; per le email niente maiuscole
+// né correttore. Chi usa il campo può sempre passare valori diversi.
+function keyboardDefaults(type: string | undefined): React.InputHTMLAttributes<HTMLInputElement> {
+  if (type === "email") return { autoCapitalize: "none", autoCorrect: "off", spellCheck: false, autoComplete: "email" };
+  if (type === "password") return { autoCapitalize: "none", autoCorrect: "off", spellCheck: false };
+  if (!type || type === "text") return { autoCapitalize: "sentences" };
+  return {};
+}
+
 export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
   ({ className, ...props }, ref) => (
     <input
       ref={ref}
+      {...keyboardDefaults(props.type)}
       className={cn(
         "flex h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
         className
@@ -19,6 +29,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTML
   ({ className, ...props }, ref) => (
     <textarea
       ref={ref}
+      autoCapitalize="sentences"
       className={cn(
         "flex min-h-20 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
         className

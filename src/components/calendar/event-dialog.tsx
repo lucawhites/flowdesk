@@ -36,7 +36,7 @@ export function EventDialog({
         <>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="event-title">Cosa succede</Label>
-            <Input id="event-title" name="title" placeholder="Es. Appuntamento dal fornitore" defaultValue={event?.title} required autoFocus />
+            <Input id="event-title" name="title" enterKeyHint="done" placeholder="Es. Appuntamento dal fornitore" defaultValue={event?.title} required autoFocus />
             <FieldError messages={state?.errors?.title} />
           </div>
 

@@ -24,12 +24,12 @@ export function RegisterForm() {
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="name">Nome e cognome</Label>
-        <Input id="name" name="name" placeholder="Mario Rossi" required autoFocus />
+        <Input id="name" name="name" autoComplete="name" autoCapitalize="words" placeholder="Mario Rossi" required autoFocus />
         {state?.errors?.name && <p className="text-xs text-danger">{state.errors.name[0]}</p>}
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="company">Nome azienda / team</Label>
-        <Input id="company" name="company" placeholder="Acme Srl" required />
+        <Input id="company" name="company" autoComplete="organization" autoCapitalize="words" placeholder="Acme Srl" required />
         {state?.errors?.company && <p className="text-xs text-danger">{state.errors.company[0]}</p>}
       </div>
       <div className="flex flex-col gap-1.5">
@@ -42,7 +42,7 @@ export function RegisterForm() {
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="password">Password</Label>
-        <Input id="password" name="password" type="password" placeholder="Almeno 8 caratteri" required />
+        <Input id="password" name="password" type="password" autoComplete="new-password" placeholder="Almeno 8 caratteri" required />
         {state?.errors?.password && <p className="text-xs text-danger">{state.errors.password[0]}</p>}
       </div>
       {state?.message && (

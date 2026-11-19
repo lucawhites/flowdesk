@@ -8,6 +8,7 @@ import { deleteDaily, postponeDaily, proposeDailyInstructions, toggleDaily } fro
 import { DailyDialog } from "@/components/daily-dialog";
 import { ItemMenu } from "@/components/item-menu";
 import { SwipeRow } from "@/components/swipe-row";
+import { ShareButton } from "@/components/share-button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -295,6 +296,20 @@ export function DailyRow({
           </DetailSection>
 
           <DialogFooter className="flex-wrap">
+            <ShareButton
+              title={daily.title}
+              text={[
+                `Daily: ${daily.title}`,
+                `${formatISO(daily.date, "EEEE d MMMM")} · ${daily.assignee.name}`,
+                daily.objective ? `Obiettivo: ${daily.objective.title}` : null,
+                daily.description,
+              ]
+                .filter(Boolean)
+                .join("\n")}
+              path={daily.objective ? `/obiettivi/${daily.objective.id}` : "/daily"}
+              variant="ghost"
+              className="mr-auto"
+            />
             {canManage &&
               editDialog(
                 <Button type="button" variant="outline">

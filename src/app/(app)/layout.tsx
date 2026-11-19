@@ -7,6 +7,8 @@ import { SidebarNav } from "@/components/sidebar-nav";
 import { MobileNav } from "@/components/mobile-nav";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { TabBar } from "@/components/tab-bar";
+import { PwaSetup } from "@/components/pwa-setup";
+import { openDailiesToday } from "@/lib/push";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TextSizeMenu } from "@/components/text-size-menu";
@@ -17,6 +19,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (!session?.user) {
     redirect("/login");
   }
+  const openToday = await openDailiesToday(session.user.id);
 
   return (
     <div className="flex min-h-screen w-full bg-background">
@@ -33,7 +36,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 glass-bar border-b border-border/70 px-4 py-3 md:px-8">
+        <header style={{ viewTransitionName: "app-header" }} className="sticky top-0 z-30 flex items-center justify-between gap-3 glass-bar border-b border-border/70 px-4 py-3 md:px-8">
           <div className="flex items-center gap-2 md:hidden">
             <MobileNav teamName={session.user.teamName} />
             <Link href="/home" className="flex items-center gap-2">
@@ -59,6 +62,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
         <TabBar />
+        <PwaSetup openToday={openToday} />
       </div>
     </div>
   );

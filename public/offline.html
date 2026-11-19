@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f6f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)">
+<title>Flowdesk · Senza connessione</title>
+<style>
+  :root { color-scheme: light dark; --bg: #f6f6f7; --fg: #18181b; --muted: #63636b; --accent: #cc4a1c; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0b0b0c; --fg: #fafafa; --muted: #a1a1aa; --accent: #f27a4c; } }
+  body { margin: 0; min-height: 100dvh; display: flex; align-items: center; justify-content: center; background: var(--bg);
+    color: var(--fg); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; text-align: center; padding: 24px; box-sizing: border-box; }
+  img { width: 72px; height: 72px; border-radius: 22%; }
+  h1 { font-size: 20px; margin: 20px 0 8px; font-weight: 600; }
+  p { color: var(--muted); font-size: 15px; line-height: 1.5; margin: 0 auto 24px; max-width: 320px; }
+  button { font: inherit; font-weight: 600; font-size: 15px; color: #fff; background: var(--accent); border: 0; border-radius: 12px; padding: 12px 22px; }
+</style>
+</head>
+<body>
+  <main>
+    <img src="/icon-192.png" alt="">
+    <h1>Sei senza connessione</h1>
+    <p>Questa pagina non è ancora stata aperta su questo telefono. Le pagine già viste restano consultabili; per segnare o modificare serve la rete.</p>
+    <button onclick="location.reload()">Riprova</button>
+  </main>
+</body>
+</html>

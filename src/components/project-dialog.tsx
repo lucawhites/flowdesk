@@ -22,7 +22,7 @@ export function ProjectDialog({ project, trigger }: { project?: ProjectItem; tri
         <>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="project-name">Nome</Label>
-            <Input id="project-name" name="name" placeholder="Es. Commerciale" defaultValue={project?.name} required autoFocus />
+            <Input id="project-name" name="name" enterKeyHint="done" placeholder="Es. Commerciale" defaultValue={project?.name} required autoFocus />
             <FieldError messages={state?.errors?.name} />
           </div>
           <div className="flex flex-col gap-1.5">

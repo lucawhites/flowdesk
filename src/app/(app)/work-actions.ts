@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSessionUser } from "@/lib/dal";
-import { isoToDateColumn, nextWorkingDays, todayISO } from "@/lib/dates";
+import { formatISO, isoToDateColumn, nextWorkingDays, todayISO } from "@/lib/dates";
 import { proposeDailyText } from "@/lib/agent/daily-text";
 import { notifyIfObjectiveReached, objectiveReached, promoteAndNotify } from "@/lib/notifications";
 import { activeCountFor } from "@/lib/objective-queue";
 import { ACTIVE_LIMIT } from "@/lib/objective-status";
+import { openDailiesToday, sendPush } from "@/lib/push";
 import { DailySchema, ObjectiveSchema, ProjectSchema } from "@/lib/validation";
 import { AGENT_INSTRUCTIONS_MAX, HOME_TILE_IDS, PROJECT_AGENT_NOTES_MAX, MAX_STEPS, STEP_TITLE_MAX, type FormState, type ObjectiveLinkOption, type StepOption } from "@/lib/types";
 
@@ -279,6 +280,24 @@ export async function saveDaily(dailyId: string | null, _prev: FormState, formDa
     await prisma.daily.update({ where: { id: dailyId }, data });
   } else {
     await prisma.daily.create({ data: { ...data, teamId: user.teamId, creatorId: user.id } });
+    // Daily assegnata a qualcun altro: lo avvisa sul telefono (dopo la risposta, senza rallentare).
+    if (data.assigneeId !== user.id) {
+      const assigneeId = data.assigneeId;
+      const day = parsed.data.date;
+      after(async () => {
+        try {
+          const badge = await openDailiesToday(assigneeId);
+          await sendPush([assigneeId], {
+            title: `${user.name?.split(" ")[0] ?? "Qualcuno"} ti ha assegnato una daily`,
+            body: `${data.title} · ${formatISO(day, "EEEE d MMMM")}`,
+            url: "/daily",
+            badge,
+          });
+        } catch (error) {
+          console.error("Notifica daily assegnata non inviata:", error);
+        }
+      });
+    }
   }
 
   refresh();

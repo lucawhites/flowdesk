@@ -25,6 +25,7 @@ export function TabBar() {
   return (
     <nav
       aria-label="Sezioni"
+      style={{ viewTransitionName: "app-tabbar" }}
       className="glass-bar fixed inset-x-0 bottom-0 z-30 flex border-t border-border/70 pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <div className="flex h-14 w-full">

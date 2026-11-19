@@ -8,12 +8,15 @@ export async function WorkPage({
   projectFilter = null,
   scope = null,
   lateOnly = false,
+  newDaily = null,
 }: {
   tab: TasksTab;
   projectFilter?: string | null;
   /** Vista iniziale ("Mie" o "Tutto il team"), es. arrivando dalla Home. */
   scope?: Scope | null;
   lateOnly?: boolean;
+  /** Apre subito "Nuova daily" (link dei Comandi rapidi). */
+  newDaily?: { title: string } | null;
 }) {
   const user = await requireSessionUser();
   const work = await getTeamWork(user.teamId);
@@ -26,6 +29,7 @@ export async function WorkPage({
       initialProjectFilter={validFilter}
       initialScope={scope}
       initialLateOnly={lateOnly}
+      initialNewDaily={newDaily}
       currentUserId={user.id}
       currentUserRole={user.role}
     />
