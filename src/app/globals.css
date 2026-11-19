@@ -96,7 +96,8 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-ring: var(--ring);
-  --font-sans: var(--font-manrope);
+  /* Font di sistema: SF Pro su iPhone e Mac, Segoe UI su Windows, Roboto su Android. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 /* Dimensione del testo scelta dall'utente: tutte le misure sono in rem, quindi scala l'intera interfaccia. */
@@ -117,7 +118,7 @@ html[data-text-size="xl"] {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, sans-serif;
+  font-family: var(--font-sans);
   font-weight: 400;
 }
 
