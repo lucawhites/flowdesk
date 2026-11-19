@@ -134,6 +134,17 @@ body {
   font-weight: 400;
 }
 
+/* iPhone: se un campo ha il testo sotto i 16px, toccandolo Safari ingrandisce la pagina.
+   Sugli schermi touch i campi restano almeno a 16px (anche con "testo piccolo"). */
+@media (pointer: coarse) {
+  input,
+  textarea,
+  select,
+  [contenteditable="true"] {
+    font-size: max(16px, 1em);
+  }
+}
+
 ::selection {
   background: var(--accent-soft);
   color: var(--foreground);
@@ -167,6 +178,22 @@ body {
 
 .dialog-content[data-state="open"] {
   animation: content-in 150ms ease-out;
+}
+
+/* Telefono: le finestre sono fogli che salgono dal basso. */
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 639px) {
+  .dialog-content[data-state="open"] {
+    animation: sheet-in 320ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
 }
 
 /* Menù a scomparsa del telefono: entra da sinistra. */

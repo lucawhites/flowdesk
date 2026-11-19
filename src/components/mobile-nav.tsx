@@ -6,6 +6,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Menu, X } from "lucide-react";
 import { AppLogo } from "@/components/app-logo";
 import { SidebarNav } from "@/components/sidebar-nav";
+import { OPEN_MENU_EVENT } from "@/components/tab-bar";
 
 // Gesto come su iPhone: scorrendo dal bordo sinistro il menù segue il dito; al rilascio
 // si apre o si richiude in base a quanto è uscito e alla velocità. Trascinandolo a sinistra si chiude.
@@ -28,6 +29,13 @@ export function MobileNav({ teamName }: { teamName?: string | null }) {
   useEffect(() => {
     openRef.current = open;
   }, [open]);
+
+  // Il pulsante "Altro" della barra in basso apre questo menù.
+  useEffect(() => {
+    const openMenu = () => setOpen(true);
+    window.addEventListener(OPEN_MENU_EVENT, openMenu);
+    return () => window.removeEventListener(OPEN_MENU_EVENT, openMenu);
+  }, []);
 
   const close = () => setOpen(false);
   const width = () => panelRef.current?.offsetWidth ?? Math.min(288, window.innerWidth * 0.85);
