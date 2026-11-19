@@ -1,23 +1,17 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { useState } from "react";
+import { Moon, Sun, SunMoon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { syncThemeColor } from "@/lib/theme-color";
+import { applyThemeChoice, readThemeChoice, type ThemeChoice as Choice } from "@/lib/theme-color";
 
 /**
- * Interruttore chiaro/scuro in stile iPhone. Lo stato vive in <html data-theme>.
+ * Interruttore chiaro/scuro in stile iPhone (intestazione su computer). Lo stato vive in <html data-theme>.
  * Binario spento grigio semitrasparente (come iOS): resta visibile anche sul vetro del menù.
  */
 export function ThemeToggle({ className }: { className?: string }) {
   function toggle() {
-    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-    document.documentElement.dataset.theme = next;
-    syncThemeColor();
-    try {
-      localStorage.setItem("theme", next);
-    } catch {
-      // Navigazione privata: il tema vale solo per questa visita.
-    }
+    applyThemeChoice(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
   }
 
   return (
@@ -36,5 +30,44 @@ export function ThemeToggle({ className }: { className?: string }) {
         <Moon className="hidden h-3.5 w-3.5 dark:block" />
       </span>
     </button>
+  );
+}
+
+const CHOICES: { value: Choice; label: string; icon: typeof Sun }[] = [
+  { value: "light", label: "Chiaro", icon: Sun },
+  { value: "dark", label: "Scuro", icon: Moon },
+  { value: "auto", label: "Automatico", icon: SunMoon },
+];
+
+/** Scelta del tema nel menù del telefono: Chiaro, Scuro o Automatico (segue l'iPhone). */
+export function ThemeChoice() {
+  // Il menù si apre solo dopo un tocco, quindi qui localStorage è già disponibile.
+  const [choice, setChoice] = useState<Choice | null>(() => (typeof window === "undefined" ? null : readThemeChoice()));
+
+  return (
+    <div role="radiogroup" aria-label="Tema" className="grid grid-cols-3 gap-1 rounded-xl bg-foreground/10 p-1">
+      {CHOICES.map(({ value, label, icon: Icon }) => {
+        const active = choice === value;
+        return (
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => {
+              applyThemeChoice(value);
+              setChoice(value);
+            }}
+            className={cn(
+              "flex cursor-pointer flex-col items-center gap-1 rounded-lg py-2 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+              active ? "bg-surface text-foreground shadow-sm" : "text-muted-foreground"
+            )}
+          >
+            <Icon className={cn("h-4 w-4", active && "text-accent")} />
+            {label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
