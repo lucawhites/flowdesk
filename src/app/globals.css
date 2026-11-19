@@ -334,31 +334,45 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
   }
 }
 
-/* Barra in basso del telefono: capsula di vetro più coprente del resto, con ombra, per staccarsi
-   bene dalle schede che le scorrono sotto. */
+/* Barra in basso del telefono: capsula di vetro in stile app Musica di iPhone. Molto trasparente
+   (il contenuto si intravede sfocato), filo di luce sul bordo alto, contorno sottile e ombra
+   morbida per staccarla. La sezione attiva ha una capsula di vetro grigio chiaro dietro. */
 .tab-capsule {
+  --cap-bg: rgb(255 255 255 / 0.5);
+  --cap-edge: rgb(255 255 255 / 0.7);
+  --cap-active: rgb(120 120 128 / 0.18);
+  --cap-shadow: 0 10px 30px rgb(0 0 0 / 0.12), 0 0 0 0.5px rgb(0 0 0 / 0.1), inset 0 1px 0 rgb(255 255 255 / 0.85),
+    inset 0 -1px 0 rgb(0 0 0 / 0.03);
   background: var(--surface);
-  border-color: var(--border);
-  box-shadow: 0 8px 28px rgb(0 0 0 / 0.16), 0 1px 3px rgb(0 0 0 / 0.08);
+  border-color: var(--cap-edge);
+  box-shadow: var(--cap-shadow);
 }
 
 :root[data-theme="dark"] .tab-capsule {
-  box-shadow: 0 8px 28px rgb(0 0 0 / 0.55), 0 1px 3px rgb(0 0 0 / 0.4);
-  border-color: rgb(255 255 255 / 0.08);
+  --cap-bg: rgb(36 36 40 / 0.38);
+  --cap-edge: rgb(255 255 255 / 0.14);
+  --cap-active: rgb(0 0 0 / 0.3);
+  --cap-shadow: 0 10px 30px rgb(0 0 0 / 0.45), 0 0 0 0.5px rgb(0 0 0 / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.16);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .tab-capsule {
-    box-shadow: 0 8px 28px rgb(0 0 0 / 0.55), 0 1px 3px rgb(0 0 0 / 0.4);
-    border-color: rgb(255 255 255 / 0.08);
+    --cap-bg: rgb(36 36 40 / 0.38);
+    --cap-edge: rgb(255 255 255 / 0.14);
+    --cap-active: rgb(0 0 0 / 0.3);
+    --cap-shadow: 0 10px 30px rgb(0 0 0 / 0.45), 0 0 0 0.5px rgb(0 0 0 / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.16);
   }
+}
+
+.tab-capsule [aria-current="page"] {
+  background: var(--cap-active);
 }
 
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .tab-capsule {
-    background: color-mix(in srgb, var(--surface) 90%, transparent);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    backdrop-filter: blur(20px) saturate(180%);
+    background: var(--cap-bg);
+    -webkit-backdrop-filter: blur(22px) saturate(190%);
+    backdrop-filter: blur(22px) saturate(190%);
   }
 }
 

@@ -16,11 +16,11 @@ const TABS = [
   { href: "/calendario", label: "Calendario", icon: CalendarDays },
 ] as const;
 
-// Capsula sospesa in vetro (stile app Apple recenti): staccata dal bordo, con ombra, icone del colore
-// del testo e una pillola arancio chiaro dietro la sezione attiva. Più visibile della barra a filo.
+// Capsula sospesa in vetro come nell'app Musica di iPhone: molto trasparente, staccata dal bordo,
+// icone del colore del testo; la sezione attiva ha icona arancio e una capsula di vetro grigio
+// chiaro dietro icona e scritta (stili in globals.css, .tab-capsule).
 const item =
-  "group flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-[0.625rem] font-medium outline-none transition-transform duration-100 active:scale-[0.94]";
-const pill = "flex h-7 w-12 items-center justify-center rounded-full transition-colors duration-150 group-focus-visible:ring-2 group-focus-visible:ring-ring";
+  "my-1.5 flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[1.75rem] text-[0.6875rem] font-semibold outline-none transition-[transform,background-color] duration-150 active:scale-[0.94] focus-visible:ring-2 focus-visible:ring-ring";
 
 export function TabBar() {
   const pathname = usePathname();
@@ -29,7 +29,7 @@ export function TabBar() {
     <nav
       aria-label="Sezioni"
       style={{ viewTransitionName: "app-tabbar" }}
-      className="tab-capsule fixed inset-x-3 bottom-[max(0.75rem,calc(env(safe-area-inset-bottom)-0.375rem))] z-30 flex h-16 rounded-[2rem] border px-1 md:hidden"
+      className="tab-capsule fixed inset-x-3 bottom-[max(0.75rem,calc(env(safe-area-inset-bottom)-0.375rem))] z-30 flex h-[4.25rem] rounded-[2.25rem] border px-1.5 md:hidden"
     >
       {TABS.map(({ href, label, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);
@@ -38,11 +38,9 @@ export function TabBar() {
             key={href}
             href={href}
             aria-current={active ? "page" : undefined}
-            className={cn(item, active ? "font-semibold text-accent" : "text-foreground/80")}
+            className={cn(item, active ? "text-accent" : "text-foreground")}
           >
-            <span className={cn(pill, active && "bg-accent-soft")}>
-              <Icon className="h-[1.375rem] w-[1.375rem]" strokeWidth={active ? 2.3 : 1.9} />
-            </span>
+            <Icon className="h-[1.625rem] w-[1.625rem]" strokeWidth={2.2} />
             <span className="truncate">{label}</span>
           </Link>
         );
@@ -50,11 +48,9 @@ export function TabBar() {
       <button
         type="button"
         onClick={() => window.dispatchEvent(new Event(OPEN_MENU_EVENT))}
-        className={cn(item, "cursor-pointer text-foreground/80")}
+        className={cn(item, "cursor-pointer text-foreground")}
       >
-        <span className={pill}>
-          <Menu className="h-[1.375rem] w-[1.375rem]" strokeWidth={1.9} />
-        </span>
+        <Menu className="h-[1.625rem] w-[1.625rem]" strokeWidth={2.2} />
         <span>Altro</span>
       </button>
     </nav>
