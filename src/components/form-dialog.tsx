@@ -4,6 +4,7 @@ import { useActionState, useState, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Kbd } from "@/components/ui/kbd";
 import {
   Dialog,
   DialogContent,
@@ -61,16 +62,26 @@ export function FormDialog({
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        <form action={formAction} className="flex flex-col gap-4">
+        <form
+          action={formAction}
+          className="flex flex-col gap-4"
+          onKeyDown={(e) => {
+            // ⌘ Invio (Ctrl Invio su Windows) salva anche dai campi lunghi, dove Invio va a capo.
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !pending) {
+              e.preventDefault();
+              e.currentTarget.requestSubmit();
+            }
+          }}
+        >
           {children(state)}
           {state?.message && <p className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">{state.message}</p>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Annulla
+              Annulla <Kbd>Esc</Kbd>
             </Button>
             <Button type="submit" disabled={pending}>
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {submitLabel}
+              {submitLabel} <Kbd>⌘↵</Kbd>
             </Button>
           </DialogFooter>
         </form>

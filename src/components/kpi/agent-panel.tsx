@@ -73,7 +73,7 @@ export async function AgentPanel({ teamId, isAdmin }: { teamId: string; isAdmin:
                   const status = STATUS[r.status as keyof typeof STATUS] ?? STATUS.skipped;
                   return (
                     <li key={r.id} className="flex items-start gap-2 text-xs">
-                      <span className="w-16 shrink-0 text-muted-foreground">{formatISO(dateColumnToISO(r.day))}</span>
+                      <span className="num w-16 shrink-0 text-muted-foreground">{formatISO(dateColumnToISO(r.day))}</span>
                       <span className="w-28 shrink-0 text-foreground">{KIND[r.kind] ?? r.kind}</span>
                       <Badge variant={status.variant} className="shrink-0">{status.label}</Badge>
                       <span className="min-w-0 flex-1 truncate text-muted-foreground" title={r.error ?? r.summary ?? ""}>

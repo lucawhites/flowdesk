@@ -59,6 +59,7 @@ export function ObjectiveCard({
       onClick={isDetail ? undefined : cardClick(() => router.push(href))}
       className={cn(
         "flex h-full flex-col gap-3 rounded-xl border border-border bg-surface p-4",
+        !isDetail && (objective.status === "QUEUED" || objective.status === "PAUSED") && "bg-hatch",
         !isDetail && "cursor-pointer transition-colors hover:border-primary/40"
       )}
     >
@@ -88,7 +89,7 @@ export function ObjectiveCard({
               <Badge variant={late ? "danger" : "neutral"}>
                 <CalendarDays className="h-3 w-3" />
                 {late ? "Scaduto il " : "Entro il "}
-                {formatISO(objective.dueDate)}
+                <span className="num">{formatISO(objective.dueDate)}</span>
               </Badge>
             )}
             <StatusBadges objective={objective} today={today} />
@@ -168,7 +169,7 @@ export function ObjectiveCard({
                 ? "Nessun passo né daily collegata"
                 : `${objective.dailyDone} di ${objective.dailyTotal} daily completate`}
           </span>
-          <span className="font-semibold text-foreground">{objective.progress}%</span>
+          <span className="num font-semibold text-foreground">{objective.progress}%</span>
         </div>
         <Progress
           value={objective.progress}
@@ -296,7 +297,7 @@ export function ObjectiveCard({
                     {d.title}
                   </span>
                   <span className="shrink-0 text-muted-foreground">
-                    {d.assigneeName.split(" ")[0]} · {formatISO(d.date)}
+                    {d.assigneeName.split(" ")[0]} · <span className="num">{formatISO(d.date)}</span>
                   </span>
                 </li>
               ))}

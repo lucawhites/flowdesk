@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { StatCard } from "@/components/stat-card";
-import { WeekBars } from "@/components/kpi/week-bars";
+import { WeekChart } from "@/components/kpi/week-chart";
 import { formatISO } from "@/lib/dates";
 import { cn, initials } from "@/lib/utils";
 import type { Kpis } from "@/lib/kpi";
@@ -55,8 +55,8 @@ export function TeamView({ kpis, teamName, currentUserId }: { kpis: Kpis; teamNa
         <section className="lg:col-span-3">
           <SectionTitle>Daily completate, ultimi 7 giorni</SectionTitle>
           <Card>
-            <CardContent className="pt-8">
-              <WeekBars days={kpis.last7Days} today={kpis.today} />
+            <CardContent className="pt-5">
+              <WeekChart days={kpis.last7Days} today={kpis.today} todayOpen={kpis.todayTotal - kpis.doneToday} />
             </CardContent>
           </Card>
         </section>

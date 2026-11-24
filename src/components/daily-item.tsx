@@ -21,6 +21,9 @@ import { isCarriedOver } from "@/lib/daily-helpers";
 import { cn, initials } from "@/lib/utils";
 import type { DailyItem, ObjectiveOption, Role, TeamMember } from "@/lib/types";
 
+/** Durata del lampo verde + chiusura della riga (deve combaciare con .daily-leave in globals.css). */
+const LEAVE_MS = 560;
+
 export function DailyRow({
   daily,
   members,
@@ -53,16 +56,29 @@ export function DailyRow({
   // Spuntando una daily collegata a un passo ancora aperto, si chiede se chiudere anche il passo.
   const [askStep, setAskStep] = useState(false);
 
+  // Uscita animata quando la si spunta: la riga si accende di verde, poi si chiude
+  // e le altre salgono; solo dopo si salva (e la daily ricompare tra le fatte).
+  const [leaving, setLeaving] = useState(false);
+
   const commit = (checked: boolean, alsoStep = false) =>
     startTransition(async () => {
       setOptimisticDone(checked);
       await toggleDaily(daily.id, checked, alsoStep);
+      setLeaving(false);
       if (alsoStep) toast.success("Daily e passo segnati come fatti");
     });
 
+  const finish = (alsoStep = false) => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return commit(true, alsoStep);
+    setLeaving(true);
+    window.setTimeout(() => commit(true, alsoStep), LEAVE_MS);
+  };
+
   const toggle = (checked: boolean) => {
+    if (leaving) return;
     if (checked && daily.step && !daily.step.done) setAskStep(true);
-    else commit(checked);
+    else if (checked) finish();
+    else commit(false);
   };
 
   const editDialog = (trigger: ReactNode) => (
@@ -85,6 +101,8 @@ export function DailyRow({
     });
 
   return (
+    <div className={cn("daily-leave", leaving && "is-leaving")}>
+    <div className="min-h-0">
     <SwipeRow
       left={
         done
@@ -101,13 +119,14 @@ export function DailyRow({
       onClick={cardClick(() => setDetailOpen(true))}
       className={cn(
         "flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-surface p-3.5 transition-colors hover:border-primary/40",
-        done && "opacity-60"
+        done && "opacity-60",
+        leaving && "daily-flash"
       )}
     >
       {dragHandle}
       <div className="pt-0.5">
         <Checkbox
-          checked={done}
+          checked={done || leaving}
           aria-label={done ? "Segna come da fare" : "Segna come fatta"}
           onCheckedChange={(checked) => toggle(checked === true)}
         />
@@ -152,10 +171,10 @@ export function DailyRow({
           {carried && !done && (
             <Badge variant="warning">
               <Undo2 className="h-3 w-3" />
-              Riportata dal {formatISO(daily.date)}
+              Riportata dal <span className="num">{formatISO(daily.date)}</span>
             </Badge>
           )}
-          {showDate && !carried && <Badge>{formatISO(daily.date, "EEE d MMM")}</Badge>}
+          {showDate && !carried && <Badge><span className="num">{formatISO(daily.date, "EEE d MMM")}</span></Badge>}
           {showAssignee && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-muted px-2 py-0.5 text-xs text-muted-foreground">
               <Avatar className="h-4 w-4">
@@ -204,7 +223,7 @@ export function DailyRow({
                 variant="outline"
                 onClick={() => {
                   setAskStep(false);
-                  commit(true);
+                  finish();
                 }}
               >
                 No, solo la daily
@@ -213,7 +232,7 @@ export function DailyRow({
                 type="button"
                 onClick={() => {
                   setAskStep(false);
-                  commit(true, true);
+                  finish(true);
                 }}
               >
                 Sì, anche il passo
@@ -331,6 +350,8 @@ export function DailyRow({
       </Dialog>
     </div>
     </SwipeRow>
+    </div>
+    </div>
   );
 }
 

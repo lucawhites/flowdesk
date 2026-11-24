@@ -44,7 +44,7 @@ model User {
   areas         String[]  @default([])
   // Ordine delle tessere della Home scelto dall'utente (id delle tessere); vuoto = ordine standard.
   homeOrder     String[]  @default([])
-  // Palette di colori scelta in Impostazioni: graphite (predefinita), indigo, teal, warm.
+  // Palette di colori scelta in Impostazioni: graphite (predefinita), indigo, teal, warm, lime.
   palette       String    @default("graphite")
 
   team   Team   @relation(fields: [teamId], references: [id])

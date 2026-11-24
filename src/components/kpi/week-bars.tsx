@@ -8,7 +8,7 @@ export function WeekBars({ days, today }: { days: { day: string; done: number }[
 
   return (
     <figure>
-      <div className="flex h-40 items-end gap-2" aria-hidden>
+      <div className="flex h-44 items-end gap-2" aria-hidden>
         {days.map(({ day, done }, i) => {
           const isToday = day === today;
           return (

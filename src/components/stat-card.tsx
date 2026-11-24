@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CountUp } from "@/components/count-up";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -41,7 +42,9 @@ export function StatCard({
     <Card className={cn("h-full", href && "transition-colors group-hover:border-primary/40")}>
       <CardContent className="flex h-full flex-col gap-1.5 p-4">
         <div className="flex items-start justify-between gap-2">
-          <p className="truncate text-[1.75rem] font-semibold leading-none tracking-tight text-foreground">{value}</p>
+          <p className="truncate text-[1.75rem] font-semibold leading-none tracking-tight text-foreground">
+            {typeof value === "number" ? <CountUp value={value} /> : value}
+          </p>
           <svg width="0" height="0" className="absolute" aria-hidden>
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">

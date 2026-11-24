@@ -229,6 +229,63 @@
   --chart-1-soft: #7c2d12;
 }
 
+/* "Lime" (dal reel di esempio): grigi chiari, pulsanti neri, lime solo come tocco.
+   In chiaro il lime pieno non si legge come testo: testi e link in verde oliva (regole sotto), lime pieno nei fondi. */
+:root[data-palette="lime"]:not([data-theme="dark"]) {
+  --background: #ededef;
+  --surface: #ffffff;
+  --surface-muted: #f2f2f4;
+  --foreground: #111113;
+  --muted-foreground: #66666e;
+  --border: #e2e2e6;
+  --primary: #111113;
+  --primary-foreground: #ffffff;
+  --primary-soft: #e9e9ec;
+  --accent: #a3e635;
+  --accent-soft: #ecfccb;
+  --accent-light: #d9f99d;
+  --success: #15803d;
+  --success-soft: #dcfce7;
+  --warning: #b45309;
+  --warning-soft: #fef3c7;
+  --danger: #dc2626;
+  --danger-soft: #fee2e2;
+  --ring: #84cc16;
+  --chart-1: #111113;
+  --chart-1-soft: #c8c8ce;
+}
+
+:root[data-palette="lime"][data-theme="dark"] {
+  --background: #111113;
+  --surface: #1c1c1f;
+  --surface-muted: #26262a;
+  --foreground: #f4f4f5;
+  --muted-foreground: #a1a1aa;
+  --border: #2c2c31;
+  --primary: #f4f4f5;
+  --primary-foreground: #111113;
+  --primary-soft: #2a2a2f;
+  --accent: #c6f432;
+  --accent-soft: #2b3510;
+  --accent-light: #e2ff86;
+  --success: #4ade80;
+  --success-soft: #12301d;
+  --warning: #fbbf24;
+  --warning-soft: #3a2a0a;
+  --danger: #f87171;
+  --danger-soft: #3b1515;
+  --ring: #c6f432;
+  --chart-1: #e4e4e7;
+  --chart-1-soft: #45454c;
+}
+
+:root[data-palette="lime"]:not([data-theme="dark"]) .text-accent {
+  color: #4d7c0f;
+}
+:root[data-palette="lime"]:not([data-theme="dark"]) .bg-accent.text-white {
+  color: #111113;
+}
+
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme inline {
@@ -803,3 +860,99 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
   }
 }
 
+
+/* Daily spuntata: lampo verde, poi la riga si chiude e le altre salgono (LEAVE_MS in daily-item.tsx). */
+.daily-leave {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition:
+    grid-template-rows 320ms cubic-bezier(0.32, 0.72, 0, 1) 220ms,
+    opacity 260ms ease 260ms,
+    transform 320ms cubic-bezier(0.32, 0.72, 0, 1) 220ms;
+}
+.daily-leave > div {
+  overflow: hidden;
+}
+.daily-leave.is-leaving {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: scale(0.98);
+  pointer-events: none;
+}
+.daily-flash {
+  border-color: var(--success) !important;
+  background-color: color-mix(in srgb, var(--success-soft) 70%, var(--surface));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 22%, transparent);
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+/* Date, orari e conteggi: carattere normale, cifre della stessa larghezza (restano allineate). */
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Obiettivi in coda o in pausa: fondo a righine diagonali, per distinguerli dagli attivi. */
+.bg-hatch {
+  background-image: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--foreground) 5%, transparent) 0 1px,
+    transparent 1px 7px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .daily-leave {
+    transition: none;
+  }
+}
+
+/* Grafico KPI a puntini: ogni puntino entra con una piccola molla, colonna dopo colonna. */
+@keyframes dot-pop {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+.dot-pop {
+  animation: dot-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Cambio Puntini/Barre: la vista nuova sfuma dentro mentre i suoi elementi crescono. */
+@keyframes chart-swap {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.chart-swap {
+  animation: chart-swap 260ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot-pop,
+  .chart-swap {
+    animation: none;
+  }
+}
+
+/* Tasti dentro i pulsanti ("Salva ⌘↵", "Annulla Esc"): solo con mouse o trackpad. */
+.kbd {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .kbd {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.125rem;
+    padding: 0.0625rem 0.3125rem;
+    border-radius: 0.3125rem;
+    border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+    background: color-mix(in srgb, currentColor 14%, transparent);
+    font-size: 0.6875rem;
+    line-height: 1.2;
+    opacity: 0.9;
+  }
+}

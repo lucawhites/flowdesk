@@ -25,6 +25,12 @@ export const PALETTES = [
     note: "Toni caldi come la prima Flowdesk, più contrastati.",
     preview: { light: ["#faf9f7", "#ffffff", "#1c1917", "#c2410c"], dark: ["#0e0d0c", "#1c1a18", "#fafaf9", "#fb923c"] },
   },
+  {
+    id: "lime",
+    name: "Lime",
+    note: "Grigi chiari, pulsanti neri e un tocco di lime, come il reel di esempio.",
+    preview: { light: ["#ededef", "#ffffff", "#111113", "#a3e635"], dark: ["#111113", "#1c1c1f", "#f4f4f5", "#c6f432"] },
+  },
 ] as const;
 
 export type PaletteId = (typeof PALETTES)[number]["id"];

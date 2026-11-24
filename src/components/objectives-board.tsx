@@ -112,7 +112,7 @@ export function ObjectivesBoard({
             onReorder={(ids) => reorderItems("objective", ids)}
             renderItem={(o, handle) => (
               <div className="flex items-start gap-2">
-                <span className="mt-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-muted text-xs font-semibold text-foreground">
+                <span className="mt-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-muted text-xs font-semibold text-foreground num">
                   {queue.indexOf(o) + 1}
                 </span>
                 <div className="min-w-0 flex-1">
