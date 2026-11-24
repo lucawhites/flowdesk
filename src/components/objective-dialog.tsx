@@ -6,6 +6,7 @@ import { FieldError, FormDialog } from "@/components/form-dialog";
 import { MemberSelect } from "@/components/member-select";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchSelect } from "@/components/ui/search-select";
 import { CADENCE_MAX, KIND_HINT, KIND_LABEL, STATUS_LABEL, type ObjectiveKind, type ObjectiveStatus } from "@/lib/objective-status";
 import type { ObjectiveItem, ObjectiveLinkOption, TeamMember } from "@/lib/types";
 
@@ -121,6 +122,8 @@ const NONE = "NONE";
 function PlanningFields({ objective }: { objective?: ObjectiveItem }) {
   const [kind, setKind] = useState<ObjectiveKind>(objective?.kind ?? "STANDARD");
   const [options, setOptions] = useState<ObjectiveLinkOption[] | null>(null);
+  const [afterId, setAfterId] = useState(objective?.after?.id ?? NONE);
+  const [umbrellaId, setUmbrellaId] = useState(objective?.umbrella?.id ?? NONE);
 
   // La finestra monta questi campi solo quando si apre: gli obiettivi da collegare si leggono allora.
   useEffect(() => {
@@ -205,19 +208,16 @@ function PlanningFields({ objective }: { objective?: ObjectiveItem }) {
               <input type="hidden" name="afterId" value={objective?.after?.id ?? NONE} />
             </>
           ) : (
-            <Select name="afterId" defaultValue={objective?.after?.id ?? NONE}>
-              <SelectTrigger id="objective-after">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NONE}>Nessuno: segue solo l&apos;ordine della coda</SelectItem>
-                {afterOptions.map((o) => (
-                  <SelectItem key={o.id} value={o.id}>
-                    {o.title} · {o.assigneeName.split(" ")[0]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchSelect
+              id="objective-after"
+              name="afterId"
+              value={afterId}
+              onChange={setAfterId}
+              emptyOption={{ value: NONE, label: "Nessuno: segue solo l'ordine della coda" }}
+              options={afterOptions.map((o) => ({ value: o.id, label: o.title, hint: o.assigneeName }))}
+              placeholder="Cerca un obiettivo o una persona…"
+              noResults="Nessun obiettivo"
+            />
           )}
           <p className="text-xs text-muted-foreground">Resta in attesa finché quell&apos;obiettivo non è al 100%, poi parte da solo.</p>
         </div>
@@ -230,19 +230,16 @@ function PlanningFields({ objective }: { objective?: ObjectiveItem }) {
       {kind !== "UMBRELLA" && umbrellaOptions.length > 0 && (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="objective-umbrella">Conta per l&apos;ombrello (opzionale)</Label>
-          <Select name="umbrellaId" defaultValue={objective?.umbrella?.id ?? NONE}>
-            <SelectTrigger id="objective-umbrella">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NONE}>Nessuno</SelectItem>
-              {umbrellaOptions.map((o) => (
-                <SelectItem key={o.id} value={o.id}>
-                  {o.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SearchSelect
+            id="objective-umbrella"
+            name="umbrellaId"
+            value={umbrellaId}
+            onChange={setUmbrellaId}
+            emptyOption={{ value: NONE, label: "Nessuno" }}
+            options={umbrellaOptions.map((o) => ({ value: o.id, label: o.title, hint: o.assigneeName }))}
+            placeholder="Cerca un ombrello…"
+            noResults="Nessun ombrello"
+          />
         </div>
       )}
     </>
