@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Manrope } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { SPLASH_SCREENS } from "@/lib/splash-screens";
@@ -9,6 +10,15 @@ import { THEME_COLORS } from "@/lib/theme-color";
 // anche quando cambia mentre l'app è aperta (es. la sera). Così la barra di stato dell'app
 // installata, che iOS colora in base al proprio aspetto, coincide sempre con l'app.
 const themeScript = `(function(){try{var m=matchMedia("(prefers-color-scheme: dark)");var apply=function(){var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=m.matches?"dark":"light"}document.documentElement.dataset.theme=t};apply();m.addEventListener("change",function(){var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark")apply()});var p=localStorage.getItem("palette");if(p==="indigo"||p==="teal"||p==="warm"||p==="lime"||p==="elitter"){document.documentElement.dataset.palette=p}var z=localStorage.getItem("textSize");if(z==="s"||z==="l"||z==="xl"){document.documentElement.dataset.textSize=z}var b=localStorage.getItem("sfondo");document.documentElement.dataset.sfondo=b==="vetro"?"vetro":"pieno";var k=Number(localStorage.getItem("vetroIntensita"));if(k>=0&&k<=100&&localStorage.getItem("vetroIntensita")!==null){document.documentElement.style.setProperty("--vetro",String(k/100))}}catch(e){}})()`;
+
+// Manrope (il carattere del sito Elitter) solo con la palette Elitter: senza preload, così chi usa
+// le altre palette non scarica il file; il browser lo prende solo quando serve.
+const manrope = Manrope({
+  variable: "--font-manrope",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  preload: false,
+});
 
 export const metadata: Metadata = {
   title: "Flowdesk · Task del team",
@@ -39,7 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="it"
-      className="h-full antialiased"
+      className={`${manrope.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

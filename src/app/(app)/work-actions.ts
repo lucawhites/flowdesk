@@ -375,6 +375,10 @@ export async function toggleDaily(dailyId: string, done: boolean, alsoStep = fal
   if (done && alsoStep && daily.stepId) {
     await prisma.objectiveStep.updateMany({ where: { id: daily.stepId, completedAt: null }, data: { completedAt: now } });
   }
+  // «Annulla» dopo aver segnato fatti daily e passo: riapre anche il passo.
+  if (!done && alsoStep && daily.stepId) {
+    await prisma.objectiveStep.updateMany({ where: { id: daily.stepId }, data: { completedAt: null } });
+  }
   if (!wasReached) watchObjectiveReached(daily.objectiveId!, user.id);
   refresh();
 }
@@ -408,6 +412,16 @@ export async function postponeDaily(dailyId: string): Promise<string | null> {
   await prisma.daily.update({ where: { id: dailyId }, data: { date: isoToDateColumn(next) } });
   refresh();
   return next;
+}
+
+/** «Annulla» dopo un rimando: riporta la daily al giorno in cui era. */
+export async function moveDailyBack(dailyId: string, dateISO: string) {
+  const user = await requireSessionUser();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) return;
+  const existing = await prisma.daily.findFirst({ where: { id: dailyId, teamId: user.teamId } });
+  if (!existing || !canManage(user, existing) || existing.completedAt) return;
+  await prisma.daily.update({ where: { id: dailyId }, data: { date: isoToDateColumn(dateISO) } });
+  refresh();
 }
 
 export async function deleteDaily(dailyId: string) {

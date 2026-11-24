@@ -62,18 +62,7 @@ export function ObjectiveDialog({
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="objective-project">Progetto</Label>
-            <Select name="projectId" defaultValue={objective?.project.id ?? defaultProjectId ?? projects[0]?.id}>
-              <SelectTrigger id="objective-project">
-                <SelectValue placeholder="Scegli un progetto" />
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ProjectField projects={projects} initial={objective?.project.id ?? defaultProjectId ?? projects[0]?.id ?? ""} />
             <FieldError messages={state?.errors?.projectId} />
           </div>
 
@@ -117,6 +106,22 @@ export function ObjectiveDialog({
 }
 
 const NONE = "NONE";
+
+/** Progetto dell'obiettivo, con ricerca per parola. */
+function ProjectField({ projects, initial }: { projects: { id: string; name: string }[]; initial: string }) {
+  const [projectId, setProjectId] = useState(initial);
+  return (
+    <SearchSelect
+      id="objective-project"
+      name="projectId"
+      value={projectId}
+      onChange={setProjectId}
+      options={projects.map((p) => ({ value: p.id, label: p.name }))}
+      placeholder="Cerca un progetto…"
+      noResults="Nessun progetto"
+    />
+  );
+}
 
 /** Tipo, stato, data di inizio, cadenza, "Parte dopo" e ombrello. */
 function PlanningFields({ objective }: { objective?: ObjectiveItem }) {

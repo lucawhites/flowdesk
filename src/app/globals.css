@@ -404,6 +404,11 @@ body {
   font-weight: 400;
 }
 
+/* Palette Elitter: Manrope come sul sito elittermilano.com (caricato in src/app/layout.tsx). */
+:root[data-palette="elitter"] body {
+  font-family: var(--font-manrope), var(--font-sans);
+}
+
 /* iPhone: se un campo ha il testo sotto i 16px, toccandolo Safari ingrandisce la pagina.
    Sugli schermi touch i campi restano almeno a 16px (anche con "testo piccolo"). */
 @media (pointer: coarse) {

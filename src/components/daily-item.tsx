@@ -4,7 +4,7 @@ import { useOptimistic, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { CalendarClock, Check, Loader2, Pencil, RotateCcw, Sparkles, StickyNote, Target, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
-import { deleteDaily, postponeDaily, proposeDailyInstructions, toggleDaily } from "@/app/(app)/work-actions";
+import { deleteDaily, moveDailyBack, postponeDaily, proposeDailyInstructions, toggleDaily } from "@/app/(app)/work-actions";
 import { DailyDialog } from "@/components/daily-dialog";
 import { ItemMenu } from "@/components/item-menu";
 import { SwipeRow } from "@/components/swipe-row";
@@ -65,7 +65,20 @@ export function DailyRow({
       setOptimisticDone(checked);
       await toggleDaily(daily.id, checked, alsoStep);
       setLeaving(false);
-      if (alsoStep) toast.success("Daily e passo segnati come fatti");
+      // Per qualche secondo si può tornare indietro (tocco sbagliato, soprattutto sul telefono).
+      if (checked) {
+        toast.success(alsoStep ? "Daily e passo segnati come fatti" : "Daily fatta", {
+          duration: 6000,
+          action: {
+            label: "Annulla",
+            onClick: () =>
+              startTransition(async () => {
+                setOptimisticDone(false);
+                await toggleDaily(daily.id, false, alsoStep);
+              }),
+          },
+        });
+      }
     });
 
   const finish = (alsoStep = false) => {
@@ -95,8 +108,13 @@ export function DailyRow({
   // Gesti sul telefono: a destra segna fatta (o riapre), a sinistra sposta al prossimo giorno lavorativo.
   const postpone = () =>
     startTransition(async () => {
+      const before = daily.date;
       const next = await postponeDaily(daily.id);
-      if (next) toast.success(next === addDaysISO(today, 1) ? "Spostata a domani" : `Spostata a ${formatISO(next, "EEEE d MMM")}`);
+      if (next)
+        toast.success(next === addDaysISO(today, 1) ? "Spostata a domani" : `Spostata a ${formatISO(next, "EEEE d MMM")}`, {
+          duration: 6000,
+          action: { label: "Annulla", onClick: () => startTransition(() => moveDailyBack(daily.id, before)) },
+        });
       else toast.error("Non è stato possibile spostare la daily");
     });
 
