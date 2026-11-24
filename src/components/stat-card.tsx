@@ -13,8 +13,8 @@ const GRADIENTS: Record<Tone, [string, string]> = {
   warning: ["color-mix(in srgb, var(--warning) 50%, #ffffff)", "var(--warning)"],
   danger: ["color-mix(in srgb, var(--danger) 55%, #ffffff)", "var(--danger)"],
   neutral: ["var(--muted-foreground)", "var(--foreground)"],
-  // Blu degli obiettivi: uguale in tutte le palette e leggibile sia in chiaro sia in scuro.
-  info: ["#7cb3ff", "#2563eb"],
+  // Blu degli obiettivi: lo stesso in quasi tutte le palette (la palette Elitter usa il suo blu).
+  info: ["var(--info-from)", "var(--info-to)"],
 };
 
 /**

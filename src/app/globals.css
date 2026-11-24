@@ -26,6 +26,9 @@
   --chart-1: #e0663a;
   /* Barre dei giorni passati: stesso arancio, più tenue. */
   --chart-1-soft: #f5c3ac;
+  /* Blu degli obiettivi nelle schede numeriche (la palette Elitter usa il suo blu). */
+  --info-from: #7cb3ff;
+  --info-to: #2563eb;
   /* Fondo delle schede: pieno; con lo sfondo sfocato diventa vetro (vedi «Sfondo sfocato» in fondo). */
   --card: var(--surface);
 }
@@ -279,6 +282,66 @@
   --ring: #c6f432;
   --chart-1: #e4e4e7;
   --chart-1-soft: #45454c;
+}
+
+/* "Elitter": i colori ufficiali del brand (guida Elitter). Neutri caldi che reggono la pagina
+   (#141413, #faf9f5, #e8e6dc, #b0aea5), arancio #d97757 come accento usato con misura, blu #6a9bcc
+   e verde oliva #788c5d come accenti secondari. Mai bianco o nero puri. In chiaro l'arancio pieno
+   come testo si legge poco sul crema: testi e link in un arancio più scuro (regola sotto). */
+:root[data-palette="elitter"]:not([data-theme="dark"]) {
+  --background: #f1efe8;
+  --surface: #faf9f5;
+  --surface-muted: #e8e6dc;
+  --foreground: #141413;
+  --muted-foreground: #6b6a64;
+  --border: #dedbd0;
+  --primary: #141413;
+  --primary-foreground: #faf9f5;
+  --primary-soft: #e8e6dc;
+  --accent: #d97757;
+  --accent-soft: #f6e3da;
+  --accent-light: #ecaa8f;
+  --success: #5f7247;
+  --success-soft: #e6ead9;
+  --warning: #a8670f;
+  --warning-soft: #f5ead2;
+  --danger: #b4432c;
+  --danger-soft: #f6dfd8;
+  --ring: #d97757;
+  --chart-1: #d97757;
+  --chart-1-soft: #efc6b5;
+  --info-from: #a9c7e6;
+  --info-to: #6a9bcc;
+}
+
+:root[data-palette="elitter"][data-theme="dark"] {
+  --background: #141413;
+  --surface: #1e1d1b;
+  --surface-muted: #2a2926;
+  --foreground: #faf9f5;
+  --muted-foreground: #b0aea5;
+  --border: #34322e;
+  --primary: #faf9f5;
+  --primary-foreground: #141413;
+  --primary-soft: #2a2926;
+  --accent: #e08a6c;
+  --accent-soft: #3a2219;
+  --accent-light: #f0b39b;
+  --success: #9cb07f;
+  --success-soft: #26301c;
+  --warning: #e0b15c;
+  --warning-soft: #3a2c12;
+  --danger: #e8846f;
+  --danger-soft: #3b1a14;
+  --ring: #e08a6c;
+  --chart-1: #e08a6c;
+  --chart-1-soft: #5c3424;
+  --info-from: #c3d8ee;
+  --info-to: #8fb5dc;
+}
+
+:root[data-palette="elitter"]:not([data-theme="dark"]) .text-accent {
+  color: #b4583a;
 }
 
 :root[data-palette="lime"]:not([data-theme="dark"]) .text-accent {
@@ -1014,4 +1077,42 @@ html[data-sfondo="vetro"] .bg-card {
   html[data-sfondo="vetro"] {
     --card: var(--surface);
   }
+}
+
+/* ── Logo dentro l'app (src/components/app-logo.tsx) ─────────────────────────────────────
+   F in vetro con la sfumatura dell'accento della palette; fondo grigio nebbia in chiaro,
+   grafite in scuro. Grafite e arancio in chiaro resta uguale all'icona installata. */
+:root {
+  --logo-bg-1: #eeeef0;
+  --logo-bg-2: #dcdde1;
+  --logo-bg-3: #c6c8ce;
+  --logo-top: var(--accent-light);
+  --logo-bottom: var(--accent);
+  --logo-shadow: color-mix(in srgb, var(--accent) 45%, #000);
+}
+:root:not([data-palette]):not([data-theme="dark"]) {
+  --logo-top: #ff9a6a;
+  --logo-bottom: #d8461a;
+  --logo-shadow: #7a240a;
+}
+:root[data-theme="dark"] {
+  --logo-bg-1: #3d3d44;
+  --logo-bg-2: #26262b;
+  --logo-bg-3: #0f0f11;
+  --logo-shadow: color-mix(in srgb, var(--accent) 25%, #000);
+}
+:root[data-palette="lime"]:not([data-theme="dark"]) {
+  --logo-top: #bef264;
+  --logo-bottom: #65a30d;
+  --logo-shadow: #2f4a07;
+}
+:root[data-palette="elitter"]:not([data-theme="dark"]) {
+  --logo-bg-1: #faf9f5;
+  --logo-bg-2: #efede5;
+  --logo-bg-3: #dcd9ce;
+}
+:root[data-palette="elitter"][data-theme="dark"] {
+  --logo-bg-1: #3a3935;
+  --logo-bg-2: #28272a;
+  --logo-bg-3: #141413;
 }

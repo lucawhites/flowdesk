@@ -31,6 +31,12 @@ export const PALETTES = [
     note: "Grigi chiari, pulsanti neri e un tocco di lime, come il reel di esempio.",
     preview: { light: ["#ededef", "#ffffff", "#111113", "#a3e635"], dark: ["#111113", "#1c1c1f", "#f4f4f5", "#c6f432"] },
   },
+  {
+    id: "elitter",
+    name: "Elitter",
+    note: "I colori del brand: neutri caldi, nero e crema, arancio Elitter con misura.",
+    preview: { light: ["#f1efe8", "#faf9f5", "#141413", "#d97757"], dark: ["#141413", "#1e1d1b", "#faf9f5", "#e08a6c"] },
+  },
 ] as const;
 
 export type PaletteId = (typeof PALETTES)[number]["id"];

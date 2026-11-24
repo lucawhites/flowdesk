@@ -1,8 +1,9 @@
 import { useId } from "react";
 
 // Marchio Flowdesk: lo stesso disegno dell'icona dell'app (scripts/make-icons.mjs, variante "1d-E":
-// F in vetro arancio pieno, un po' più grande, su grigio nebbia). Colori fissi in entrambi i temi; il bordo
-// sottile lo stacca dallo sfondo.
+// F in vetro pieno, un po' più grande, su grigio nebbia). Dentro l'app i colori seguono palette e tema
+// (variabili --logo-* in globals.css): la F prende l'accento della palette, il fondo diventa grafite in
+// scuro. L'icona installata (schermata Home, Dock) resta invece fissa, arancio su grigio.
 // Gli id dei gradienti sono unici per ogni logo: due loghi nella stessa pagina (uno nascosto) non si disturbano.
 export function AppLogo({ className = "h-8 w-8" }: { className?: string }) {
   const id = useId().replace(/:/g, "");
@@ -20,13 +21,13 @@ export function AppLogo({ className = "h-8 w-8" }: { className?: string }) {
     <svg viewBox="0 0 100 100" aria-hidden="true" className={`${className} shrink-0 rounded-[22%] ring-1 ring-border`}>
       <defs>
         <radialGradient id={`${id}-bg`} cx="0.3" cy="0.2" r="0.95">
-          <stop offset="0" stopColor="#eeeef0" />
-          <stop offset="0.6" stopColor="#dcdde1" />
-          <stop offset="1" stopColor="#c6c8ce" />
+          <stop offset="0" style={{ stopColor: "var(--logo-bg-1)" }} />
+          <stop offset="0.6" style={{ stopColor: "var(--logo-bg-2)" }} />
+          <stop offset="1" style={{ stopColor: "var(--logo-bg-3)" }} />
         </radialGradient>
         <linearGradient id={`${id}-orangeV`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ff9a6a" />
-          <stop offset="1" stopColor="#d8461a" />
+          <stop offset="0" style={{ stopColor: "var(--logo-top)" }} />
+          <stop offset="1" style={{ stopColor: "var(--logo-bottom)" }} />
         </linearGradient>
         <linearGradient id={`${id}-sheen`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#fff" stopOpacity="0.9" />
@@ -49,7 +50,7 @@ export function AppLogo({ className = "h-8 w-8" }: { className?: string }) {
       <g transform="translate(52 50) scale(1.1) translate(-53 -50.5)">
       <g opacity="0.28" filter={ref("shadow")} transform="translate(0 1.6)">
         {pills.map((p, i) => (
-          <rect key={`s${i}`} x={p.x} y={p.y} width={p.w} height={p.h} rx={rx(p)} fill="#7a240a" />
+          <rect key={`s${i}`} x={p.x} y={p.y} width={p.w} height={p.h} rx={rx(p)} style={{ fill: "var(--logo-shadow)" }} />
         ))}
       </g>
       {pills.map((p, i) => (
