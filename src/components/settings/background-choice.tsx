@@ -5,11 +5,11 @@ import { LensSegmented } from "@/components/ui/lens-segmented";
 
 /**
  * Sfondo dell'app: «Vetro» = macchie di colore della palette dietro e schede semitrasparenti
- * (predefinito), «Pieno» = fondo uniforme e schede piene. Vive in <html data-sfondo> (stili in
+ * «Pieno» = fondo uniforme e schede piene (predefinito). Vive in <html data-sfondo> (stili in
  * globals.css) e resta salvato su questo dispositivo, come il tema.
  */
 function readBackground() {
-  return document.documentElement.dataset.sfondo === "pieno" ? "pieno" : "vetro";
+  return document.documentElement.dataset.sfondo === "vetro" ? "vetro" : "pieno";
 }
 
 function saveBackground(id: string) {
@@ -39,8 +39,8 @@ export function BackgroundChoice() {
         setPicked(id);
       }}
       options={[
-        { value: "vetro", label: "Vetro", icon: <Swatch glass /> },
         { value: "pieno", label: "Pieno", icon: <Swatch /> },
+        { value: "vetro", label: "Vetro", icon: <Swatch glass /> },
       ]}
     />
   );
