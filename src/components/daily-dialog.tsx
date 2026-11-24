@@ -9,6 +9,7 @@ import { MemberSelect } from "@/components/member-select";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchSelect } from "@/components/ui/search-select";
 import {
   DAILY_DESCRIPTION_MAX,
   DAILY_INSTRUCTIONS_MAX,
@@ -156,26 +157,19 @@ function ObjectiveAndStep({
     <>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="daily-objective">Obiettivo</Label>
-        <Select
+        <SearchSelect
+          id="daily-objective"
           name="objectiveId"
           value={objectiveId}
-          onValueChange={(v) => {
+          onChange={(v) => {
             setObjectiveId(v);
             setStepId(undefined); // nuovo obiettivo: riparti dal suo passo corrente
           }}
-        >
-          <SelectTrigger id="daily-objective">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="NONE">Nessuno (daily libera)</SelectItem>
-            {objectives.map((o) => (
-              <SelectItem key={o.id} value={o.id}>
-                {o.projectName} · {o.title}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          emptyOption={{ value: "NONE", label: "Nessuno (daily libera)" }}
+          options={objectives.map((o) => ({ value: o.id, label: o.title, hint: o.projectName }))}
+          placeholder="Cerca un obiettivo o un progetto…"
+          noResults="Nessun obiettivo"
+        />
       </div>
 
       {objectiveId !== "NONE" && list && list.length > 0 && (
