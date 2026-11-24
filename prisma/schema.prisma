@@ -57,6 +57,7 @@ model User {
   eventsCreated      CalendarEvent[]    @relation("EventCreator")
   eventsAbout        CalendarEvent[]    @relation("EventPerson")
   pushSubscriptions  PushSubscription[]
+  comments           Comment[]
 }
 
 // Iscrizione alle notifiche push di un dispositivo (es. l'iPhone con Flowdesk installata).
@@ -155,8 +156,9 @@ model Objective {
   creator   User   @relation("ObjectiveCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   creatorId String
 
-  dailies Daily[]
-  steps   ObjectiveStep[]
+  dailies  Daily[]
+  steps    ObjectiveStep[]
+  comments Comment[]
 
   @@index([teamId])
   @@index([projectId])
@@ -253,9 +255,31 @@ model Daily {
   creator   User   @relation("DailyCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   creatorId String
 
+  comments Comment[]
+
   @@index([teamId, date])
   @@index([assigneeId])
   @@index([objectiveId])
+}
+
+// Commento di testo su una daily OPPURE su un obiettivo (uno dei due, mai entrambi).
+// Si cancella con l'elemento a cui è attaccato; ognuno può cancellare solo i propri.
+model Comment {
+  id        String   @id @default(cuid())
+  body      String
+  createdAt DateTime @default(now())
+
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+
+  daily   Daily?  @relation(fields: [dailyId], references: [id], onDelete: Cascade)
+  dailyId String?
+
+  objective   Objective? @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+  objectiveId String?
+
+  @@index([dailyId, createdAt])
+  @@index([objectiveId, createdAt])
 }
 
 // Evento del calendario inserito a mano (assenze, appuntamenti…). Non sono daily.

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CalendarClock, Check, Loader2, Pencil, RotateCcw, Sparkles, StickyNote, Target, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteDaily, moveDailyBack, postponeDaily, proposeDailyInstructions, toggleDaily } from "@/app/(app)/work-actions";
+import { CommentsSection } from "@/components/comments-section";
 import { DailyDialog } from "@/components/daily-dialog";
 import { ItemMenu } from "@/components/item-menu";
 import { SwipeRow } from "@/components/swipe-row";
@@ -302,6 +303,8 @@ export function DailyRow({
               <p className="text-muted-foreground">Nessuna nota</p>
             )}
           </DetailSection>
+
+          <CommentsSection target={{ kind: "daily", id: daily.id }} />
 
           <DetailSection title="Origine">
             <dl className="flex flex-col gap-2">

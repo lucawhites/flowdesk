@@ -138,3 +138,20 @@ export type CalendarEventItem = {
   person: Person | null;
   creatorId: string;
 };
+
+// ─── Commenti ────────────────────────────────────────────────────────────────
+
+export const COMMENT_MAX = 2000;
+
+/** A cosa è attaccato un commento: una daily oppure un obiettivo. */
+export type CommentTarget = { kind: "daily" | "objective"; id: string };
+
+export type CommentItem = {
+  id: string;
+  body: string;
+  /** Istante ISO (UTC). */
+  createdAt: string;
+  author: { id: string; name: string };
+  /** Scritto da chi sta guardando: può cancellarlo. */
+  mine: boolean;
+};

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarCheck2 } from "lucide-react";
 import { requireSessionUser } from "@/lib/dal";
 import { getObjectiveDailies, getTeamWork } from "@/lib/queries";
+import { CommentsSection } from "@/components/comments-section";
 import { DailyRow } from "@/components/daily-item";
 import { EmptyState } from "@/components/empty-state";
 import { ObjectiveCard } from "@/components/objective-card";
@@ -84,6 +85,8 @@ export default async function ObjectivePage({ params }: { params: Promise<{ id: 
           ))
         )}
       </section>
+
+      <CommentsSection target={{ kind: "objective", id: objective.id }} variant="page" />
     </div>
   );
 }
