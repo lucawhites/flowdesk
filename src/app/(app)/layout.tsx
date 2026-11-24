@@ -28,8 +28,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const palette = prefs && isPaletteId(prefs.palette) ? prefs.palette : DEFAULT_PALETTE;
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-surface p-5 md:flex">
+    <div className="app-shell isolate flex min-h-screen w-full bg-background">
+      {/* Sfondo sfocato (si vede solo se scelto in Impostazioni): macchie di colore della palette. */}
+      <div className="app-wallpaper" aria-hidden />
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-card p-5 md:flex">
         <Link href="/home" className="mb-8 flex items-center gap-2 px-1">
           <AppLogo className="h-8 w-8" />
           <span className="text-base font-semibold tracking-tight text-foreground">Flowdesk</span>

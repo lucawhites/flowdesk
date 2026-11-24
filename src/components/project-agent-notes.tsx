@@ -26,7 +26,7 @@ export function ProjectAgentNotes({ projectId, initial }: { projectId: string; i
   return (
     <form
       action={formAction}
-      className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-6"
+      className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6"
     >
       <input type="hidden" name="projectId" value={projectId} />
       <label htmlFor="project-agent-notes" className="flex items-center gap-1.5 text-sm font-semibold text-foreground">

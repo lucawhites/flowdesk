@@ -39,7 +39,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         <ArrowLeft className="h-3.5 w-3.5" /> Progetti
       </Link>
 
-      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-6">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">{project.name}</h1>

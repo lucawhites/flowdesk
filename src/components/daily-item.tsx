@@ -118,7 +118,7 @@ export function DailyRow({
     <div
       onClick={cardClick(() => setDetailOpen(true))}
       className={cn(
-        "flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-surface p-3.5 transition-colors hover:border-primary/40",
+        "flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-card p-3.5 transition-colors hover:border-primary/40",
         done && "opacity-60",
         leaving && "daily-flash"
       )}

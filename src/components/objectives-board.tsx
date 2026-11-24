@@ -102,7 +102,7 @@ export function ObjectivesBoard({
 
       {queue.length > 0 && (
         <Section title="In coda" hint="L'ordine è la priorità: trascina per cambiarlo">
-          <p className="rounded-xl border border-dashed border-border bg-surface px-3.5 py-2.5 text-xs leading-relaxed text-muted-foreground">
+          <p className="rounded-xl border border-dashed border-border bg-card px-3.5 py-2.5 text-xs leading-relaxed text-muted-foreground">
             Quando un attivo arriva al 100% parte il primo pronto della coda. L&apos;agente usa i posti rimasti liberi per
             preparare i primi {QUEUE_LOOKAHEAD} di ogni persona e segnala le scadenze vicine.
           </p>

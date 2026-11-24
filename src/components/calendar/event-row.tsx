@@ -40,7 +40,7 @@ export function EventRow({
   return (
     <div
       className={cn(
-        "flex items-start rounded-2xl border border-border bg-surface shadow-sm",
+        "flex items-start rounded-2xl border border-border bg-card shadow-sm",
         compact ? "gap-2 p-3 md:gap-1 md:rounded-xl md:p-2" : "gap-3 p-4"
       )}
     >

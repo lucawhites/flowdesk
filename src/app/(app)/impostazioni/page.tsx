@@ -6,6 +6,7 @@ import { logout } from "@/app/(app)/actions";
 import { DEFAULT_PALETTE, isPaletteId } from "@/lib/palettes";
 import { PaletteChoice } from "@/components/settings/palette-choice";
 import { PushToggle } from "@/components/settings/push-toggle";
+import { BackgroundChoice } from "@/components/settings/background-choice";
 import { ThemeChoice } from "@/components/theme-toggle";
 import { TextSizeChoice } from "@/components/text-size-menu";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,10 @@ export default async function SettingsPage() {
         <ThemeChoice />
       </Section>
 
+      <Section title="Sfondo" hint="Vetro: colori sfumati dietro e schede trasparenti, come sul Mac. Vale su questo dispositivo.">
+        <BackgroundChoice />
+      </Section>
+
       <Section title="Dimensione del testo" hint="Vale su questo dispositivo.">
         <TextSizeChoice />
       </Section>
@@ -62,7 +67,7 @@ export default async function SettingsPage() {
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-5">
+    <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
       <div>
         <h2 className="text-sm font-semibold text-foreground">{title}</h2>
         {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}

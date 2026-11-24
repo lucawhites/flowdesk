@@ -137,7 +137,7 @@ export default async function HomePage() {
             node: (
               <Link
                 href={c.href}
-                className="rounded-2xl border border-border bg-surface shadow-sm outline-none transition-colors hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring"
+                className="rounded-2xl border border-border bg-card shadow-sm outline-none transition-colors hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <CardContent className="flex items-center gap-4 p-4">
                   <ProgressRing id={c.id} done={c.done} total={c.total} />

@@ -58,7 +58,7 @@ export function ObjectiveCard({
     <div
       onClick={isDetail ? undefined : cardClick(() => router.push(href))}
       className={cn(
-        "flex h-full flex-col gap-3 rounded-xl border border-border bg-surface p-4",
+        "flex h-full flex-col gap-3 rounded-xl border border-border bg-card p-4",
         !isDetail && (objective.status === "QUEUED" || objective.status === "PAUSED") && "bg-hatch",
         !isDetail && "cursor-pointer transition-colors hover:border-primary/40"
       )}

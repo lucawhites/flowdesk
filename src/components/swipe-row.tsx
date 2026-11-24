@@ -161,7 +161,9 @@ export function SwipeRow({
         </div>
       )}
       <div
-        className="relative will-change-transform"
+        // durante il trascinamento la scheda diventa piena, così con lo sfondo di vetro
+        // il colore dell'azione sotto non traspare
+        className={cn("relative rounded-xl will-change-transform", shown && "bg-surface")}
         style={{
           transform: dx ? `translateX(${dx}px)` : undefined,
           transition: settling ? `transform ${SETTLE_MS}ms ${EASE}` : "none",

@@ -42,7 +42,7 @@ export function ProjectCard({
   return (
     <div
       onClick={cardClick(() => router.push(href))}
-      className="flex h-full cursor-pointer flex-col gap-4 rounded-xl border border-border bg-surface p-5 transition-colors hover:border-primary/40"
+      className="flex h-full cursor-pointer flex-col gap-4 rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/40"
     >
       <div className="flex items-start gap-3">
         {dragHandle}

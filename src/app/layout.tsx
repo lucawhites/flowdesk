@@ -4,11 +4,11 @@ import "./globals.css";
 import { SPLASH_SCREENS } from "@/lib/splash-screens";
 import { THEME_COLORS } from "@/lib/theme-color";
 
-// Applica tema e dimensione del testo prima del primo disegno, per evitare lampi e salti.
+// Applica tema, dimensione del testo e sfondo (vetro salvo scelta «pieno») prima del primo disegno, per evitare lampi e salti.
 // Tema: "light" o "dark" scelti a mano, altrimenti Automatico = segue l'iPhone/il computer,
 // anche quando cambia mentre l'app è aperta (es. la sera). Così la barra di stato dell'app
 // installata, che iOS colora in base al proprio aspetto, coincide sempre con l'app.
-const themeScript = `(function(){try{var m=matchMedia("(prefers-color-scheme: dark)");var apply=function(){var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=m.matches?"dark":"light"}document.documentElement.dataset.theme=t};apply();m.addEventListener("change",function(){var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark")apply()});var p=localStorage.getItem("palette");if(p==="indigo"||p==="teal"||p==="warm"||p==="lime"){document.documentElement.dataset.palette=p}var z=localStorage.getItem("textSize");if(z==="s"||z==="l"||z==="xl"){document.documentElement.dataset.textSize=z}}catch(e){}})()`;
+const themeScript = `(function(){try{var m=matchMedia("(prefers-color-scheme: dark)");var apply=function(){var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=m.matches?"dark":"light"}document.documentElement.dataset.theme=t};apply();m.addEventListener("change",function(){var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark")apply()});var p=localStorage.getItem("palette");if(p==="indigo"||p==="teal"||p==="warm"||p==="lime"){document.documentElement.dataset.palette=p}var z=localStorage.getItem("textSize");if(z==="s"||z==="l"||z==="xl"){document.documentElement.dataset.textSize=z}var b=localStorage.getItem("sfondo");document.documentElement.dataset.sfondo=b==="pieno"?"pieno":"vetro";}catch(e){}})()`;
 
 export const metadata: Metadata = {
   title: "Flowdesk · Task del team",

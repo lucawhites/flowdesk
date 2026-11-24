@@ -226,7 +226,7 @@ export default async function CalendarPage({
       ) : (
         <>
           {/* Griglia del mese: solo da tablet in su, sul telefono basta l'elenco. */}
-          <div className="hidden overflow-hidden rounded-2xl border border-border bg-surface shadow-sm md:block">
+          <div className="hidden overflow-hidden rounded-2xl border border-border bg-card shadow-sm md:block">
             <div className="grid grid-cols-7 border-b border-border bg-surface-muted">
               {WEEKDAYS.map((day) => (
                 <p
