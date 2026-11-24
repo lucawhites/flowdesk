@@ -969,19 +969,22 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
   display: none;
 }
 html[data-sfondo="vetro"] {
-  --wall-1: 90%;
-  --wall-2: 58%;
-  --wall-3: 72%;
-  --card: color-mix(in srgb, var(--surface) 52%, transparent);
+  /* Intensità del vetro, da 0 (quasi pieno) a 1 (molto colorato e trasparente): il cursore in
+     Impostazioni la scrive come stile sul tag <html>, che vince su questo valore predefinito. */
+  --vetro: 0.6;
+  --wall-1: min(100%, calc(var(--vetro) * 150%));
+  --wall-2: calc(var(--vetro) * 97%);
+  --wall-3: min(100%, calc(var(--vetro) * 120%));
+  --card: color-mix(in srgb, var(--surface) calc(85% - var(--vetro) * 55%), transparent);
   --card-edge: rgb(255 255 255 / 0.65);
   --card-glow: rgb(255 255 255 / 0.7);
   --card-shadow: 0 1px 2px rgb(40 24 16 / 0.04), 0 10px 30px -14px rgb(40 24 16 / 0.22);
 }
 html[data-sfondo="vetro"][data-theme="dark"] {
-  --wall-1: 42%;
-  --wall-2: 34%;
-  --wall-3: 30%;
-  --card: color-mix(in srgb, var(--surface) 58%, transparent);
+  --wall-1: calc(var(--vetro) * 70%);
+  --wall-2: calc(var(--vetro) * 57%);
+  --wall-3: calc(var(--vetro) * 50%);
+  --card: color-mix(in srgb, var(--surface) calc(88% - var(--vetro) * 50%), transparent);
   --card-edge: rgb(255 255 255 / 0.09);
   --card-glow: rgb(255 255 255 / 0.07);
   --card-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -14px rgb(0 0 0 / 0.6);
