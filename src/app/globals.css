@@ -340,6 +340,56 @@
   --info-to: #8fb5dc;
 }
 
+/* "Rosso" (dall'app Musica di Apple): grigi chiarissimi, rosso-rosa acceso come accento,
+   sfumatura verso il corallo. In chiaro il rosso è un filo più scuro per leggersi come testo (≥ 4.5:1). */
+:root[data-palette="rosso"]:not([data-theme="dark"]) {
+  --background: #f5f5f7;
+  --surface: #ffffff;
+  --surface-muted: #efeff2;
+  --foreground: #1d1d1f;
+  --muted-foreground: #6e6e73;
+  --border: #e5e5ea;
+  --primary: #1d1d1f;
+  --primary-foreground: #ffffff;
+  --primary-soft: #ececf0;
+  --accent: #e0203c;
+  --accent-soft: #fde8ec;
+  --accent-light: #ff6b7d;
+  --success: #15803d;
+  --success-soft: #dcfce7;
+  --warning: #b45309;
+  --warning-soft: #fef3c7;
+  --danger: #c81e1e;
+  --danger-soft: #fee2e2;
+  --ring: #fa2d48;
+  --chart-1: #fa2d48;
+  --chart-1-soft: #fcb8c2;
+}
+
+:root[data-palette="rosso"][data-theme="dark"] {
+  --background: #000000;
+  --surface: #1c1c1e;
+  --surface-muted: #2c2c2e;
+  --foreground: #f5f5f7;
+  --muted-foreground: #a1a1a6;
+  --border: #2e2e32;
+  --primary: #f5f5f7;
+  --primary-foreground: #1c1c1e;
+  --primary-soft: #2c2c2e;
+  --accent: #ff4d62;
+  --accent-soft: #3d1219;
+  --accent-light: #ff8a98;
+  --success: #4ade80;
+  --success-soft: #12301d;
+  --warning: #fbbf24;
+  --warning-soft: #3a2a0a;
+  --danger: #ff6b6b;
+  --danger-soft: #3b1515;
+  --ring: #ff4d62;
+  --chart-1: #ff4d62;
+  --chart-1-soft: #6b1e2a;
+}
+
 :root[data-palette="elitter"]:not([data-theme="dark"]) .text-accent {
   color: #b4583a;
 }

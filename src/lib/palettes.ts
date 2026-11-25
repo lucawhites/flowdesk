@@ -37,6 +37,12 @@ export const PALETTES = [
     note: "I colori del brand: neutri caldi, nero e crema, arancio Elitter con misura.",
     preview: { light: ["#f1efe8", "#faf9f5", "#141413", "#d97757"], dark: ["#141413", "#1e1d1b", "#faf9f5", "#e08a6c"] },
   },
+  {
+    id: "rosso",
+    name: "Rosso",
+    note: "Grigi chiari e un rosso-rosa acceso, stile app Musica (come in Planfolk).",
+    preview: { light: ["#f5f5f7", "#ffffff", "#1d1d1f", "#fa2d48"], dark: ["#000000", "#1c1c1e", "#f5f5f7", "#ff4d62"] },
+  },
 ] as const;
 
 export type PaletteId = (typeof PALETTES)[number]["id"];
