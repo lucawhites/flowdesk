@@ -4,7 +4,7 @@ import { useOptimistic, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { CalendarClock, Check, Loader2, Pencil, RotateCcw, Sparkles, StickyNote, Target, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
-import { deleteDaily, moveDailyBack, postponeDaily, proposeDailyInstructions, toggleDaily } from "@/app/(app)/work-actions";
+import { deleteDaily, moveDailyBack, objectiveClosingCheck, postponeDaily, proposeDailyInstructions, toggleDaily } from "@/app/(app)/work-actions";
 import { CommentsSection } from "@/components/comments-section";
 import { DailyDialog } from "@/components/daily-dialog";
 import { ItemMenu } from "@/components/item-menu";
@@ -56,15 +56,17 @@ export function DailyRow({
 
   // Spuntando una daily collegata a un passo ancora aperto, si chiede se chiudere anche il passo.
   const [askStep, setAskStep] = useState(false);
+  // Ultima daily aperta di un obiettivo senza passi: si chiede se chiudere anche l'obiettivo.
+  const [askClose, setAskClose] = useState<string | null>(null);
 
   // Uscita animata quando la si spunta: la riga si accende di verde, poi si chiude
   // e le altre salgono; solo dopo si salva (e la daily ricompare tra le fatte).
   const [leaving, setLeaving] = useState(false);
 
-  const commit = (checked: boolean, alsoStep = false) =>
+  const commit = (checked: boolean, alsoStep = false, keepObjectiveOpen = false) =>
     startTransition(async () => {
       setOptimisticDone(checked);
-      await toggleDaily(daily.id, checked, alsoStep);
+      await toggleDaily(daily.id, checked, alsoStep || keepObjectiveOpen, keepObjectiveOpen);
       setLeaving(false);
       // Per qualche secondo si può tornare indietro (tocco sbagliato, soprattutto sul telefono).
       if (checked) {
@@ -82,16 +84,21 @@ export function DailyRow({
       }
     });
 
-  const finish = (alsoStep = false) => {
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return commit(true, alsoStep);
+  const finish = (alsoStep = false, keepObjectiveOpen = false) => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return commit(true, alsoStep, keepObjectiveOpen);
     setLeaving(true);
-    window.setTimeout(() => commit(true, alsoStep), LEAVE_MS);
+    window.setTimeout(() => commit(true, alsoStep, keepObjectiveOpen), LEAVE_MS);
   };
 
-  const toggle = (checked: boolean) => {
+  const toggle = async (checked: boolean) => {
     if (leaving) return;
     if (checked && daily.step && !daily.step.done) setAskStep(true);
-    else if (checked) finish();
+    else if (checked && daily.objective && !daily.step) {
+      // Obiettivo senza passi: se questa è la sua ultima daily aperta, chiedi prima di chiuderlo.
+      const closing = await objectiveClosingCheck(daily.id);
+      if (closing) setAskClose(closing.objectiveTitle);
+      else finish();
+    } else if (checked) finish();
     else commit(false);
   };
 
@@ -255,6 +262,42 @@ export function DailyRow({
                 }}
               >
                 Sì, anche il passo
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {daily.objective && !daily.step && (
+        <Dialog open={askClose !== null} onOpenChange={(open) => !open && setAskClose(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="pr-6">Chiudere anche l&apos;obiettivo?</DialogTitle>
+              <DialogDescription>
+                È l&apos;ultima daily aperta di «{askClose}», che non ha passi: spuntandola l&apos;obiettivo
+                risulta raggiunto. Se c&apos;è ancora lavoro da fare, scegli «Solo la daily»: l&apos;obiettivo resta
+                aperto con un passo «Prossimo passo da definire», da rinominare quando vuoi.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex-wrap">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setAskClose(null);
+                  finish(false, true);
+                }}
+              >
+                Solo la daily
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  setAskClose(null);
+                  finish();
+                }}
+              >
+                Sì, obiettivo raggiunto
               </Button>
             </DialogFooter>
           </DialogContent>

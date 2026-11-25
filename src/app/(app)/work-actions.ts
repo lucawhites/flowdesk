@@ -362,13 +362,54 @@ export async function proposeDailyInstructions(dailyId: string): Promise<{ ok: t
 }
 
 /** Spunta una daily; con `alsoStep` segna fatto anche il passo a cui è collegata. */
-export async function toggleDaily(dailyId: string, done: boolean, alsoStep = false) {
+/**
+ * Prima di spuntare una daily: se è l'ultima aperta di un obiettivo SENZA passi, spuntarla lo
+ * porterebbe al 100% (l'avanzamento si misura sulle daily). In quel caso restituisce il titolo
+ * dell'obiettivo, così si chiede conferma; altrimenti null.
+ */
+export async function objectiveClosingCheck(dailyId: string): Promise<{ objectiveTitle: string } | null> {
+  const user = await requireSessionUser();
+  const daily = await prisma.daily.findFirst({
+    where: { id: dailyId, teamId: user.teamId, completedAt: null, objectiveId: { not: null } },
+    select: {
+      objective: {
+        select: {
+          title: true,
+          kind: true,
+          _count: { select: { steps: true } },
+          dailies: { where: { completedAt: null, id: { not: dailyId } }, select: { id: true }, take: 1 },
+        },
+      },
+    },
+  });
+  const o = daily?.objective;
+  if (!o || o.kind === "ROUTINE" || o._count.steps > 0 || o.dailies.length > 0) return null;
+  return { objectiveTitle: o.title };
+}
+
+export async function toggleDaily(dailyId: string, done: boolean, alsoStep = false, keepObjectiveOpen = false) {
   const user = await requireSessionUser();
   const daily = await prisma.daily.findFirst({
     where: { id: dailyId, teamId: user.teamId },
-    select: { objectiveId: true, stepId: true },
+    select: { objectiveId: true, stepId: true, title: true },
   });
   if (!daily) return;
+  // «Solo la daily» sull'ultima daily di un obiettivo senza passi: l'obiettivo resta aperto
+  // ricevendo due passi (questa daily, fatta, e un passo successivo da definire), così
+  // l'avanzamento si misura sui passi e non arriva al 100%.
+  if (done && keepObjectiveOpen && daily.objectiveId && !daily.stepId) {
+    const objectiveId = daily.objectiveId;
+    const hasSteps = await prisma.objectiveStep.count({ where: { objectiveId } });
+    if (hasSteps === 0) {
+      const first = await prisma.objectiveStep.create({
+        data: { objectiveId, position: 1, title: daily.title },
+      });
+      await prisma.objectiveStep.create({ data: { objectiveId, position: 2, title: "Prossimo passo da definire" } });
+      await prisma.daily.update({ where: { id: dailyId }, data: { stepId: first.id } });
+      daily.stepId = first.id;
+      alsoStep = true;
+    }
+  }
   const wasReached = done && daily.objectiveId ? await objectiveReached(daily.objectiveId) : true;
   const now = new Date();
   await prisma.daily.update({ where: { id: dailyId }, data: { completedAt: done ? now : null } });
