@@ -32,11 +32,11 @@ export function WeekStrip({
               key={d}
               className={cn(
                 "flex flex-col items-center gap-0.5 rounded-lg py-1.5",
-                isToday ? "bg-accent text-white" : "text-foreground",
+                isToday ? "bg-accent text-on-accent" : "text-foreground",
                 d < today && !isToday && "opacity-50"
               )}
             >
-              <span className={cn("text-[0.625rem] font-semibold uppercase", isToday ? "text-white/80" : "text-muted-foreground")}>
+              <span className={cn("text-[0.625rem] font-semibold uppercase", isToday ? "opacity-75" : "text-muted-foreground")}>
                 {formatISO(d, "EEEEE")}
               </span>
               <span className="text-sm font-semibold tabular-nums">{formatISO(d, "d")}</span>
@@ -45,7 +45,7 @@ export function WeekStrip({
                 className={cn(
                   "h-1 w-1 rounded-full",
                   !mark && "opacity-0",
-                  mark === "absence" ? "bg-warning" : isToday ? "bg-white" : "bg-accent"
+                  mark === "absence" ? "bg-warning" : isToday ? "bg-[var(--on-accent)]" : "bg-accent"
                 )}
               />
             </div>

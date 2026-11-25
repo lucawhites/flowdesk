@@ -348,7 +348,7 @@
   color: #4d7c0f;
 }
 :root[data-palette="lime"]:not([data-theme="dark"]) .bg-accent.text-white {
-  color: #111113;
+  color: var(--on-accent);
 }
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
@@ -1120,4 +1120,19 @@ html[data-sfondo="vetro"] .bg-card {
   --logo-bg-1: #3a3935;
   --logo-bg-2: #28272a;
   --logo-bg-3: #141413;
+}
+
+/* ── Testo sopra l'accento pieno (oggi nel calendario, giorno scelto…) ─────────────────────
+   In chiaro bianco; in scuro gli accenti sono chiari (arancio, ottanio, lime…) e il bianco non si
+   legge: lì testo quasi nero. Lime è chiaro anche nel tema chiaro. */
+:root {
+  --on-accent: #ffffff;
+}
+:root[data-theme="dark"],
+:root[data-palette="lime"] {
+  --on-accent: #111113;
+}
+.bg-accent.text-on-accent,
+.bg-accent.text-white {
+  color: var(--on-accent);
 }
