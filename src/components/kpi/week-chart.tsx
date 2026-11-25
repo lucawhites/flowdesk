@@ -18,7 +18,7 @@ const CAPACITY = 12;
  * Si passa da una vista all'altra col selettore a lente; ogni vista entra con la sua animazione.
  */
 export function WeekChart({ days, today, todayOpen }: { days: Day[]; today: string; todayOpen: number }) {
-  const [mode, setMode] = useState<Mode>("dots");
+  const [mode, setMode] = useState<Mode>("bars");
 
   return (
     <div className="flex flex-col gap-5">
@@ -40,8 +40,8 @@ export function WeekChart({ days, today, todayOpen }: { days: Day[]; today: stri
           value={mode}
           onChange={setMode}
           options={[
-            { value: "dots", label: "Puntini", icon: <Grip className="h-3.5 w-3.5" /> },
             { value: "bars", label: "Barre", icon: <ChartNoAxesColumn className="h-3.5 w-3.5" /> },
+            { value: "dots", label: "Puntini", icon: <Grip className="h-3.5 w-3.5" /> },
           ]}
         />
       </div>

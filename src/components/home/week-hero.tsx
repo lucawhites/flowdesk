@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ProgressRing } from "@/components/progress-ring";
+import { cn } from "@/lib/utils";
 
 export type HeroPerson = { id: string; name: string; done: number; total: number };
 
@@ -15,7 +16,7 @@ function initials(name: string) {
 
 /**
  * Scheda grande della Home: com'è andata la settimana del team. Frase, tre numeri e l'anello
- * con le persone del team intorno (ognuna col suo «fatte / totali» della settimana).
+ * a spicchi: uno spicchio per persona, riempito con le sue daily fatte della settimana.
  * Fondo con una velatura dell'accento della palette, leggibile in tutte le palette e nei due temi.
  */
 export function WeekHero({
@@ -31,8 +32,6 @@ export function WeekHero({
   stats: { value: number | string; label: string }[];
   people: HeroPerson[];
 }) {
-  const size = 132;
-  const orbit = size / 2 + 6;
   return (
     <Link
       href="/team"
@@ -62,28 +61,112 @@ export function WeekHero({
           </dl>
         </div>
 
-        <div className="relative mx-auto hidden shrink-0 sm:block" style={{ width: size + 44, height: size + 44 }}>
-          <div className="absolute" style={{ left: 22, top: 22 }}>
-            <ProgressRing id="week-hero" done={done} total={total} size={size} strokeWidth={11} />
-          </div>
-          {people.map((p, i) => {
-            // Persone in cerchio, a partire da in alto a destra.
-            const angle = -Math.PI / 3 + (i * 2 * Math.PI) / Math.max(people.length, 1);
-            const x = (size + 44) / 2 + Math.cos(angle) * orbit;
-            const y = (size + 44) / 2 + Math.sin(angle) * orbit;
-            return (
-              <span
-                key={p.id}
-                title={`${p.name}: ${p.done} di ${p.total} daily fatte questa settimana`}
-                className="absolute flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-[var(--card)] bg-primary-soft text-[0.6875rem] font-semibold text-foreground shadow-sm"
-                style={{ left: x, top: y }}
-              >
-                {initials(p.name)}
-              </span>
-            );
-          })}
+        <div className="mx-auto hidden shrink-0 sm:block">
+          <TeamRing done={done} total={total} people={people} />
         </div>
       </div>
     </Link>
+  );
+}
+
+/** Punto sulla circonferenza: angolo in gradi, 0 = in alto, senso orario. */
+function polar(cx: number, cy: number, r: number, deg: number) {
+  const rad = ((deg - 90) * Math.PI) / 180;
+  return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)] as const;
+}
+
+function arc(cx: number, cy: number, r: number, from: number, to: number) {
+  const [x1, y1] = polar(cx, cy, r, from);
+  const [x2, y2] = polar(cx, cy, r, to);
+  return `M${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 ${to - from > 180 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+}
+
+/**
+ * Anello del team: ogni persona ha lo stesso spicchio (così nessuno «vince» per posizione)
+ * riempito in proporzione alle SUE daily fatte; verde quando le ha fatte tutte. Le iniziali
+ * stanno a metà del proprio spicchio, con «fatte/totali» sotto. Al centro la % del team.
+ */
+function TeamRing({ done, total, people }: { done: number; total: number; people: HeroPerson[] }) {
+  const ring = 128;
+  const stroke = 11;
+  // Spazio intorno all'anello: largo ai lati (i numeri stanno accanto alle iniziali, verso
+  // l'esterno), meno in alto e in basso.
+  const width = ring + 172;
+  const height = ring + 108;
+  const cx = width / 2;
+  const cy = height / 2;
+  const r = (ring - stroke) / 2;
+  const active = people.filter((p) => p.total > 0);
+  const n = Math.max(active.length, 1);
+  const span = 360 / n;
+  const gap = active.length > 1 ? 16 : 0; // spazio tra gli spicchi (compresi i bordi arrotondati)
+  const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  return (
+    <div className="relative" style={{ width, height }}>
+      <svg width={width} height={height} aria-hidden>
+        <defs>
+          <linearGradient id="team-ring-fill" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" style={{ stopColor: "var(--accent-light)" }} />
+            <stop offset="1" style={{ stopColor: "var(--accent)" }} />
+          </linearGradient>
+        </defs>
+        {active.length === 0 && (
+          <circle cx={cx} cy={cy} r={r} fill="none" style={{ stroke: "var(--surface-muted)" }} strokeWidth={stroke} />
+        )}
+        {active.map((p, i) => {
+          const from = i * span + gap / 2;
+          const to = (i + 1) * span - gap / 2;
+          const fill = p.done / p.total;
+          const complete = p.done >= p.total;
+          return (
+            <g key={p.id}>
+              <path d={arc(cx, cy, r, from, to)} fill="none" style={{ stroke: "var(--surface-muted)" }} strokeWidth={stroke} strokeLinecap="round" />
+              {fill > 0 && (
+                <path
+                  d={arc(cx, cy, r, from, from + Math.max(fill * (to - from), 0.5))}
+                  fill="none"
+                  style={{ stroke: complete ? "var(--success)" : "url(#team-ring-fill)" }}
+                  strokeWidth={stroke}
+                  strokeLinecap="round"
+                />
+              )}
+            </g>
+          );
+        })}
+      </svg>
+      <span className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-xl font-semibold tabular-nums text-foreground">{total > 0 ? `${percent}%` : "–"}</span>
+        <span className="text-[0.625rem] font-medium uppercase tracking-wider text-muted-foreground">team</span>
+      </span>
+      {active.map((p, i) => {
+        const [x, y] = polar(cx, cy, r + stroke / 2 + 20, (i + 0.5) * span);
+        // I numeri vanno verso l'esterno: a sinistra, a destra o sotto (se la persona è in basso/in alto al centro).
+        const side = Math.abs(x - cx) < 12 ? (y > cy ? "below" : "above") : x < cx ? "left" : "right";
+        return (
+          <span
+            key={p.id}
+            title={`${p.name}: ${p.done} di ${p.total} daily fatte questa settimana`}
+            className="absolute -translate-x-1/2 -translate-y-1/2"
+            style={{ left: x, top: y }}
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--card)] bg-primary-soft text-[0.6875rem] font-semibold text-foreground shadow-sm">
+              {initials(p.name)}
+            </span>
+            <span
+              className={cn(
+                "absolute whitespace-nowrap text-[0.6875rem] font-semibold tabular-nums text-muted-foreground",
+                side === "left" && "right-full top-1/2 mr-1.5 -translate-y-1/2",
+                side === "right" && "left-full top-1/2 ml-1.5 -translate-y-1/2",
+                side === "below" && "left-1/2 top-full mt-0.5 -translate-x-1/2",
+                side === "above" && "bottom-full left-1/2 mb-0.5 -translate-x-1/2"
+              )}
+            >
+              {p.done}/{p.total}
+            </span>
+          </span>
+        );
+      })}
+    </div>
   );
 }
