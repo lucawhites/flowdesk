@@ -84,10 +84,8 @@ export default async function HomePage() {
           ? `A metà strada: ${weekPercent}% delle daily della settimana fatte.`
           : `Settimana in salita: ${weekPercent}% delle daily fatte finora.`;
 
-  // Le mie daily completate giorno per giorno (ultimi 7 giorni) e confronto coi 7 prima.
+  // Le mie daily completate negli ultimi 7 giorni, a confronto coi 7 prima.
   const myCompletions = completions.filter((c) => c.assigneeId === user.id && c.completedAt).map((c) => romeISO(c.completedAt!));
-  const last7 = Array.from({ length: 7 }, (_, i) => addDaysISO(today, i - 6));
-  const myTrend = last7.map((day) => myCompletions.filter((d) => d === day).length);
   const thisWeekCount = myCompletions.filter((d) => d > addDaysISO(today, -7)).length;
   const prevWeekCount = myCompletions.filter((d) => d <= addDaysISO(today, -7) && d > addDaysISO(today, -14)).length;
   const myDelta = prevWeekCount > 0 ? Math.round(((thisWeekCount - prevWeekCount) / prevWeekCount) * 100) : null;
@@ -194,7 +192,6 @@ export default async function HomePage() {
                 value={myDoneToday}
                 tone="success"
                 href="/daily"
-                trend={myTrend}
                 delta={myDelta}
               />
             ),

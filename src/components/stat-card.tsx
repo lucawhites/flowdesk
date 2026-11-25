@@ -27,7 +27,6 @@ export function StatCard({
   value,
   tone = "neutral",
   href,
-  trend,
   delta,
 }: {
   icon: React.ComponentType<{ className?: string; fill?: string }>;
@@ -36,8 +35,6 @@ export function StatCard({
   tone?: Tone;
   /** Se presente, il riquadro è un collegamento. */
   href?: string;
-  /** Andamento degli ultimi giorni (dal più vecchio a oggi): disegna una piccola linea. */
-  trend?: number[];
   /** Variazione in % rispetto al periodo prima; null = non confrontabile. */
   delta?: number | null;
 }) {
@@ -75,10 +72,7 @@ export function StatCard({
           </svg>
           <Icon className="h-7 w-7 shrink-0" fill={`url(#${gradientId})`} />
         </div>
-        <div className="mt-auto flex items-end justify-between gap-2">
-          <p className="text-xs leading-snug text-muted-foreground">{label}</p>
-          {trend && trend.length > 1 && <Sparkline values={trend} color={to} />}
-        </div>
+        <p className="text-xs leading-snug text-muted-foreground">{label}</p>
 
       </CardContent>
     </Card>
@@ -92,19 +86,3 @@ export function StatCard({
   );
 }
 
-/** Piccola linea dell'andamento, con un punto sull'ultimo valore (oggi). */
-function Sparkline({ values, color }: { values: number[]; color: string }) {
-  const w = 56;
-  const h = 20;
-  const max = Math.max(...values, 1);
-  const step = w / (values.length - 1);
-  const points = values.map((v, i) => [i * step, h - 2 - (v / max) * (h - 4)] as const);
-  const d = points.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
-  const [lx, ly] = points[points.length - 1]!;
-  return (
-    <svg width={w} height={h} viewBox={`-2 0 ${w + 4} ${h}`} aria-hidden className="shrink-0 overflow-visible">
-      <path d={d} fill="none" style={{ stroke: color }} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity="0.85" />
-      <circle cx={lx} cy={ly} r="2.2" style={{ fill: color }} />
-    </svg>
-  );
-}
