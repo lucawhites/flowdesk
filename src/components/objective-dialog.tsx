@@ -7,6 +7,7 @@ import { MemberSelect } from "@/components/member-select";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SearchSelect } from "@/components/ui/search-select";
+import { NumberedStepsField } from "@/components/numbered-steps-field";
 import { CADENCE_MAX, KIND_HINT, KIND_LABEL, STATUS_LABEL, type ObjectiveKind, type ObjectiveStatus } from "@/lib/objective-status";
 import type { ObjectiveItem, ObjectiveLinkOption, TeamMember } from "@/lib/types";
 
@@ -88,14 +89,9 @@ export function ObjectiveDialog({
           {!isEdit && (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="objective-steps">Passi (opzionale)</Label>
-              <Textarea
-                id="objective-steps"
-                name="steps"
-                rows={5}
-                placeholder={"Un passo per riga, nell'ordine in cui vanno fatti.\nEs. Chiedere il preventivo al fornitore\nApprovare il campione"}
-              />
+              <NumberedStepsField id="objective-steps" name="steps" />
               <p className="text-xs text-muted-foreground">
-                Potrai aggiungerne, correggerli o riordinarli anche dopo, dalla pagina dell&apos;obiettivo.
+                Un passo per riga, nell&apos;ordine in cui vanno fatti: Invio va al passo successivo. Potrai aggiungerne, correggerli o riordinarli anche dopo, dalla pagina dell&apos;obiettivo.
               </p>
             </div>
           )}
