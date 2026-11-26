@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CalendarClock, Check, Loader2, MessageCircle, Pencil, RotateCcw, Sparkles, StickyNote, Target, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteDaily, moveDailyBack, objectiveClosingCheck, postponeDaily, proposeDailyInstructions, toggleDaily } from "@/app/(app)/work-actions";
+import { CommentsPeek } from "@/components/comments-peek";
 import { CommentsSection } from "@/components/comments-section";
 import { DailyDialog } from "@/components/daily-dialog";
 import { ItemMenu } from "@/components/item-menu";
@@ -197,16 +198,18 @@ export function DailyRow({
             </Badge>
           )}
           {daily.commentCount > 0 && (
-            <button
-              type="button"
-              onClick={openComments}
-              className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              title={daily.commentCount === 1 ? "1 commento" : `${daily.commentCount} commenti`}
-            >
-              <Badge className="hover:underline">
-                <MessageCircle className="h-3 w-3" /> <span className="num">{daily.commentCount}</span>
-              </Badge>
-            </button>
+            <CommentsPeek target={{ kind: "daily", id: daily.id }} count={daily.commentCount}>
+              <button
+                type="button"
+                onClick={openComments}
+                className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={daily.commentCount === 1 ? "1 commento" : `${daily.commentCount} commenti`}
+              >
+                <Badge className="hover:underline">
+                  <MessageCircle className="h-3 w-3" /> <span className="num">{daily.commentCount}</span>
+                </Badge>
+              </button>
+            </CommentsPeek>
           )}
           {daily.notes && (
             <Badge title="Ha delle note">
