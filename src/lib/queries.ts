@@ -13,6 +13,7 @@ const dailyInclude = {
   creator: person,
   objective: { select: { id: true, title: true, project: { select: { name: true } } } },
   step: { select: { id: true, title: true, completedAt: true } },
+  _count: { select: { comments: true } },
 } as const;
 
 type DailyRowData = {
@@ -31,6 +32,7 @@ type DailyRowData = {
   assignee: { id: string; name: string };
   objective: { id: string; title: string; project: { name: string } } | null;
   step: { id: string; title: string; completedAt: Date | null } | null;
+  _count: { comments: number };
 };
 
 function toDailyItem(d: DailyRowData): DailyItem {
@@ -52,6 +54,7 @@ function toDailyItem(d: DailyRowData): DailyItem {
       : null,
     step: d.step ? { id: d.step.id, title: d.step.title, done: !!d.step.completedAt } : null,
     byAgent: !!d.agentRunId,
+    commentCount: d._count.comments,
   };
 }
 

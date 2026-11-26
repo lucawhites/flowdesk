@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSessionUser } from "@/lib/dal";
@@ -77,6 +78,8 @@ export async function addComment(target: CommentTarget, text: string): Promise<{
     });
   }
 
+  // Aggiorna il fumetto col numero di commenti sulle card delle daily.
+  if (target.kind === "daily") revalidatePath("/", "layout");
   return { comment: toItem(created, user.id) };
 }
 
@@ -84,5 +87,6 @@ export async function addComment(target: CommentTarget, text: string): Promise<{
 export async function deleteComment(commentId: string): Promise<{ ok: boolean }> {
   const user = await requireSessionUser();
   const { count } = await prisma.comment.deleteMany({ where: { id: commentId, authorId: user.id } });
+  if (count > 0) revalidatePath("/", "layout");
   return { ok: count > 0 };
 }

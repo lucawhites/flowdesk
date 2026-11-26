@@ -2,7 +2,7 @@
 
 import { useOptimistic, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
-import { CalendarClock, Check, Loader2, Pencil, RotateCcw, Sparkles, StickyNote, Target, Trash2, Undo2 } from "lucide-react";
+import { CalendarClock, Check, Loader2, MessageCircle, Pencil, RotateCcw, Sparkles, StickyNote, Target, Trash2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteDaily, moveDailyBack, objectiveClosingCheck, postponeDaily, proposeDailyInstructions, toggleDaily } from "@/app/(app)/work-actions";
 import { CommentsSection } from "@/components/comments-section";
@@ -50,6 +50,13 @@ export function DailyRow({
   const [, startTransition] = useTransition();
   const [done, setOptimisticDone] = useOptimistic(daily.completedOn !== null);
   const [detailOpen, setDetailOpen] = useState(false);
+  // Fumetto dei commenti: apre il dettaglio e scorre fino ai commenti.
+  const openComments = () => {
+    setDetailOpen(true);
+    setTimeout(() => {
+      document.getElementById(`commenti-${daily.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 250);
+  };
   const carried = isCarriedOver(daily, today);
   const canManage =
     currentUserRole === "ADMIN" || daily.creatorId === currentUserId || daily.assignee.id === currentUserId;
@@ -188,6 +195,18 @@ export function DailyRow({
             <Badge title="Creata dall'agente pianificatore">
               <Sparkles className="h-3 w-3" /> Agente
             </Badge>
+          )}
+          {daily.commentCount > 0 && (
+            <button
+              type="button"
+              onClick={openComments}
+              className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              title={daily.commentCount === 1 ? "1 commento" : `${daily.commentCount} commenti`}
+            >
+              <Badge className="hover:underline">
+                <MessageCircle className="h-3 w-3" /> <span className="num">{daily.commentCount}</span>
+              </Badge>
+            </button>
           )}
           {daily.notes && (
             <Badge title="Ha delle note">
@@ -347,7 +366,9 @@ export function DailyRow({
             )}
           </DetailSection>
 
-          <CommentsSection target={{ kind: "daily", id: daily.id }} />
+          <div id={`commenti-${daily.id}`} className="scroll-mt-4">
+            <CommentsSection target={{ kind: "daily", id: daily.id }} />
+          </div>
 
           <DetailSection title="Origine">
             <dl className="flex flex-col gap-2">

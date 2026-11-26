@@ -37,6 +37,8 @@ export type DailyItem = {
   step: { id: string; title: string; done: boolean } | null;
   /** Creata dall'agente pianificatore. */
   byAgent: boolean;
+  /** Numero di commenti (fumetto sulla card). */
+  commentCount: number;
 };
 
 export type ObjectiveItem = {
